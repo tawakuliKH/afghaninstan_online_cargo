@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-primary: #1E2A5E;   /* Indigo Dusk */
+  --color-brand-accent: #F2A60D;    /* Saffron Flame */
+  --color-brand-secondary: #2DB7C4; /* Sky Transit */
+  --color-brand-muted: #64748B;     /* Slate Mist */
+  --color-brand-bg: #F8F9FB;        /* Cloud White */
+  --color-brand-danger: #E0524B;    /* Signal Coral */
+}

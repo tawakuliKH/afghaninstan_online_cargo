@@ -1,0 +1,11 @@
+{
+  "nav": {
+    "home": "Home",
+    "trips": "Trips",
+    "packages": "Packages",
+    "login": "Login",
+    "register": "Register",
+    "profile": "Profile",
+    "rules": "Rules"
+  }
+}
