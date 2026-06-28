@@ -1,0 +1,64 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum AccountStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum DocumentType {
+  PASSPORT
+  TAZKIRA
+}
+
+model User {
+  id                      String        @id @default(uuid())
+  email                   String        @unique
+  passwordHash            String
+
+  legalFullName           String
+  nickname                String
+  dateOfBirth             DateTime
+  whatsappNumber          String
+
+  documentType            DocumentType
+  documentNumber          String        @unique
+  documentIssuingCountry  String?
+
+  permanentCountry        String
+  permanentCity           String
+  currentCountry          String
+  currentCity             String
+
+  passportPhotoUrl        String
+  facePhotoUrl            String
+  visaResidencyDocUrl     String?
+
+  accountStatus           AccountStatus @default(PENDING)
+  adminNote                String?
+  isAdmin                  Boolean       @default(false)
+
+  rating                   Float         @default(0)
+  reviewCount              Int           @default(0)
+  packagesDeliveredCount   Int           @default(0)
+
+  createdAt                DateTime      @default(now())
+  updatedAt                DateTime      @updatedAt
+
+  @@map("users")
+}
