@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 130" width="120" height="130">
+  <title>cargo_online icon</title>
+  <rect x="24" y="32" width="60" height="60" rx="10" fill="none" stroke="#1E2A52" stroke-width="7"/>
+  <polygon points="76,32 110,10 100,40" fill="#E2984B"/>
+  <circle cx="16" cy="92" r="5" fill="#E2984B" opacity="0.85"/>
+  <circle cx="8" cy="101" r="3.5" fill="#E2984B" opacity="0.55"/>
+  <circle cx="4" cy="109" r="2" fill="#E2984B" opacity="0.3"/>
+</svg>
