@@ -4,6 +4,9 @@ import helmet from 'helmet'
 import cookieParser from 'cookie-parser'
 import dotenv from 'dotenv'
 
+import authRoutes from './routes/auth.routes'
+// ...
+
 dotenv.config()
 
 const app = express()
@@ -21,3 +24,7 @@ app.get('/api/health', (_req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`)
 })
+
+app.use('/api/auth', authRoutes)
+
+
