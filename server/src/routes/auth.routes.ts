@@ -5,8 +5,87 @@ import { upload } from '../middleware/upload'
 import { registerSchema } from '../schemas/auth.schema'
 import { prisma } from '../lib/prisma'
 import { uploadKycFile } from '../lib/storage'
+import { loginSchema } from '../schemas/auth.schema'
+import { signAccessToken, signRefreshToken } from '../lib/jwt'
+import { verifyRefreshToken } from '../lib/jwt'
+import { requireAuth, requireApproved } from '../middleware/auth'
+
 
 const router = Router()
+
+router.get('/me', requireAuth, requireApproved, async (req, res) => {
+  const user = await prisma.user.findUnique({
+    where: { id: req.user!.userId },
+    select: { id: true, email: true, nickname: true, accountStatus: true, isAdmin: true },
+  })
+  res.json({ user })
+})
+
+router.post('/refresh', (req, res) => {
+  const refreshToken = req.cookies.refreshToken
+  if (!refreshToken) {
+    return res.status(401).json({ error: 'No refresh token provided' })
+  }
+
+  try {
+    const payload = verifyRefreshToken(refreshToken)
+    const newAccessToken = signAccessToken({ userId: payload.userId, isAdmin: payload.isAdmin })
+    res.json({ accessToken: newAccessToken })
+  } catch {
+    return res.status(401).json({ error: 'Invalid or expired refresh token' })
+  }
+})
+
+router.post('/logout', (req, res) => {
+  res.clearCookie('refreshToken')
+  res.json({ message: 'Logged out successfully' })
+})
+
+router.post('/login', async (req, res) => {
+  const parseResult = loginSchema.safeParse(req.body)
+  if (!parseResult.success) {
+    return res.status(400).json({ errors: parseResult.error.flatten().fieldErrors })
+  }
+  const { email, password } = parseResult.data
+
+  const user = await prisma.user.findUnique({ where: { email } })
+  if (!user) {
+    return res.status(401).json({ error: 'Invalid email or password' })
+  }
+
+  const passwordMatches = await bcrypt.compare(password, user.passwordHash)
+  if (!passwordMatches) {
+    return res.status(401).json({ error: 'Invalid email or password' })
+  }
+
+  if (user.accountStatus !== 'APPROVED') {
+    return res.status(403).json({
+      error: `Your account is ${user.accountStatus.toLowerCase()} and cannot log in yet.`,
+      accountStatus: user.accountStatus,
+    })
+  }
+
+  const payload = { userId: user.id, isAdmin: user.isAdmin }
+  const accessToken = signAccessToken(payload)
+  const refreshToken = signRefreshToken(payload)
+
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days, in milliseconds
+  })
+
+  res.json({
+    accessToken,
+    user: {
+      id: user.id,
+      email: user.email,
+      nickname: user.nickname,
+      isAdmin: user.isAdmin,
+    },
+  })
+})
 
 router.post(
   '/register',
