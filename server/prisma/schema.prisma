@@ -57,8 +57,59 @@ model User {
   reviewCount              Int           @default(0)
   packagesDeliveredCount   Int           @default(0)
 
+  trips                    Trip[]
+  packages                  Package[]
+
   createdAt                DateTime      @default(now())
   updatedAt                DateTime      @updatedAt
 
   @@map("users")
+}
+
+model Trip {
+  id              String   @id @default(uuid())
+  travelerId      String
+  traveler        User     @relation(fields: [travelerId], references: [id])
+
+  originCountry   String
+  originCity      String
+  destCountry     String
+  destCity        String
+
+  capacityWeight  Float?
+  capacityNote    String?
+
+  departureDate   DateTime
+  notes           String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("trips")
+}
+
+model Package {
+  id                String   @id @default(uuid())
+  senderId          String
+  sender            User     @relation(fields: [senderId], references: [id])
+
+  title             String
+  weight            Float
+
+  originCountry     String
+  originCity        String
+  destCountry       String
+  destCity          String
+
+  recipientName     String
+  recipientWhatsapp String
+  recipientEmail    String
+
+  goodsPhotoUrl     String?
+  notes             String?
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("packages")
 }

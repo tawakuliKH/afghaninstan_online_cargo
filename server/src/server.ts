@@ -4,7 +4,12 @@ import helmet from 'helmet'
 import cookieParser from 'cookie-parser'
 import dotenv from 'dotenv'
 
+import tripRoutes from './routes/trip.routes'
+// ...
+
 import authRoutes from './routes/auth.routes'
+// ...
+import packageRoutes from './routes/package.routes'
 // ...
 
 dotenv.config()
@@ -26,5 +31,8 @@ app.listen(PORT, () => {
 })
 
 app.use('/api/auth', authRoutes)
+app.use('/api/trips', tripRoutes)
+app.use('/api/packages', packageRoutes)
+
 
 

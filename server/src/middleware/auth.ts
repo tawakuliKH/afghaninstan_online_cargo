@@ -31,3 +31,16 @@ export async function requireApproved(req: Request, res: Response, next: NextFun
 
   next()
 }
+
+export function optionalAuth(req: Request, _res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1]
+    try {
+      req.user = verifyAccessToken(token)
+    } catch {
+      // invalid/expired token on a public route — just treat as anonymous, don't error
+    }
+  }
+  next()
+}

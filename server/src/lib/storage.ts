@@ -8,3 +8,15 @@ export async function uploadKycFile(filePath: string, buffer: Buffer, contentTyp
   if (error) throw new Error(`Failed to upload ${filePath}: ${error.message}`)
   return filePath
 }
+
+
+export async function uploadPackagePhoto(filePath: string, buffer: Buffer, contentType: string) {
+  const { error } = await supabase.storage
+    .from('package-photos')
+    .upload(filePath, buffer, { contentType, upsert: false })
+
+  if (error) throw new Error(`Failed to upload ${filePath}: ${error.message}`)
+
+  const { data } = supabase.storage.from('package-photos').getPublicUrl(filePath)
+  return data.publicUrl
+}
