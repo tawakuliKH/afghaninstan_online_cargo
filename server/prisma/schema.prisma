@@ -59,6 +59,8 @@ model User {
 
   trips                    Trip[]
   packages                  Package[]
+  senderDeliveries         Delivery[]    @relation("SenderDeliveries")
+  travelerDeliveries       Delivery[]    @relation("TravelerDeliveries")
 
   createdAt                DateTime      @default(now())
   updatedAt                DateTime      @updatedAt
@@ -81,6 +83,8 @@ model Trip {
 
   departureDate   DateTime
   notes           String?
+
+  deliveries            Delivery[]
 
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -108,8 +112,48 @@ model Package {
   goodsPhotoUrl     String?
   notes             String?
 
+  deliveries            Delivery[]
+
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
   @@map("packages")
+}
+
+enum DeliveryStatus {
+  PROPOSED
+  ACCEPTED
+  FINALIZED
+  CANCELLED
+}
+
+enum PaymentLocation {
+  ORIGIN
+  DESTINATION
+}
+
+model Delivery {
+  id                    String          @id @default(uuid())
+  packageId             String
+  package               Package         @relation(fields: [packageId], references: [id])
+  tripId                String?
+  trip                  Trip?           @relation(fields: [tripId], references: [id])
+  senderId              String
+  sender                User            @relation("SenderDeliveries", fields: [senderId], references: [id])
+  travelerId            String
+  traveler              User            @relation("TravelerDeliveries", fields: [travelerId], references: [id])
+
+  agreedAmount          Float
+  currency              String
+  paymentLocation       PaymentLocation
+  status                DeliveryStatus  @default(PROPOSED)
+  estimatedDeliveryDate DateTime?
+  finalizedAt           DateTime?
+  commissionAmount      Float?
+  commissionPaid        Boolean         @default(false)
+
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  @@map("deliveries")
 }

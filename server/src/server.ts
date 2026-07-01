@@ -11,6 +11,8 @@ import authRoutes from './routes/auth.routes'
 // ...
 import packageRoutes from './routes/package.routes'
 // ...
+import deliveryRoutes from './routes/delivery.routes'
+// ...
 
 dotenv.config()
 
@@ -34,5 +36,6 @@ app.use('/api/auth', authRoutes)
 app.use('/api/trips', tripRoutes)
 app.use('/api/packages', packageRoutes)
 
+app.use('/api/deliveries', deliveryRoutes)
 
 
