@@ -14,6 +14,12 @@ import packageRoutes from './routes/package.routes'
 import deliveryRoutes from './routes/delivery.routes'
 // ...
 
+import reviewRoutes from './routes/review.routes'
+// ...
+import messageRoutes from './routes/message.routes'
+import notificationRoutes from './routes/notification.routes'
+// ...
+
 dotenv.config()
 
 const app = express()
@@ -37,5 +43,10 @@ app.use('/api/trips', tripRoutes)
 app.use('/api/packages', packageRoutes)
 
 app.use('/api/deliveries', deliveryRoutes)
+
+app.use('/api/reviews', reviewRoutes)
+
+app.use('/api/messages', messageRoutes)
+app.use('/api/notifications', notificationRoutes)
 
 

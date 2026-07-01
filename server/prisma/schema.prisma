@@ -61,6 +61,11 @@ model User {
   packages                  Package[]
   senderDeliveries         Delivery[]    @relation("SenderDeliveries")
   travelerDeliveries       Delivery[]    @relation("TravelerDeliveries")
+  reviewsGiven             Review[]      @relation("ReviewsGiven")
+  reviewsReceived          Review[]      @relation("ReviewsReceived")
+  messagesSent             Message[]     @relation("MessagesSent")
+  messagesReceived         Message[]     @relation("MessagesReceived")
+  notifications            Notification[]
 
   createdAt                DateTime      @default(now())
   updatedAt                DateTime      @updatedAt
@@ -152,8 +157,61 @@ model Delivery {
   commissionAmount      Float?
   commissionPaid        Boolean         @default(false)
 
+  review                Review?
+
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
 
   @@map("deliveries")
+}
+
+model Review {
+  id          String   @id @default(uuid())
+  deliveryId  String   @unique
+  delivery    Delivery @relation(fields: [deliveryId], references: [id])
+  reviewerId  String
+  reviewer    User     @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  revieweeId  String
+  reviewee    User     @relation("ReviewsReceived", fields: [revieweeId], references: [id])
+  rating      Int
+  comment     String?
+  createdAt   DateTime @default(now())
+
+  @@map("reviews")
+}
+
+enum NotificationType {
+  MESSAGE
+  ACCOUNT_APPROVED
+  ACCOUNT_REJECTED
+  DELIVERY_PROPOSED
+  DELIVERY_ACCEPTED
+  DELIVERY_FINALIZED
+}
+
+model Message {
+  id         String    @id @default(uuid())
+  senderId   String
+  sender     User      @relation("MessagesSent", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User      @relation("MessagesReceived", fields: [receiverId], references: [id])
+  content    String
+  readAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@map("messages")
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+  type      NotificationType
+  title     String
+  body      String
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@map("notifications")
 }
