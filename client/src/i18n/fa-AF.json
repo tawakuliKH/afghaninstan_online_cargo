@@ -6,6 +6,17 @@
     "login": "ورود",
     "register": "ثبت‌نام",
     "profile": "پروفایل",
-    "rules": "قوانین"
+    "rules": "قوانین",
+    "logout": "خروج",
+    "loggedOut": "با موفقیت خارج شدید"
+  },
+  "auth": {
+    "loginTitle": "خوش آمدید",
+    "loginSubtitle": "به حساب cargo_online خود وارد شوید",
+    "email": "آدرس ایمیل",
+    "password": "رمز عبور",
+    "loginButton": "ورود",
+    "noAccount": "حساب ندارید؟",
+    "registerLink": "ثبت‌نام"
   }
 }

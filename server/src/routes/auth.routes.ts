@@ -13,10 +13,16 @@ import { requireAuth, requireApproved } from '../middleware/auth'
 
 const router = Router()
 
-router.get('/me', requireAuth, requireApproved, async (req, res) => {
+router.get('/me', requireAuth, async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.user!.userId },
-    select: { id: true, email: true, nickname: true, accountStatus: true, isAdmin: true },
+    select: {
+      id: true,
+      email: true,
+      nickname: true,
+      accountStatus: true,
+      isAdmin: true,
+    },
   })
   res.json({ user })
 })
@@ -58,13 +64,6 @@ router.post('/login', async (req, res) => {
     return res.status(401).json({ error: 'Invalid email or password' })
   }
 
-  if (user.accountStatus !== 'APPROVED') {
-    return res.status(403).json({
-      error: `Your account is ${user.accountStatus.toLowerCase()} and cannot log in yet.`,
-      accountStatus: user.accountStatus,
-    })
-  }
-
   const payload = { userId: user.id, isAdmin: user.isAdmin }
   const accessToken = signAccessToken(payload)
   const refreshToken = signRefreshToken(payload)
@@ -83,6 +82,7 @@ router.post('/login', async (req, res) => {
       email: user.email,
       nickname: user.nickname,
       isAdmin: user.isAdmin,
+      accountStatus: user.accountStatus,
     },
   })
 })

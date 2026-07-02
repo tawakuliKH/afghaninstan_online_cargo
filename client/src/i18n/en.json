@@ -6,6 +6,18 @@
     "login": "Login",
     "register": "Register",
     "profile": "Profile",
-    "rules": "Rules"
+    "rules": "Rules",
+    "logout": "Logout",
+    "loggedOut": "Logged out successfully"
+  },
+  "auth": {
+    "loginTitle": "Welcome back",
+    "loginSubtitle": "Sign in to your cargo_online account",
+    "email": "Email address",
+    "password": "Password",
+    "loginButton": "Sign in",
+    "noAccount": "Don't have an account?",
+    "registerLink": "Register"
   }
+  
 }

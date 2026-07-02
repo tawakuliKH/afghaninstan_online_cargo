@@ -1,20 +1,16 @@
-import { useEffect, useState } from 'react'
-import api from '../lib/axios'
+import { useAuthStore } from '../store/authStore'
 
 function Home() {
-  const [status, setStatus] = useState<string>('checking...')
-
-  useEffect(() => {
-    api
-      .get('/health')
-      .then((res) => setStatus(`✅ ${res.data.status} — ${res.data.timestamp}`))
-      .catch(() => setStatus('❌ could not reach server'))
-  }, [])
+  const { user } = useAuthStore()
 
   return (
-    <div className="p-8 text-2xl">
-      <p>Home page</p>
-      <p className="mt-4 text-base">Backend status: {status}</p>
+    <div className="p-8">
+      <h1 className="text-2xl font-bold text-brand-primary">Home page</h1>
+      {user ? (
+        <p className="mt-2 text-brand-muted">Logged in as: {user.nickname}</p>
+      ) : (
+        <p className="mt-2 text-brand-muted">Not logged in</p>
+      )}
     </div>
   )
 }

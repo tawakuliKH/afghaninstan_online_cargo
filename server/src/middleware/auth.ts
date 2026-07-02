@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express'
 import { verifyAccessToken } from '../lib/jwt'
 import { prisma } from '../lib/prisma'
 
+
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -42,5 +43,11 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction) {
       // invalid/expired token on a public route — just treat as anonymous, don't error
     }
   }
+  next()
+}
+
+export function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated' })
+  if (!req.user.isAdmin) return res.status(403).json({ error: 'Admin access required' })
   next()
 }

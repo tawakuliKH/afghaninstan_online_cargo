@@ -19,6 +19,8 @@ import reviewRoutes from './routes/review.routes'
 import messageRoutes from './routes/message.routes'
 import notificationRoutes from './routes/notification.routes'
 // ...
+import adminRoutes from './routes/admin.routes'
+// ...
 
 dotenv.config()
 
@@ -48,5 +50,6 @@ app.use('/api/reviews', reviewRoutes)
 
 app.use('/api/messages', messageRoutes)
 app.use('/api/notifications', notificationRoutes)
+app.use('/api/admin', adminRoutes)
 
 
