@@ -2,7 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../../store/authStore'
 import api from '../../lib/axios'
-import { Package, Globe, LogOut, User, Bell, Menu, X } from 'lucide-react'
+import { Package, Globe, LogOut, User, Bell, Menu, X, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
 
@@ -57,6 +57,7 @@ export function Navbar() {
 
         {/* Right side controls */}
         <div className="hidden items-center gap-3 md:flex">
+
           {/* Language switcher */}
           <button
             onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'fa-AF' : 'en')}
@@ -68,6 +69,17 @@ export function Navbar() {
 
           {user ? (
             <>
+              {/* Admin link — only for admins */}
+              {user.isAdmin && (
+                <Link
+                  to="/admin"
+                  className="flex items-center gap-1 rounded-full bg-brand-accent/20 px-3 py-1 text-xs font-semibold text-brand-accent transition hover:bg-brand-accent/30"
+                >
+                  <ShieldCheck className="h-3 w-3" />
+                  Admin
+                </Link>
+              )}
+
               {/* Notifications */}
               <Link
                 to="/profile?tab=notifications"
@@ -137,19 +149,44 @@ export function Navbar() {
             <hr className="border-white/10" />
             {user ? (
               <>
-                <Link to="/profile" onClick={() => setMobileOpen(false)} className="text-sm text-white/80">
+                {user.isAdmin && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-1 text-sm font-semibold text-brand-accent"
+                  >
+                    <ShieldCheck className="h-4 w-4" />
+                    Admin Dashboard
+                  </Link>
+                )}
+                <Link
+                  to="/profile"
+                  onClick={() => setMobileOpen(false)}
+                  className="text-sm text-white/80"
+                >
                   {t('nav.profile')} — {user.nickname}
                 </Link>
-                <button onClick={handleLogout} className="text-start text-sm text-brand-danger">
+                <button
+                  onClick={handleLogout}
+                  className="text-start text-sm text-brand-danger"
+                >
                   {t('nav.logout')}
                 </button>
               </>
             ) : (
               <>
-                <Link to="/login" onClick={() => setMobileOpen(false)} className="text-sm text-white/80">
+                <Link
+                  to="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="text-sm text-white/80"
+                >
                   {t('nav.login')}
                 </Link>
-                <Link to="/register" onClick={() => setMobileOpen(false)} className="text-sm font-semibold text-brand-accent">
+                <Link
+                  to="/register"
+                  onClick={() => setMobileOpen(false)}
+                  className="text-sm font-semibold text-brand-accent"
+                >
                   {t('nav.register')}
                 </Link>
               </>

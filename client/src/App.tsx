@@ -15,6 +15,8 @@ import NotFound from "./pages/NotFound";
 import { ProtectedRoute } from "./components/layout/ProtectedRoute";
 import NewTrip from "./pages/NewTrip";
 import NewPackage from "./pages/NewPackage";
+import MessageThread from "./pages/MessageThread";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
   const { isLoading } = useAuthStore();
@@ -63,6 +65,22 @@ function App() {
             element={
               <ProtectedRoute requireApproved>
                 <NewPackage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/messages/:userId"
+            element={
+              <ProtectedRoute requireApproved>
+                <MessageThread />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute requireApproved>
+                <AdminDashboard />
               </ProtectedRoute>
             }
           />
