@@ -6,18 +6,123 @@
     "login": "Login",
     "register": "Register",
     "profile": "Profile",
-    "rules": "Rules",
+    "rules": "Rules & Terms",
     "logout": "Logout",
     "loggedOut": "Logged out successfully"
   },
   "auth": {
     "loginTitle": "Welcome back",
-    "loginSubtitle": "Sign in to your cargo_online account",
+    "loginSubtitle": "Sign in to your Afghanistan Online Cargo account",
     "email": "Email address",
     "password": "Password",
     "loginButton": "Sign in",
     "noAccount": "Don't have an account?",
     "registerLink": "Register"
+  },
+  "rules": {
+    "pageTitle": "Rules & Terms of Use",
+    "pageSubtitle": "Please read all sections carefully before using Afghanistan Online Cargo.",
+    "generalTab": "How It Works",
+    "senderTab": "Sender Rules",
+    "travelerTab": "Traveler Rules",
+    "general": {
+      "title": "How Afghanistan Online Cargo Works",
+      "intro": "Afghanistan Online Cargo is a coordination platform — not a courier company, shipping agent, or logistics provider. We do not transport, insure, store, or take physical custody of any package at any time. Our sole function is to connect verified senders and verified travelers, and to create a timestamped record of what was agreed and physically handed over between them.",
+      "points": [
+        "Every user must register with a valid government-issued identity document (passport or Afghan Tazkira) and be manually approved by an administrator before accessing any platform features.",
+        "Senders post packages they need delivered. Travelers post trips and available capacity. Both parties find each other through the platform's search tools.",
+        "All financial negotiations, price agreements, and physical handovers happen entirely off-platform — in person, by phone, or via WhatsApp — between the sender and traveler directly.",
+        "At the moment of handover, the sender must verify the traveler's identity by physically inspecting their original passport or Tazkira and confirming it matches the traveler's profile on the platform.",
+        "The sender then records the handover on the platform by clicking 'Mark as Delivered to Traveler', entering the agreed amount, currency, and payment location. The traveler must confirm this record.",
+        "When the traveler delivers the package to the final recipient, they click 'Finalize Delivery'. This creates a permanent, timestamped record of the completed delivery.",
+        "A 5% platform commission is charged to the traveler on the agreed delivery amount upon finalization. Travelers with unpaid commission cannot accept new deliveries.",
+        "The platform's Delivery record — including timestamps, agreed amounts, and the identity of both parties — serves as legal evidence of what was agreed and handed over, should any dispute arise.",
+        "Afghanistan Online Cargo bears no legal liability for lost, damaged, stolen, or undelivered packages. Any such dispute must be pursued through the appropriate government or legal channels in the relevant jurisdiction."
+      ]
+    },
+    "sender": {
+      "title": "Sender Terms & Legal Disclaimer",
+      "lastUpdated": "Last updated: July 2026 — Version 1.0",
+      "sections": [
+        {
+          "heading": "1. Nature of the Platform",
+          "body": "Afghanistan Online Cargo ('the Platform') is a coordination and record-keeping service only. By posting a package and initiating a delivery record, you ('the Sender') acknowledge and agree that the Platform is not a party to any delivery agreement, does not take custody of your package at any point, does not provide insurance, and does not guarantee the delivery of any package. The Platform's only obligation is to maintain an accurate, timestamped record of the information you and the traveler enter into it."
+        },
+        {
+          "heading": "2. Identity Verification Responsibility",
+          "body": "Before handing over any package or payment to a traveler, you are solely responsible for verifying the traveler's identity. You must physically inspect the traveler's original passport or Afghan Tazkira and confirm that it matches the profile displayed on the Platform. The Platform provides identity records for reference purposes only. Failure to perform this verification releases the Platform from any and all liability arising from the subsequent delivery."
+        },
+        {
+          "heading": "3. Handover Record",
+          "body": "By clicking 'Mark as Delivered to Traveler', you are creating a legally significant record stating that: (a) you have physically inspected and verified the traveler's identity document; (b) you have handed the described package to the traveler; and (c) you have agreed on the specified amount, currency, and payment location. You confirm that this record is accurate and truthful. Deliberately entering false information into this record may constitute fraud under applicable law."
+        },
+        {
+          "heading": "4. Financial Agreements",
+          "body": "All financial arrangements — including the agreed delivery fee, payment timing (at origin or destination), and any advance payments — are made directly between you and the traveler. The Platform does not process, hold, or guarantee any payment. The Platform records the agreed amount for reference and commission calculation only. Any financial disputes must be resolved directly between you and the traveler."
+        },
+        {
+          "heading": "5. Prohibited Items",
+          "body": "You are strictly prohibited from using the Platform to arrange the transport of: illegal substances or controlled materials; weapons, explosives, or dangerous goods; items prohibited by the laws of the origin country, transit countries, or destination country; items subject to trade sanctions or export controls; currency or negotiable instruments above applicable legal thresholds; any item whose transport would violate applicable law. You bear full personal legal responsibility for the contents of your package. The Platform has no means to inspect packages and accepts no liability for the contents."
+        },
+        {
+          "heading": "6. Loss, Damage, and Non-Delivery",
+          "body": "If your package is not delivered, is delivered in a damaged condition, is lost, or is stolen, the Platform is not liable. Your recourse is against the traveler directly, through civil legal action, through police or customs authorities in the relevant jurisdiction, or through any other legal channel available to you. The Delivery record created on the Platform — including both parties' identities, the agreed terms, and all timestamps — constitutes the primary evidence of the agreement and may be used in any legal proceeding. The Platform will cooperate with lawful requests from authorities to provide this record."
+        },
+        {
+          "heading": "7. Customs and Import/Export Laws",
+          "body": "It is your sole responsibility to ensure that the package and its contents comply with all applicable import, export, customs, and tax laws in both the origin and destination countries. The Platform provides no legal advice, customs guidance, or compliance verification. Any fines, seizures, penalties, or legal consequences arising from customs or import/export violations are your sole responsibility."
+        },
+        {
+          "heading": "8. Reviews and Reputation",
+          "body": "After a delivery is finalized, you may leave a rating and written review of the traveler. You agree that any review you submit is honest, accurate, and based on your genuine experience. You agree not to submit false, defamatory, or misleading reviews. The Platform reserves the right to remove any review that violates these standards."
+        },
+        {
+          "heading": "9. Agreement to These Terms",
+          "body": "By clicking 'I have read and agree to the Sender Terms' at the time of account creation and at the time of marking a package as delivered, you confirm that you have read, understood, and agree to be bound by these terms in their entirety. If you do not agree, you must not use the Platform's delivery coordination features."
+        }
+      ]
+    },
+    "traveler": {
+      "title": "Traveler Terms & Legal Disclaimer",
+      "lastUpdated": "Last updated: July 2026 — Version 1.0",
+      "sections": [
+        {
+          "heading": "1. Nature of the Platform",
+          "body": "Afghanistan Online Cargo ('the Platform') is a coordination and record-keeping service only. By accepting a delivery request, you ('the Traveler') acknowledge and agree that the Platform is not a party to any delivery agreement, does not take custody of any package, does not provide insurance or liability coverage for packages you carry, and does not guarantee payment from senders. The Platform's only obligation is to maintain an accurate, timestamped record of the delivery agreement and its completion."
+        },
+        {
+          "heading": "2. Identity Presentation",
+          "body": "When meeting a sender to accept a package, you are required to present your original passport or Afghan Tazkira for physical inspection by the sender. This is a mandatory condition of using the Platform's delivery coordination features. You must not present false, altered, or borrowed identity documents. Doing so may constitute identity fraud under applicable law and will result in permanent suspension from the Platform."
+        },
+        {
+          "heading": "3. Acceptance Record",
+          "body": "By clicking 'Accept Delivery', you are creating a legally significant record stating that: (a) you have received the described package from the sender; (b) you agree to deliver it to the specified recipient; (c) you have agreed on the specified amount, currency, and payment location; and (d) you commit to delivering the package by the estimated delivery date you provide. You confirm that this record is accurate and truthful."
+        },
+        {
+          "heading": "4. Customs, Border Control, and Legal Compliance",
+          "body": "You are solely responsible for ensuring that the package and its contents comply with all applicable laws, customs regulations, import and export restrictions, and border control requirements in every country you transit through or deliver to. The Platform provides no customs guidance or legal advice. You are responsible for declaring all items as required by law. Any fines, seizures, detentions, penalties, or legal consequences arising from carrying a package across any border are your sole personal responsibility. The Platform is not liable for any such consequences."
+        },
+        {
+          "heading": "5. Prohibited Items",
+          "body": "You must not agree to carry, and must not carry: illegal substances or controlled materials; weapons, explosives, or dangerous goods; items prohibited by the laws of any country you will enter or transit; items subject to trade sanctions or export controls; undeclared currency or negotiable instruments above applicable legal thresholds; any item whose transport would violate applicable law. If a sender asks you to carry any such item, you must refuse and report the incident through the Platform's dispute mechanism. You bear full personal legal responsibility for any item you agree to carry."
+        },
+        {
+          "heading": "6. Inspection and Refusal",
+          "body": "You have the right — and are strongly encouraged — to inspect the contents of any package before accepting it. If a sender refuses to allow inspection, you must refuse the delivery. The Platform strongly advises against carrying any package whose contents you have not verified. By accepting a delivery, you represent that you are satisfied with the nature of the contents and that they are lawful."
+        },
+        {
+          "heading": "7. Commission",
+          "body": "Upon finalization of a delivery, a platform commission of 5% of the agreed delivery amount is charged to you. This commission is tracked within the Platform. You agree to settle any outstanding commission within a reasonable time. Unpaid commission will block your ability to accept new delivery requests until settled. The Platform reserves the right to pursue unpaid commission through legal means if necessary."
+        },
+        {
+          "heading": "8. Loss, Damage, and Non-Delivery",
+          "body": "If you fail to deliver a package, deliver it in a damaged condition, or lose it, you may be held personally liable by the sender under civil law. The Delivery record on the Platform — including your identity, the agreed terms, and all timestamps — may be used as evidence in any legal proceeding. The Platform will cooperate with lawful requests from authorities to provide this record. You are strongly advised to take reasonable care of any package you agree to carry."
+        },
+        {
+          "heading": "9. Agreement to These Terms",
+          "body": "By clicking 'I have read and agree to the Traveler Terms' at the time of account creation and at the time of accepting a delivery request, you confirm that you have read, understood, and agree to be bound by these terms in their entirety. If you do not agree, you must not use the Platform's delivery coordination features."
+        }
+      ]
+    }
   }
-  
 }
