@@ -2,6 +2,8 @@ import { Router } from 'express'
 import { prisma } from '../lib/prisma'
 import { requireAuth, requireApproved } from '../middleware/auth'
 import { proposeDeliverySchema, acceptDeliverySchema } from '../schemas/delivery.schema'
+import { sendEmail, emailTemplates } from '../lib/email'
+
 
 const router = Router()
 
@@ -61,6 +63,20 @@ router.post('/propose', requireAuth, requireApproved, async (req, res) => {
     },
   })
 
+  // Notify traveler by email
+  const [senderUser, travelerUser, pkgData] = await Promise.all([
+    prisma.user.findUnique({ where: { id: req.user!.userId }, select: { nickname: true } }),
+    prisma.user.findUnique({ where: { id: data.travelerId }, select: { email: true, nickname: true } }),
+    prisma.package.findUnique({ where: { id: data.packageId }, select: { title: true } }),
+  ])
+  if (senderUser && travelerUser && pkgData) {
+    const { subject, html } = emailTemplates.deliveryProposed(
+      travelerUser.nickname,
+      pkgData.title,
+      senderUser.nickname
+    )
+    await sendEmail(travelerUser.email, subject, html)
+  }
   res.status(201).json({ delivery })
 })
 
@@ -88,6 +104,20 @@ router.post('/:id/accept', requireAuth, requireApproved, async (req, res) => {
     },
   })
 
+  const [travelerUser, senderUser, pkgData] = await Promise.all([
+    prisma.user.findUnique({ where: { id: req.user!.userId }, select: { nickname: true } }),
+    prisma.user.findUnique({ where: { id: delivery.senderId }, select: { email: true, nickname: true } }),
+    prisma.package.findUnique({ where: { id: delivery.packageId }, select: { title: true } }),
+  ])
+  if (travelerUser && senderUser && pkgData && updated.estimatedDeliveryDate) {
+    const { subject, html } = emailTemplates.deliveryAccepted(
+      senderUser.nickname,
+      pkgData.title,
+      travelerUser.nickname,
+      new Date(updated.estimatedDeliveryDate).toLocaleDateString()
+    )
+    await sendEmail(senderUser.email, subject, html)
+  }
   res.json({ delivery: updated })
 })
 
@@ -120,6 +150,19 @@ router.post('/:id/finalize', requireAuth, requireApproved, async (req, res) => {
     }),
   ])
 
+  const [travelerUser, senderUser, pkgData] = await Promise.all([
+    prisma.user.findUnique({ where: { id: req.user!.userId }, select: { nickname: true } }),
+    prisma.user.findUnique({ where: { id: delivery.senderId }, select: { email: true, nickname: true } }),
+    prisma.package.findUnique({ where: { id: delivery.packageId }, select: { title: true } }),
+  ])
+  if (travelerUser && senderUser && pkgData) {
+    const { subject, html } = emailTemplates.deliveryFinalized(
+      senderUser.nickname,
+      pkgData.title,
+      travelerUser.nickname
+    )
+    await sendEmail(senderUser.email, subject, html)
+  }
   res.json({
     delivery: updatedDelivery,
     commissionOwed: commissionAmount,

@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { prisma } from '../lib/prisma'
 import { requireAuth, requireApproved } from '../middleware/auth'
 import { z } from 'zod'
+import { sendEmail, emailTemplates } from '../lib/email'
 
 const router = Router()
 
@@ -45,7 +46,18 @@ router.post('/', requireAuth, requireApproved, async (req, res) => {
       link: `/messages/${req.user!.userId}`,
     },
   })
-
+  const sender = await prisma.user.findUnique({
+    where: { id: req.user!.userId },
+    select: { nickname: true }
+  })
+  if (sender) {
+    const { subject, html } = emailTemplates.newMessage(
+      receiver.nickname,
+      sender.nickname,
+      content
+    )
+    await sendEmail(receiver.email, subject, html)
+  }
   res.status(201).json({ message })
 })
 

@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma'
 import { requireAuth, requireAdmin } from '../middleware/auth'
 import { supabase } from '../lib/supabase'
 import { z } from 'zod'
+import { sendEmail, emailTemplates } from '../lib/email'
 
 const router = Router()
 
@@ -88,9 +89,19 @@ router.patch('/users/:id/approve', async (req, res) => {
       link: '/profile',
     },
   })
+  // After prisma.notification.create in approve route:
+  const approvedUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { email: true, nickname: true }
+  })
+  if (approvedUser) {
+    const { subject, html } = emailTemplates.accountApproved(approvedUser.nickname)
+    await sendEmail(approvedUser.email, subject, html)
+  }
 
   res.json({ user })
 })
+
 
 // Reject a user (with reason)
 const rejectSchema = z.object({ reason: z.string().min(5) })
@@ -115,6 +126,18 @@ router.patch('/users/:id/reject', async (req, res) => {
       link: '/register',
     },
   })
+  // After prisma.notification.create in reject route:
+const rejectedUser = await prisma.user.findUnique({
+  where: { id: user.id },
+  select: { email: true, nickname: true }
+})
+if (rejectedUser) {
+  const { subject, html } = emailTemplates.accountRejected(
+    rejectedUser.nickname,
+    parseResult.data.reason
+  )
+  await sendEmail(rejectedUser.email, subject, html)
+}
 
   res.json({ user })
 })
