@@ -4,6 +4,8 @@ import { useDocumentDirection } from "./hooks/useDocumentDirection";
 import { useBootstrapAuth } from "./hooks/useBootstrapAuth";
 import { useAuthStore } from "./store/authStore";
 import { Navbar } from "./components/layout/Navbar";
+import { Footer } from "./components/layout/Footer";
+import { ProtectedRoute } from "./components/layout/ProtectedRoute";
 import Home from "./pages/Home";
 import Trips from "./pages/Trips";
 import Packages from "./pages/Packages";
@@ -12,7 +14,6 @@ import Register from "./pages/Register";
 import Profile from "./pages/Profile";
 import Rules from "./pages/Rules";
 import NotFound from "./pages/NotFound";
-import { ProtectedRoute } from "./components/layout/ProtectedRoute";
 import NewTrip from "./pages/NewTrip";
 import NewPackage from "./pages/NewPackage";
 import MessageThread from "./pages/MessageThread";
@@ -34,10 +35,10 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-bg">
+    <div className="flex min-h-screen flex-col bg-brand-bg">
       <Toaster position="top-right" />
       <Navbar />
-      <main>
+      <main className="flex-1">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/trips" element={<Trips />} />
@@ -45,6 +46,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/rules" element={<Rules />} />
+          <Route path="/users/:userId" element={<UserProfile />} />
           <Route
             path="/profile"
             element={
@@ -53,7 +55,6 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="*" element={<NotFound />} />
           <Route
             path="/trips/new"
             element={
@@ -67,6 +68,14 @@ function App() {
             element={
               <ProtectedRoute requireApproved>
                 <NewPackage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/packages/:packageId/propose"
+            element={
+              <ProtectedRoute requireApproved>
+                <ProposeDelivery />
               </ProtectedRoute>
             }
           />
@@ -86,17 +95,10 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/users/:userId" element={<UserProfile />} />
-          <Route
-            path="/packages/:packageId/propose"
-            element={
-              <ProtectedRoute requireApproved>
-                <ProposeDelivery />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
+      <Footer />
     </div>
   );
 }
