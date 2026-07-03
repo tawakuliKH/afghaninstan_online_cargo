@@ -168,6 +168,24 @@ function TripMiniCard({ trip }: { trip: any }) {
 function PackageMiniCard({ pkg }: { pkg: any }) {
   return (
     <div className="rounded-xl bg-white p-4 shadow-sm">
+      {pkg.goodsPhotoUrl ? (
+        <img
+          src={pkg.goodsPhotoUrl}
+          alt={pkg.title}
+          className="mb-3 h-28 w-full rounded-lg object-cover"
+        />
+      ) : (
+        <div className="mb-3 flex h-28 w-full items-center justify-center rounded-lg bg-brand-primary/5 border border-brand-muted/10">
+          <div className="flex flex-col items-center gap-1 text-brand-primary/30">
+            <svg viewBox="0 0 24 24" className="h-8 w-8 fill-none stroke-current stroke-1">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+              <line x1="12" y1="22.08" x2="12" y2="12" />
+            </svg>
+            <span className="text-xs">No photo</span>
+          </div>
+        </div>
+      )}
       <div className="flex items-center gap-2 mb-2">
         <Package className="h-4 w-4 text-brand-accent" />
         <span className="text-sm font-medium text-brand-primary">{pkg.title}</span>

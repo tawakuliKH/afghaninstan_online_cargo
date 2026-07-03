@@ -56,6 +56,7 @@ model User {
   rating                   Float         @default(0)
   reviewCount              Int           @default(0)
   packagesDeliveredCount   Int           @default(0)
+  agreementAcceptances     AgreementAcceptance[]
 
   trips                    Trip[]
   packages                  Package[]
@@ -214,4 +215,25 @@ model Notification {
   createdAt DateTime         @default(now())
 
   @@map("notifications")
+}
+
+enum AgreementType {
+  ACCOUNT_CREATION_SENDER
+  ACCOUNT_CREATION_TRAVELER
+  DELIVER_PACKAGE
+  ACCEPT_DELIVERY
+}
+
+model AgreementAcceptance {
+  id         String        @id @default(uuid())
+  userId     String
+  user       User          @relation(fields: [userId], references: [id])
+  type       AgreementType
+  deliveryId String?
+  version    String
+  openedAt   DateTime
+  acceptedAt DateTime?
+  createdAt  DateTime      @default(now())
+
+  @@map("agreement_acceptances")
 }

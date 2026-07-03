@@ -1,39 +1,47 @@
-import { Link, useNavigate } from 'react-router-dom'
-import { useTranslation } from 'react-i18next'
-import { useAuthStore } from '../../store/authStore'
-import api from '../../lib/axios'
-import { Package, Globe, LogOut, User, Bell, Menu, X, ShieldCheck } from 'lucide-react'
-import { useState } from 'react'
-import toast from 'react-hot-toast'
+import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { useAuthStore } from "../../store/authStore";
+import api from "../../lib/axios";
+import {
+  Package,
+  Globe,
+  LogOut,
+  User,
+  Bell,
+  Menu,
+  X,
+  ShieldCheck,
+} from "lucide-react";
+import { useState } from "react";
+import toast from "react-hot-toast";
 
 export function Navbar() {
-  const { t, i18n } = useTranslation()
-  const { user, clearAuth } = useAuthStore()
-  const navigate = useNavigate()
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const { t, i18n } = useTranslation();
+  const { user, clearAuth } = useAuthStore();
+  const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
-      await api.post('/auth/logout')
+      await api.post("/auth/logout");
     } catch {
       // even if the server call fails, clear local state
     }
-    clearAuth()
-    toast.success(t('nav.loggedOut'))
-    navigate('/login')
-  }
+    clearAuth();
+    toast.success(t("nav.loggedOut"));
+    navigate("/login");
+  };
 
   const navLinks = [
-    { to: '/', label: t('nav.home') },
-    { to: '/trips', label: t('nav.trips') },
-    { to: '/packages', label: t('nav.packages') },
-    { to: '/rules', label: t('nav.rules') },
-  ]
+    { to: "/", label: t("nav.home") },
+    { to: "/trips", label: t("nav.trips") },
+    { to: "/packages", label: t("nav.packages") },
+    { to: "/rules", label: t("nav.rules") },
+  ];
 
   return (
     <header className="sticky top-0 z-50 bg-brand-primary shadow-lg">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3">
-
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 text-white">
           <Package className="h-7 w-7 text-brand-accent" />
@@ -57,14 +65,15 @@ export function Navbar() {
 
         {/* Right side controls */}
         <div className="hidden items-center gap-3 md:flex">
-
           {/* Language switcher */}
           <button
-            onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'fa-AF' : 'en')}
+            onClick={() =>
+              i18n.changeLanguage(i18n.language === "en" ? "fa-AF" : "en")
+            }
             className="flex items-center gap-1 rounded-full border border-white/20 px-3 py-1 text-xs text-white/80 transition hover:border-brand-accent hover:text-brand-accent"
           >
             <Globe className="h-3 w-3" />
-            {i18n.language === 'en' ? 'دری' : 'EN'}
+            {i18n.language === "en" ? "دری" : "EN"}
           </button>
 
           {user ? (
@@ -93,7 +102,11 @@ export function Navbar() {
                 to="/profile"
                 className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm text-white transition hover:bg-white/20"
               >
-                <User className="h-4 w-4" />
+                <img
+                  src={`https://api.dicebear.com/9.x/personas/svg?seed=${user.id}&backgroundColor=e8edf5`}
+                  alt={user.nickname}
+                  className="h-6 w-6 rounded-full"
+                />
                 {user.nickname}
               </Link>
 
@@ -111,13 +124,13 @@ export function Navbar() {
                 to="/login"
                 className="text-sm font-medium text-white/80 transition hover:text-brand-accent"
               >
-                {t('nav.login')}
+                {t("nav.login")}
               </Link>
               <Link
                 to="/register"
                 className="rounded-full bg-brand-accent px-4 py-1.5 text-sm font-semibold text-white transition hover:opacity-90"
               >
-                {t('nav.register')}
+                {t("nav.register")}
               </Link>
             </>
           )}
@@ -128,7 +141,11 @@ export function Navbar() {
           className="text-white md:hidden"
           onClick={() => setMobileOpen((v) => !v)}
         >
-          {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          {mobileOpen ? (
+            <X className="h-6 w-6" />
+          ) : (
+            <Menu className="h-6 w-6" />
+          )}
         </button>
       </div>
 
@@ -164,13 +181,13 @@ export function Navbar() {
                   onClick={() => setMobileOpen(false)}
                   className="text-sm text-white/80"
                 >
-                  {t('nav.profile')} — {user.nickname}
+                  {t("nav.profile")} — {user.nickname}
                 </Link>
                 <button
                   onClick={handleLogout}
                   className="text-start text-sm text-brand-danger"
                 >
-                  {t('nav.logout')}
+                  {t("nav.logout")}
                 </button>
               </>
             ) : (
@@ -180,26 +197,28 @@ export function Navbar() {
                   onClick={() => setMobileOpen(false)}
                   className="text-sm text-white/80"
                 >
-                  {t('nav.login')}
+                  {t("nav.login")}
                 </Link>
                 <Link
                   to="/register"
                   onClick={() => setMobileOpen(false)}
                   className="text-sm font-semibold text-brand-accent"
                 >
-                  {t('nav.register')}
+                  {t("nav.register")}
                 </Link>
               </>
             )}
             <button
-              onClick={() => i18n.changeLanguage(i18n.language === 'en' ? 'fa-AF' : 'en')}
+              onClick={() =>
+                i18n.changeLanguage(i18n.language === "en" ? "fa-AF" : "en")
+              }
               className="text-start text-sm text-white/60"
             >
-              {i18n.language === 'en' ? 'دری' : 'EN'}
+              {i18n.language === "en" ? "دری" : "EN"}
             </button>
           </nav>
         </div>
       )}
     </header>
-  )
+  );
 }

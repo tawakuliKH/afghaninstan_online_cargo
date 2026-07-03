@@ -1,58 +1,77 @@
-import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { Link } from 'react-router-dom'
-import { useAuthStore } from '../store/authStore'
-import api from '../lib/axios'
-import { Search, MapPin, Package, Weight, ChevronLeft, ChevronRight, Loader2, Plus } from 'lucide-react'
-import DatePicker from 'react-datepicker'
-import 'react-datepicker/dist/react-datepicker.css'
-import { getData } from 'country-list'
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { Link } from "react-router-dom";
+import { useAuthStore } from "../store/authStore";
+import api from "../lib/axios";
+import {
+  Search,
+  MapPin,
+  Package,
+  Weight,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Plus,
+} from "lucide-react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { getData } from "country-list";
 
-const countries = getData().sort((a, b) => a.name.localeCompare(b.name))
+const countries = getData().sort((a, b) => a.name.localeCompare(b.name));
 
 interface PackageItem {
-  id: string
-  title: string
-  weight: number
-  originCountry: string
-  originCity: string
-  destCountry: string
-  destCity: string
-  notes?: string
-  goodsPhotoUrl?: string
-  createdAt: string
+  id: string;
+  title: string;
+  weight: number;
+  originCountry: string;
+  originCity: string;
+  destCountry: string;
+  destCity: string;
+  notes?: string;
+  goodsPhotoUrl?: string;
+  createdAt: string;
   sender: {
-    id: string
-    nickname: string
-    legalFullName?: string
-    whatsappNumber?: string
-    email?: string
-  }
+    id: string;
+    nickname: string;
+    legalFullName?: string;
+    whatsappNumber?: string;
+    email?: string;
+  };
 }
 
 interface SearchForm {
-  originCountry: string
-  destCountry: string
+  originCountry: string;
+  destCountry: string;
 }
 
-function ContactInfo({ pkg, canSeeContact }: { pkg: PackageItem; canSeeContact: boolean }) {
+function ContactInfo({
+  pkg,
+  canSeeContact,
+}: {
+  pkg: PackageItem;
+  canSeeContact: boolean;
+}) {
   if (canSeeContact && (pkg.sender.whatsappNumber || pkg.sender.email)) {
     return (
       <div className="mt-3 space-y-1 border-t border-brand-muted/10 pt-3">
         {pkg.sender.whatsappNumber && (
           <p className="text-xs text-brand-muted">
-            WhatsApp:{' '}
-            <span className="font-medium text-brand-primary">{pkg.sender.whatsappNumber}</span>
+            WhatsApp:{" "}
+            <span className="font-medium text-brand-primary">
+              {pkg.sender.whatsappNumber}
+            </span>
           </p>
         )}
         {pkg.sender.email && (
           <p className="text-xs text-brand-muted">
-            Email:{' '}
-            <span className="font-medium text-brand-primary">{pkg.sender.email}</span>
+            Email:{" "}
+            <span className="font-medium text-brand-primary">
+              {pkg.sender.email}
+            </span>
           </p>
         )}
       </div>
-    )
+    );
   }
 
   return (
@@ -62,34 +81,45 @@ function ContactInfo({ pkg, canSeeContact }: { pkg: PackageItem; canSeeContact: 
           <>
             <Link to="/register" className="text-brand-accent hover:underline">
               Create an account and post a trip or package
-            </Link>{' '}
+            </Link>{" "}
             to see contact details
           </>
         ) : (
-          'Post a trip or package to see contact details'
+          "Post a trip or package to see contact details"
         )}
       </p>
     </div>
-  )
+  );
 }
 
 function PackageCard({
   pkg,
   viewerCanSeeContact,
 }: {
-  pkg: PackageItem
-  viewerCanSeeContact: boolean
+  pkg: PackageItem;
+  viewerCanSeeContact: boolean;
 }) {
   return (
     <div className="rounded-xl bg-white p-5 shadow-sm transition hover:shadow-md">
-      {/* Photo */}
-      {pkg.goodsPhotoUrl && (
-        <img
-          src={pkg.goodsPhotoUrl}
-          alt={pkg.title}
-          className="mb-4 h-36 w-full rounded-lg object-cover"
-        />
-      )}
+      {/* Photo or placeholder */}
+{pkg.goodsPhotoUrl ? (
+  <img
+    src={pkg.goodsPhotoUrl}
+    alt={pkg.title}
+    className="mb-4 h-36 w-full rounded-lg object-cover"
+  />
+) : (
+  <div className="mb-4 flex h-36 w-full items-center justify-center rounded-lg bg-brand-primary/5 border border-brand-muted/10">
+    <div className="flex flex-col items-center gap-2 text-brand-primary/30">
+      <svg viewBox="0 0 24 24" className="h-10 w-10 fill-none stroke-current stroke-1">
+        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+        <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+        <line x1="12" y1="22.08" x2="12" y2="12" />
+      </svg>
+      <span className="text-xs font-medium">No photo uploaded</span>
+    </div>
+  </div>
+)}
 
       {/* Title + weight */}
       <div className="flex items-start justify-between gap-2">
@@ -107,14 +137,18 @@ function PackageCard({
       <div className="mt-3 flex items-center gap-2">
         <div className="text-center">
           <p className="text-xs text-brand-muted">From</p>
-          <p className="text-sm font-medium text-brand-primary">{pkg.originCity}</p>
+          <p className="text-sm font-medium text-brand-primary">
+            {pkg.originCity}
+          </p>
           <p className="text-xs text-brand-muted">{pkg.originCountry}</p>
         </div>
         <div className="flex-1 border-t-2 border-dashed border-brand-secondary/40 mx-2" />
         <MapPin className="h-4 w-4 shrink-0 text-brand-accent" />
         <div className="text-center">
           <p className="text-xs text-brand-muted">To</p>
-          <p className="text-sm font-medium text-brand-primary">{pkg.destCity}</p>
+          <p className="text-sm font-medium text-brand-primary">
+            {pkg.destCity}
+          </p>
           <p className="text-xs text-brand-muted">{pkg.destCountry}</p>
         </div>
       </div>
@@ -124,12 +158,28 @@ function PackageCard({
       )}
 
       {/* Sender */}
+      {/* Sender */}
       <div className="mt-4 flex items-center justify-between">
-        <div>
-          <p className="text-xs text-brand-muted">Sender</p>
-          <p className="text-sm font-medium text-brand-primary">
-            {pkg.sender.legalFullName || pkg.sender.nickname}
-          </p>
+        <div className="flex items-center gap-2">
+          <img
+            src={`https://api.dicebear.com/9.x/personas/svg?seed=${pkg.sender.id}&backgroundColor=e8edf5`}
+            alt={pkg.sender.nickname}
+            className="h-10 w-10 rounded-full border-2 border-brand-primary/10 object-cover"
+          />
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-primary/10 text-sm font-bold text-brand-primary">
+            {(pkg.sender.legalFullName || pkg.sender.nickname)
+              .charAt(0)
+              .toUpperCase()}
+          </div>
+          <div>
+            <p className="text-xs text-brand-muted">Sender</p>
+            <Link
+              to={`/users/${pkg.sender.id}`}
+              className="text-sm font-medium text-brand-primary hover:text-brand-accent"
+            >
+              {pkg.sender.legalFullName || pkg.sender.nickname}
+            </Link>
+          </div>
         </div>
         <p className="text-xs text-brand-muted">
           {new Date(pkg.createdAt).toLocaleDateString()}
@@ -138,80 +188,84 @@ function PackageCard({
 
       <ContactInfo pkg={pkg} canSeeContact={viewerCanSeeContact} />
     </div>
-  )
+  );
 }
 
 function Packages() {
-  const { user } = useAuthStore()
-  const [packages, setPackages] = useState<PackageItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [startDate, setStartDate] = useState<Date | null>(null)
-  const [endDate, setEndDate] = useState<Date | null>(null)
-  const [viewerCanSeeContact, setViewerCanSeeContact] = useState(false)
+  const { user } = useAuthStore();
+  const [packages, setPackages] = useState<PackageItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [viewerCanSeeContact, setViewerCanSeeContact] = useState(false);
   const [activeFilters, setActiveFilters] = useState({
-    originCountry: '',
-    destCountry: '',
-    startDate: '',
-    endDate: '',
-  })
+    originCountry: "",
+    destCountry: "",
+    startDate: "",
+    endDate: "",
+  });
 
-  const { register, handleSubmit } = useForm<SearchForm>()
+  const { register, handleSubmit } = useForm<SearchForm>();
 
   const fetchPackages = async (filters = activeFilters, p = page) => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const params = new URLSearchParams({ page: String(p) })
-      if (filters.originCountry) params.set('originCountry', filters.originCountry)
-      if (filters.destCountry) params.set('destCountry', filters.destCountry)
-      if (filters.startDate) params.set('startDate', filters.startDate)
-      if (filters.endDate) params.set('endDate', filters.endDate)
+      const params = new URLSearchParams({ page: String(p) });
+      if (filters.originCountry)
+        params.set("originCountry", filters.originCountry);
+      if (filters.destCountry) params.set("destCountry", filters.destCountry);
+      if (filters.startDate) params.set("startDate", filters.startDate);
+      if (filters.endDate) params.set("endDate", filters.endDate);
 
-      const res = await api.get(`/packages?${params.toString()}`)
-      setPackages(res.data.packages)
-      setTotalPages(res.data.pagination.totalPages)
+      const res = await api.get(`/packages?${params.toString()}`);
+      setPackages(res.data.packages);
+      setTotalPages(res.data.pagination.totalPages);
 
-      if (user?.accountStatus === 'APPROVED') {
-        const myPackages = await api.get('/packages?page=1')
+      if (user?.accountStatus === "APPROVED") {
+        const myPackages = await api.get("/packages?page=1");
         const hasPosted = myPackages.data.packages.some(
-          (p: PackageItem) => p.sender.id === user.id
-        )
-        setViewerCanSeeContact(hasPosted)
+          (p: PackageItem) => p.sender.id === user.id,
+        );
+        setViewerCanSeeContact(hasPosted);
       }
     } catch (err) {
-      console.error(err)
+      console.error(err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  useEffect(() => { fetchPackages() }, [page])
+  useEffect(() => {
+    fetchPackages();
+  }, [page]);
 
   const onSearch = (data: SearchForm) => {
     const filters = {
       originCountry: data.originCountry,
       destCountry: data.destCountry,
-      startDate: startDate ? startDate.toISOString() : '',
-      endDate: endDate ? endDate.toISOString() : '',
-    }
-    setActiveFilters(filters)
-    setPage(1)
-    fetchPackages(filters, 1)
-  }
+      startDate: startDate ? startDate.toISOString() : "",
+      endDate: endDate ? endDate.toISOString() : "",
+    };
+    setActiveFilters(filters);
+    setPage(1);
+    fetchPackages(filters, 1);
+  };
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Packages to Send</h1>
+          <h1 className="text-2xl font-bold text-brand-primary">
+            Packages to Send
+          </h1>
           <p className="text-sm text-brand-muted">
             Browse packages that need a traveler to carry them
           </p>
         </div>
-        {user?.accountStatus === 'APPROVED' && (
+        {user?.accountStatus === "APPROVED" && (
           <Link
             to="/packages/new"
             className="flex items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
@@ -233,12 +287,14 @@ function Packages() {
               From country
             </label>
             <select
-              {...register('originCountry')}
+              {...register("originCountry")}
               className="w-full rounded-lg border border-brand-muted/30 bg-brand-bg px-3 py-2 text-sm text-brand-primary outline-none focus:border-brand-primary"
             >
               <option value="">Any country</option>
               {countries.map((c) => (
-                <option key={c.code} value={c.name}>{c.name}</option>
+                <option key={c.code} value={c.name}>
+                  {c.name}
+                </option>
               ))}
             </select>
           </div>
@@ -248,12 +304,14 @@ function Packages() {
               To country
             </label>
             <select
-              {...register('destCountry')}
+              {...register("destCountry")}
               className="w-full rounded-lg border border-brand-muted/30 bg-brand-bg px-3 py-2 text-sm text-brand-primary outline-none focus:border-brand-primary"
             >
               <option value="">Any country</option>
               {countries.map((c) => (
-                <option key={c.code} value={c.name}>{c.name}</option>
+                <option key={c.code} value={c.name}>
+                  {c.name}
+                </option>
               ))}
             </select>
           </div>
@@ -303,7 +361,9 @@ function Packages() {
         </div>
       ) : packages.length === 0 ? (
         <div className="py-16 text-center">
-          <p className="text-brand-muted">No packages found matching your search.</p>
+          <p className="text-brand-muted">
+            No packages found matching your search.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -340,7 +400,7 @@ function Packages() {
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export default Packages
+export default Packages;

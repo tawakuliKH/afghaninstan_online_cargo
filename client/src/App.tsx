@@ -17,6 +17,8 @@ import NewTrip from "./pages/NewTrip";
 import NewPackage from "./pages/NewPackage";
 import MessageThread from "./pages/MessageThread";
 import AdminDashboard from "./pages/AdminDashboard";
+import UserProfile from "./pages/UserProfile";
+import ProposeDelivery from "./pages/ProposeDelivery";
 
 function App() {
   const { isLoading } = useAuthStore();
@@ -81,6 +83,15 @@ function App() {
             element={
               <ProtectedRoute requireApproved>
                 <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/users/:userId" element={<UserProfile />} />
+          <Route
+            path="/packages/:packageId/propose"
+            element={
+              <ProtectedRoute requireApproved>
+                <ProposeDelivery />
               </ProtectedRoute>
             }
           />

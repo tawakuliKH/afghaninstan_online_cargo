@@ -9,6 +9,8 @@ import { loginSchema } from '../schemas/auth.schema'
 import { signAccessToken, signRefreshToken } from '../lib/jwt'
 import { verifyRefreshToken } from '../lib/jwt'
 import { requireAuth, requireApproved } from '../middleware/auth'
+import { optionalAuth } from '../middleware/auth'
+import { getViewerContext, shapeUserForViewer } from '../lib/visibility'
 
 
 const router = Router()
@@ -25,6 +27,43 @@ router.get('/me', requireAuth, async (req, res) => {
     },
   })
   res.json({ user })
+})
+
+router.get('/users/:id/profile', optionalAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({
+    where: { id: req.params.id as string },
+    select: {
+      id: true,
+      nickname: true,
+      legalFullName: true,
+      whatsappNumber: true,
+      email: true,
+      currentCountry: true,
+      currentCity: true,
+      rating: true,
+      reviewCount: true,
+      packagesDeliveredCount: true,
+      accountStatus: true,
+      createdAt: true,
+    },
+  })
+  if (!user) return res.status(404).json({ error: 'User not found' })
+
+  const viewer = await getViewerContext(req.user?.userId)
+  const shaped = shapeUserForViewer(user, viewer)
+
+  const reviews = await prisma.review.findMany({
+    where: { revieweeId: user.id },
+    orderBy: { createdAt: 'desc' },
+    take: 10,
+    include: { reviewer: { select: { id: true, nickname: true } } },
+  })
+
+  res.json({
+    user: shaped,
+    reviews,
+    viewerCanSeeContact: viewer.isAuthenticated && (viewer.hasPosted === true || viewer.userId === user.id)
+  })
 })
 
 router.post('/refresh', (req, res) => {
@@ -172,5 +211,20 @@ router.post(
     }
   }
 )
+
+router.get('/users', requireAuth, requireApproved, async (req, res) => {
+  const users = await prisma.user.findMany({
+    where: { accountStatus: 'APPROVED' },
+    select: {
+      id: true,
+      nickname: true,
+      legalFullName: true,
+      rating: true,
+      packagesDeliveredCount: true,
+    },
+    orderBy: { nickname: 'asc' },
+  })
+  res.json({ users })
+})
 
 export default router

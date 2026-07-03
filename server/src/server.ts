@@ -4,23 +4,15 @@ import helmet from 'helmet'
 import cookieParser from 'cookie-parser'
 import dotenv from 'dotenv'
 
-import tripRoutes from './routes/trip.routes'
-// ...
-
 import authRoutes from './routes/auth.routes'
-// ...
+import tripRoutes from './routes/trip.routes'
 import packageRoutes from './routes/package.routes'
-// ...
 import deliveryRoutes from './routes/delivery.routes'
-// ...
-
 import reviewRoutes from './routes/review.routes'
-// ...
 import messageRoutes from './routes/message.routes'
 import notificationRoutes from './routes/notification.routes'
-// ...
 import adminRoutes from './routes/admin.routes'
-// ...
+import agreementRoutes from './routes/agreement.routes'
 
 dotenv.config()
 
@@ -36,20 +28,16 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`)
-})
-
 app.use('/api/auth', authRoutes)
 app.use('/api/trips', tripRoutes)
 app.use('/api/packages', packageRoutes)
-
 app.use('/api/deliveries', deliveryRoutes)
-
 app.use('/api/reviews', reviewRoutes)
-
 app.use('/api/messages', messageRoutes)
 app.use('/api/notifications', notificationRoutes)
 app.use('/api/admin', adminRoutes)
+app.use('/api/agreements', agreementRoutes)
 
-
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`)
+})

@@ -1,56 +1,77 @@
-import { useEffect, useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { Link } from 'react-router-dom'
-import { useAuthStore } from '../store/authStore'
-import api from '../lib/axios'
-import { Search, MapPin, Calendar, Weight, ChevronLeft, ChevronRight, Loader2, Plus } from 'lucide-react'
-import DatePicker from 'react-datepicker'
-import 'react-datepicker/dist/react-datepicker.css'
-import { getData } from 'country-list'
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { Link } from "react-router-dom";
+import { useAuthStore } from "../store/authStore";
+import api from "../lib/axios";
+import {
+  Search,
+  MapPin,
+  Calendar,
+  Weight,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Plus,
+} from "lucide-react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { getData } from "country-list";
 
-const countries = getData().sort((a, b) => a.name.localeCompare(b.name))
+const countries = getData().sort((a, b) => a.name.localeCompare(b.name));
 
 interface Trip {
-  id: string
-  originCountry: string
-  originCity: string
-  destCountry: string
-  destCity: string
-  departureDate: string
-  capacityWeight?: number
-  capacityNote?: string
-  notes?: string
-  createdAt: string
+  id: string;
+  originCountry: string;
+  originCity: string;
+  destCountry: string;
+  destCity: string;
+  departureDate: string;
+  capacityWeight?: number;
+  capacityNote?: string;
+  notes?: string;
+  createdAt: string;
   traveler: {
-    id: string
-    nickname: string
-    legalFullName?: string
-    whatsappNumber?: string
-    email?: string
-  }
+    id: string;
+    nickname: string;
+    legalFullName?: string;
+    whatsappNumber?: string;
+    email?: string;
+  };
 }
 
 interface SearchForm {
-  originCountry: string
-  destCountry: string
+  originCountry: string;
+  destCountry: string;
 }
 
-function ContactInfo({ trip, canSeeContact }: { trip: Trip; canSeeContact: boolean }) {
+function ContactInfo({
+  trip,
+  canSeeContact,
+}: {
+  trip: Trip;
+  canSeeContact: boolean;
+}) {
   if (canSeeContact && (trip.traveler.whatsappNumber || trip.traveler.email)) {
     return (
       <div className="mt-3 space-y-1 border-t border-brand-muted/10 pt-3">
         {trip.traveler.whatsappNumber && (
           <p className="text-xs text-brand-muted">
-            WhatsApp: <span className="font-medium text-brand-primary">{trip.traveler.whatsappNumber}</span>
+            WhatsApp:{" "}
+            <span className="font-medium text-brand-primary">
+              {trip.traveler.whatsappNumber}
+            </span>
           </p>
         )}
         {trip.traveler.email && (
           <p className="text-xs text-brand-muted">
-            Email: <span className="font-medium text-brand-primary">{trip.traveler.email}</span>
+            Email:{" "}
+            <span className="font-medium text-brand-primary">
+              {trip.traveler.email}
+            </span>
           </p>
         )}
       </div>
-    )
+    );
   }
 
   return (
@@ -60,14 +81,20 @@ function ContactInfo({ trip, canSeeContact }: { trip: Trip; canSeeContact: boole
           <Link to="/register" className="text-brand-accent hover:underline">
             Create an account and post a trip or package
           </Link>
-        )}{' '}
+        )}{" "}
         to see contact details
       </p>
     </div>
-  )
+  );
 }
 
-function TripCard({ trip, viewerCanSeeContact }: { trip: Trip; viewerCanSeeContact: boolean }) {
+function TripCard({
+  trip,
+  viewerCanSeeContact,
+}: {
+  trip: Trip;
+  viewerCanSeeContact: boolean;
+}) {
   return (
     <div className="rounded-xl bg-white p-5 shadow-sm transition hover:shadow-md">
       {/* Route */}
@@ -110,91 +137,110 @@ function TripCard({ trip, viewerCanSeeContact }: { trip: Trip; viewerCanSeeConta
       )}
 
       {/* Traveler */}
+      {/* Traveler */}
       <div className="mt-4 flex items-center justify-between">
-        <div>
-          <p className="text-xs text-brand-muted">Traveler</p>
-          <p className="text-sm font-medium text-brand-primary">
-            {trip.traveler.legalFullName || trip.traveler.nickname}
-          </p>
+        <div className="flex items-center gap-2">
+          <img
+            src={`https://api.dicebear.com/9.x/notionists/svg?seed=${trip.traveler.id}&backgroundColor=b6e3f4,c0aede,d1d4f9&backgroundType=gradientLinear`}
+            alt={trip.traveler.nickname}
+            className="h-10 w-10 rounded-full border-2 border-brand-primary/10 object-cover"
+          />
+          <div>
+            <p className="text-xs text-brand-muted">Traveler</p>
+            <Link
+              to={`/users/${trip.traveler.id}`}
+              className="text-sm font-medium text-brand-primary hover:text-brand-accent"
+            >
+              {trip.traveler.legalFullName || trip.traveler.nickname}
+            </Link>
+          </div>
         </div>
       </div>
 
       <ContactInfo trip={trip} canSeeContact={viewerCanSeeContact} />
     </div>
-  )
+  );
 }
 
 function Trips() {
-  const { user } = useAuthStore()
-  const [trips, setTrips] = useState<Trip[]>([])
-  const [loading, setLoading] = useState(true)
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [startDate, setStartDate] = useState<Date | null>(null)
-  const [endDate, setEndDate] = useState<Date | null>(null)
-  const [viewerCanSeeContact, setViewerCanSeeContact] = useState(false)
+  const { user } = useAuthStore();
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [viewerCanSeeContact, setViewerCanSeeContact] = useState(false);
   const [activeFilters, setActiveFilters] = useState({
-    originCountry: '',
-    destCountry: '',
-    startDate: '',
-    endDate: '',
-  })
+    originCountry: "",
+    destCountry: "",
+    startDate: "",
+    endDate: "",
+  });
 
-  const { register, handleSubmit } = useForm<SearchForm>()
+  const { register, handleSubmit } = useForm<SearchForm>();
 
   const fetchTrips = async (filters = activeFilters, p = page) => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const params = new URLSearchParams({ page: String(p) })
-      if (filters.originCountry) params.set('originCountry', filters.originCountry)
-      if (filters.destCountry) params.set('destCountry', filters.destCountry)
-      if (filters.startDate) params.set('startDate', filters.startDate)
-      if (filters.endDate) params.set('endDate', filters.endDate)
+      const params = new URLSearchParams({ page: String(p) });
+      if (filters.originCountry)
+        params.set("originCountry", filters.originCountry);
+      if (filters.destCountry) params.set("destCountry", filters.destCountry);
+      if (filters.startDate) params.set("startDate", filters.startDate);
+      if (filters.endDate) params.set("endDate", filters.endDate);
 
-      const res = await api.get(`/trips?${params.toString()}`)
-      setTrips(res.data.trips)
-      setTotalPages(res.data.pagination.totalPages)
+      const res = await api.get(`/trips?${params.toString()}`);
+      setTrips(res.data.trips);
+      setTotalPages(res.data.pagination.totalPages);
 
       // Check contact visibility from first trip (all will have same viewerCanSeeContact)
       // We derive it from whether the user is approved + has posted
-      if (user?.accountStatus === 'APPROVED') {
-        const meRes = await api.get('/auth/me')
+      if (user?.accountStatus === "APPROVED") {
+        const meRes = await api.get("/auth/me");
         // check if user has posted — we'll use the trips list for now
-        const myTrips = await api.get('/trips?page=1')
-        const hasPosted = myTrips.data.trips.some((t: Trip) => t.traveler.id === user.id)
-        setViewerCanSeeContact(hasPosted)
+        const myTrips = await api.get("/trips?page=1");
+        const hasPosted = myTrips.data.trips.some(
+          (t: Trip) => t.traveler.id === user.id,
+        );
+        setViewerCanSeeContact(hasPosted);
       }
     } catch (err) {
-      console.error(err)
+      console.error(err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  useEffect(() => { fetchTrips() }, [page])
+  useEffect(() => {
+    fetchTrips();
+  }, [page]);
 
   const onSearch = (data: SearchForm) => {
     const filters = {
       originCountry: data.originCountry,
       destCountry: data.destCountry,
-      startDate: startDate ? startDate.toISOString() : '',
-      endDate: endDate ? endDate.toISOString() : '',
-    }
-    setActiveFilters(filters)
-    setPage(1)
-    fetchTrips(filters, 1)
-  }
+      startDate: startDate ? startDate.toISOString() : "",
+      endDate: endDate ? endDate.toISOString() : "",
+    };
+    setActiveFilters(filters);
+    setPage(1);
+    fetchTrips(filters, 1);
+  };
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-brand-primary">Available Trips</h1>
-          <p className="text-sm text-brand-muted">Find travelers who can carry your package</p>
+          <h1 className="text-2xl font-bold text-brand-primary">
+            Available Trips
+          </h1>
+          <p className="text-sm text-brand-muted">
+            Find travelers who can carry your package
+          </p>
         </div>
-        {user?.accountStatus === 'APPROVED' && (
+        {user?.accountStatus === "APPROVED" && (
           <Link
             to="/trips/new"
             className="flex items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
@@ -212,29 +258,43 @@ function Trips() {
       >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-brand-muted">From country</label>
+            <label className="mb-1.5 block text-xs font-medium text-brand-muted">
+              From country
+            </label>
             <select
-              {...register('originCountry')}
+              {...register("originCountry")}
               className="w-full rounded-lg border border-brand-muted/30 bg-brand-bg px-3 py-2 text-sm text-brand-primary outline-none focus:border-brand-primary"
             >
               <option value="">Any country</option>
-              {countries.map((c) => <option key={c.code} value={c.name}>{c.name}</option>)}
+              {countries.map((c) => (
+                <option key={c.code} value={c.name}>
+                  {c.name}
+                </option>
+              ))}
             </select>
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-brand-muted">To country</label>
+            <label className="mb-1.5 block text-xs font-medium text-brand-muted">
+              To country
+            </label>
             <select
-              {...register('destCountry')}
+              {...register("destCountry")}
               className="w-full rounded-lg border border-brand-muted/30 bg-brand-bg px-3 py-2 text-sm text-brand-primary outline-none focus:border-brand-primary"
             >
               <option value="">Any country</option>
-              {countries.map((c) => <option key={c.code} value={c.name}>{c.name}</option>)}
+              {countries.map((c) => (
+                <option key={c.code} value={c.name}>
+                  {c.name}
+                </option>
+              ))}
             </select>
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-brand-muted">Departure from</label>
+            <label className="mb-1.5 block text-xs font-medium text-brand-muted">
+              Departure from
+            </label>
             <DatePicker
               selected={startDate}
               onChange={setStartDate}
@@ -245,7 +305,9 @@ function Trips() {
           </div>
 
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-brand-muted">Departure to</label>
+            <label className="mb-1.5 block text-xs font-medium text-brand-muted">
+              Departure to
+            </label>
             <DatePicker
               selected={endDate}
               onChange={setEndDate}
@@ -274,12 +336,18 @@ function Trips() {
         </div>
       ) : trips.length === 0 ? (
         <div className="py-16 text-center">
-          <p className="text-brand-muted">No trips found matching your search.</p>
+          <p className="text-brand-muted">
+            No trips found matching your search.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {trips.map((trip) => (
-            <TripCard key={trip.id} trip={trip} viewerCanSeeContact={viewerCanSeeContact} />
+            <TripCard
+              key={trip.id}
+              trip={trip}
+              viewerCanSeeContact={viewerCanSeeContact}
+            />
           ))}
         </div>
       )}
@@ -307,7 +375,7 @@ function Trips() {
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export default Trips
+export default Trips;
