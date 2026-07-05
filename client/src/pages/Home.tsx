@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import api from '../lib/axios'
+import { useAuthStore } from '../store/authStore'
+import { WorkflowDashboard } from '../components/WorkflowDashboard'
 import { MapPin, Package, ArrowRight, Shield, Clock, Users } from 'lucide-react'
 
 // ── Hero animation ──────────────────────────────────────────
@@ -208,6 +210,7 @@ function PackageMiniCard({ pkg }: { pkg: any }) {
 // ── Main Home page ──────────────────────────────────────────
 
 function Home() {
+  const { user } = useAuthStore()
   const [recentTrips, setRecentTrips] = useState<any[]>([])
   const [recentPackages, setRecentPackages] = useState<any[]>([])
 
@@ -269,6 +272,30 @@ function Home() {
           </Link>
         </motion.div>
       </section>
+
+      {/* Logged-in activity section */}
+      {user && user.accountStatus === 'APPROVED' && (
+        <section className="bg-brand-bg px-4 py-12">
+          <div className="mx-auto max-w-6xl">
+            <h2 className="mb-6 text-xl font-bold text-brand-primary">
+              Welcome back, {user.nickname}! Here's your activity:
+            </h2>
+            <WorkflowDashboard />
+          </div>
+        </section>
+      )}
+      {user && user.accountStatus === 'PENDING' && (
+        <section className="bg-brand-bg px-4 py-8">
+          <div className="mx-auto max-w-6xl">
+            <div className="flex items-center gap-3 rounded-xl border border-yellow-200 bg-yellow-50 p-5">
+              <Clock className="h-5 w-5 shrink-0 text-yellow-600" />
+              <p className="text-sm text-brand-muted">
+                Your account is pending approval. You'll be notified as soon as an admin reviews your application.
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Main content */}
       <div className="mx-auto max-w-6xl px-4">

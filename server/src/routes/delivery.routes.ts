@@ -251,8 +251,8 @@ router.get('/:id', requireAuth, requireApproved, async (req, res) => {
     where: { id: req.params.id as string },
     include: {
       package: true,
-      sender: { select: { id: true, nickname: true, legalFullName: true } },
-      traveler: { select: { id: true, nickname: true, legalFullName: true } },
+      sender: { select: { id: true, nickname: true, legalFullName: true, rating: true } },
+      traveler: { select: { id: true, nickname: true, legalFullName: true, rating: true, packagesDeliveredCount: true } },
       review: true,
     },
   })
@@ -263,14 +263,18 @@ router.get('/:id', requireAuth, requireApproved, async (req, res) => {
     return res.status(403).json({ error: 'Not authorized to view this delivery' })
   }
 
+  const agreementAcceptances = await prisma.agreementAcceptance.findMany({
+    where: { deliveryId: delivery.id },
+  })
+
   // Hide commission details from sender — only traveler and admin see those
   const isTraveler = delivery.travelerId === req.user!.userId
   if (!isTraveler && !req.user!.isAdmin) {
     const { commissionAmount, commissionPaid, ...safeDelivery } = delivery
-    return res.json({ delivery: safeDelivery })
+    return res.json({ delivery: safeDelivery, agreementAcceptances })
   }
 
-  res.json({ delivery })
+  res.json({ delivery, agreementAcceptances })
 })
 
 export default router

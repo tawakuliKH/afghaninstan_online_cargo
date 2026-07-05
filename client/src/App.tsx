@@ -28,6 +28,7 @@ import EditProfile from "./pages/EditProfile";
 import DeliveryReview from "./pages/DeliveryReview";
 import UserSearch from "./pages/UserSearch";
 import HelpChat from "./components/HelpChat";
+import DeliveryDetail from "./pages/DeliveryDetail";
 
 function App() {
   const { isLoading } = useAuthStore();
@@ -124,6 +125,14 @@ function App() {
             element={
               <ProtectedRoute requireApproved>
                 <DeliveryReview />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/deliveries/:deliveryId"
+            element={
+              <ProtectedRoute requireApproved>
+                <DeliveryDetail />
               </ProtectedRoute>
             }
           />

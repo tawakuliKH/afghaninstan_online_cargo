@@ -245,6 +245,211 @@ router.get('/me/wallet', requireAuth, async (req, res) => {
   })
 })
 
+// Activity dashboard — everything the user needs to see at a glance, plus
+// a computed list of pending actions that need their attention right now.
+router.get('/me/dashboard', requireAuth, async (req, res) => {
+  const userId = req.user!.userId
+
+  const [user, tripsCount, packagesCount, unpaidCommissionCount, myPackagesRaw, myDeliveriesRaw, myTrips] =
+    await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, nickname: true, accountStatus: true, isAdmin: true },
+      }),
+      prisma.trip.count({ where: { travelerId: userId } }),
+      prisma.package.count({ where: { senderId: userId } }),
+      prisma.delivery.count({ where: { travelerId: userId, status: 'FINALIZED', commissionPaid: false } }),
+      prisma.package.findMany({
+        where: { senderId: userId },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          deliveries: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            include: {
+              traveler: { select: { id: true, nickname: true, rating: true, packagesDeliveredCount: true } },
+              review: true,
+            },
+          },
+        },
+      }),
+      prisma.delivery.findMany({
+        where: { travelerId: userId },
+        orderBy: { createdAt: 'desc' },
+        include: {
+          package: { select: { id: true, title: true, destCity: true, destCountry: true, goodsPhotoUrl: true } },
+          sender: { select: { id: true, nickname: true } },
+          review: true,
+        },
+      }),
+      prisma.trip.findMany({
+        where: { travelerId: userId },
+        orderBy: { departureDate: 'desc' },
+      }),
+    ])
+
+  if (!user) return res.status(404).json({ error: 'User not found' })
+
+  const myPackages = myPackagesRaw.map(({ deliveries, ...pkg }) => {
+    const d = deliveries[0]
+    return {
+      id: pkg.id,
+      title: pkg.title,
+      weight: pkg.weight,
+      originCity: pkg.originCity,
+      originCountry: pkg.originCountry,
+      destCity: pkg.destCity,
+      destCountry: pkg.destCountry,
+      createdAt: pkg.createdAt,
+      goodsPhotoUrl: pkg.goodsPhotoUrl,
+      delivery: d
+        ? {
+            id: d.id,
+            status: d.status,
+            agreedAmount: d.agreedAmount,
+            currency: d.currency,
+            paymentLocation: d.paymentLocation,
+            estimatedDeliveryDate: d.estimatedDeliveryDate,
+            finalizedAt: d.finalizedAt,
+            commissionAmount: d.commissionAmount,
+            commissionPaid: d.commissionPaid,
+            traveler: d.traveler,
+            hasReview: Boolean(d.review),
+          }
+        : null,
+    }
+  })
+
+  const myDeliveries = myDeliveriesRaw.map((d) => ({
+    id: d.id,
+    status: d.status,
+    agreedAmount: d.agreedAmount,
+    currency: d.currency,
+    paymentLocation: d.paymentLocation,
+    estimatedDeliveryDate: d.estimatedDeliveryDate,
+    finalizedAt: d.finalizedAt,
+    commissionAmount: d.commissionAmount,
+    commissionPaid: d.commissionPaid,
+    package: d.package,
+    sender: d.sender,
+    hasReview: Boolean(d.review),
+  }))
+
+  interface PendingAction {
+    type: string
+    priority: 'urgent' | 'normal'
+    title: string
+    description: string
+    actionLabel: string
+    actionUrl: string
+    relatedId: string | null
+    sortDate: Date
+  }
+
+  const pendingActions: PendingAction[] = []
+
+  for (const d of myDeliveriesRaw) {
+    if (d.status === 'PROPOSED') {
+      pendingActions.push({
+        type: 'ACCEPT_DELIVERY',
+        priority: 'urgent',
+        title: 'Action Required: Accept or decline delivery request',
+        description: `${d.sender.nickname} wants you to carry ${d.package.title} to ${d.package.destCity}`,
+        actionLabel: 'Review & Accept',
+        actionUrl: '/profile?tab=deliveries',
+        relatedId: d.id,
+        sortDate: d.createdAt,
+      })
+    }
+    if (d.status === 'ACCEPTED') {
+      pendingActions.push({
+        type: 'FINALIZE_DELIVERY',
+        priority: 'urgent',
+        title: 'Mark delivery as complete when delivered',
+        description: `You accepted to deliver ${d.package.title} to ${d.package.destCity}. Tap when delivered.`,
+        actionLabel: 'Finalize Delivery',
+        actionUrl: '/profile?tab=deliveries',
+        relatedId: d.id,
+        sortDate: d.createdAt,
+      })
+    }
+  }
+
+  for (const pkg of myPackagesRaw) {
+    const d = pkg.deliveries[0]
+    if (d && d.status === 'FINALIZED' && !d.review) {
+      pendingActions.push({
+        type: 'LEAVE_REVIEW',
+        priority: 'normal',
+        title: 'Complete the process — leave a review',
+        description: `${d.traveler.nickname} delivered ${pkg.title}. Please confirm and review.`,
+        actionLabel: 'Leave Review →',
+        actionUrl: `/deliveries/${d.id}/review`,
+        relatedId: d.id,
+        sortDate: d.finalizedAt ?? d.createdAt,
+      })
+    }
+    if (!d) {
+      pendingActions.push({
+        type: 'PROPOSE_DELIVERY',
+        priority: 'normal',
+        title: 'Your package is waiting for a traveler',
+        description: `${pkg.title} → ${pkg.destCity}. Find a traveler and propose a delivery.`,
+        actionLabel: 'Propose Delivery',
+        actionUrl: `/packages/${pkg.id}/propose`,
+        relatedId: pkg.id,
+        sortDate: pkg.createdAt,
+      })
+    }
+  }
+
+  if (unpaidCommissionCount > 0) {
+    pendingActions.push({
+      type: 'PAY_COMMISSION',
+      priority: 'urgent',
+      title: 'Unpaid Commission — Action Required',
+      description: 'You have unpaid platform commission. Settle it to accept new deliveries.',
+      actionLabel: 'View Commission',
+      actionUrl: '/profile?tab=deliveries',
+      relatedId: null,
+      sortDate: new Date(),
+    })
+  }
+
+  if (user.accountStatus === 'APPROVED' && tripsCount === 0 && packagesCount === 0) {
+    pendingActions.push({
+      type: 'POST_FIRST_TRIP',
+      priority: 'normal',
+      title: 'Get started — post your first trip',
+      description: 'Traveling abroad? Post your trip so senders can find you.',
+      actionLabel: 'Post a Trip',
+      actionUrl: '/trips/new',
+      relatedId: null,
+      sortDate: new Date(),
+    })
+  }
+
+  pendingActions.sort((a, b) => {
+    if (a.priority !== b.priority) return a.priority === 'urgent' ? -1 : 1
+    return b.sortDate.getTime() - a.sortDate.getTime()
+  })
+
+  res.json({
+    user: {
+      id: user.id,
+      nickname: user.nickname,
+      accountStatus: user.accountStatus,
+      isAdmin: user.isAdmin,
+      hasPosted: tripsCount + packagesCount > 0,
+      hasUnpaidCommission: unpaidCommissionCount > 0,
+    },
+    myPackages,
+    myDeliveries,
+    myTrips,
+    pendingActions: pendingActions.map(({ sortDate, ...action }) => action),
+  })
+})
+
 // Public user search — no auth required
 router.get('/users/search', optionalAuth, async (req, res) => {
   const q = String(req.query.q || '').trim()

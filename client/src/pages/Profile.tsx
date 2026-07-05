@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { AgreementModal } from "../components/AgreementModal";
 import { WorkflowTimeline, type WorkflowDelivery } from "../components/WorkflowTimeline";
+import { WorkflowDashboard } from "../components/WorkflowDashboard";
 
 const statusConfig = {
   PENDING: {
@@ -954,7 +955,22 @@ function Profile() {
 
       {user.accountStatus === "APPROVED" ? (
         <>
+          <div className="mb-6">
+            <h2 className="mb-3 text-lg font-bold text-brand-primary">
+              Your Activity Dashboard
+            </h2>
+            <div className="mb-4 border-t border-brand-muted/10" />
+            <WorkflowDashboard />
+          </div>
+
           <WalletCard />
+
+          <div className="mb-4">
+            <h2 className="text-lg font-bold text-brand-primary">Detailed View</h2>
+            <p className="text-xs text-brand-muted">
+              Browse all your trips, packages, deliveries, messages and notifications below.
+            </p>
+          </div>
 
           <div className="mb-6 flex gap-1 overflow-x-auto rounded-xl bg-white p-1 shadow-sm">
             {TABS.map((tab) => {
