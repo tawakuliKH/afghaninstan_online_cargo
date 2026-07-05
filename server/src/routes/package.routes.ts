@@ -51,16 +51,24 @@ router.get('/', async (req, res) => {
     if (endDate) where.createdAt.lte = new Date(String(endDate))
   }
 
-  const [packages, total] = await Promise.all([
+  const [rawPackages, total] = await Promise.all([
     prisma.package.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      include: { sender: { select: { id: true, nickname: true, legalFullName: true } } },
+      include: {
+        sender: { select: { id: true, nickname: true, legalFullName: true } },
+        deliveries: { orderBy: { createdAt: 'desc' }, take: 1, select: { status: true } },
+      },
       skip,
       take: pageSize,
     }),
     prisma.package.count({ where }),
   ])
+
+  const packages = rawPackages.map(({ deliveries, ...pkg }) => ({
+    ...pkg,
+    deliveryStatus: deliveries[0]?.status ?? null,
+  }))
 
   res.json({
     packages,
@@ -106,23 +114,37 @@ router.delete('/:id', requireAuth, requireApproved, async (req, res) => {
 })
 
 // GET ONE
-// GET ONE
 router.get('/:id', optionalAuth, async (req, res) => {
   const pkg = await prisma.package.findUnique({
     where: { id: req.params.id as string },
-    include: { sender: true },
+    include: {
+      sender: true,
+      deliveries: {
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        select: {
+          status: true,
+          estimatedDeliveryDate: true,
+          finalizedAt: true,
+          traveler: { select: { id: true, nickname: true } },
+        },
+      },
+    },
   })
   if (!pkg) return res.status(404).json({ error: 'Package not found' })
 
   const viewer = await getViewerContext(req.user?.userId)
-  const { sender, ...packageData } = pkg
+  const viewerCanSeeContact = viewer.isAuthenticated && (viewer.hasPosted || viewer.userId === pkg.sender.id)
+  const { sender, deliveries, recipientName, recipientWhatsapp, recipientEmail, ...packageData } = pkg
 
   res.json({
     package: {
       ...packageData,
+      ...(viewerCanSeeContact ? { recipientName, recipientWhatsapp, recipientEmail } : {}),
       sender: shapeUserForViewer(sender, viewer),
+      activeDelivery: deliveries[0] ?? null,
     },
-    viewerCanSeeContact: viewer.isAuthenticated && (viewer.hasPosted || viewer.userId === sender.id),
+    viewerCanSeeContact,
   })
 })
 

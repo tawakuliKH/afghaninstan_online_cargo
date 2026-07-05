@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import api from "../lib/axios";
 import {
@@ -78,7 +78,11 @@ function ContactInfo({
     <div className="mt-3 border-t border-brand-muted/10 pt-3">
       <p className="text-xs italic text-brand-muted">
         {!canSeeContact && (
-          <Link to="/register" className="text-brand-accent hover:underline">
+          <Link
+            to="/register"
+            onClick={(e) => e.stopPropagation()}
+            className="text-brand-accent hover:underline"
+          >
             Create an account and post a trip or package
           </Link>
         )}{" "}
@@ -95,22 +99,39 @@ function TripCard({
   trip: Trip;
   viewerCanSeeContact: boolean;
 }) {
+  const navigate = useNavigate();
+  const isClosed = new Date(trip.departureDate) < new Date();
+
   return (
-    <div className="rounded-xl bg-white p-5 shadow-sm transition hover:shadow-md">
+    <div
+      onClick={() => navigate(`/trips/${trip.id}`)}
+      className="cursor-pointer rounded-xl bg-white p-5 shadow-sm transition hover:shadow-md"
+    >
       {/* Route */}
-      <div className="flex items-center gap-2">
-        <div className="text-center">
-          <p className="text-xs text-brand-muted">From</p>
-          <p className="font-semibold text-brand-primary">{trip.originCity}</p>
-          <p className="text-xs text-brand-muted">{trip.originCountry}</p>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex flex-1 items-center gap-2">
+          <div className="text-center">
+            <p className="text-xs text-brand-muted">From</p>
+            <p className="font-semibold text-brand-primary">{trip.originCity}</p>
+            <p className="text-xs text-brand-muted">{trip.originCountry}</p>
+          </div>
+          <div className="flex-1 border-t-2 border-dashed border-brand-secondary/40 mx-2" />
+          <MapPin className="h-4 w-4 shrink-0 text-brand-accent" />
+          <div className="text-center">
+            <p className="text-xs text-brand-muted">To</p>
+            <p className="font-semibold text-brand-primary">{trip.destCity}</p>
+            <p className="text-xs text-brand-muted">{trip.destCountry}</p>
+          </div>
         </div>
-        <div className="flex-1 border-t-2 border-dashed border-brand-secondary/40 mx-2" />
-        <MapPin className="h-4 w-4 shrink-0 text-brand-accent" />
-        <div className="text-center">
-          <p className="text-xs text-brand-muted">To</p>
-          <p className="font-semibold text-brand-primary">{trip.destCity}</p>
-          <p className="text-xs text-brand-muted">{trip.destCountry}</p>
-        </div>
+        <span
+          className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+            isClosed
+              ? "bg-brand-muted/10 text-brand-muted"
+              : "bg-green-100 text-green-700"
+          }`}
+        >
+          {isClosed ? "Trip Closed" : "Active"}
+        </span>
       </div>
 
       {/* Details */}
@@ -149,6 +170,7 @@ function TripCard({
             <p className="text-xs text-brand-muted">Traveler</p>
             <Link
               to={`/users/${trip.traveler.id}`}
+              onClick={(e) => e.stopPropagation()}
               className="text-sm font-medium text-brand-primary hover:text-brand-accent"
             >
               {trip.traveler.legalFullName || trip.traveler.nickname}
@@ -170,7 +192,7 @@ function Trips() {
   const [totalPages, setTotalPages] = useState(1);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-  const [viewerCanSeeContact, setViewerCanSeeContact] = useState(false);
+  const viewerCanSeeContact = Boolean(user && user.hasPosted);
   const [activeFilters, setActiveFilters] = useState({
     originCountry: "",
     destCountry: "",
@@ -193,18 +215,6 @@ function Trips() {
       const res = await api.get(`/trips?${params.toString()}`);
       setTrips(res.data.trips);
       setTotalPages(res.data.pagination.totalPages);
-
-      // Check contact visibility from first trip (all will have same viewerCanSeeContact)
-      // We derive it from whether the user is approved + has posted
-      if (user?.accountStatus === "APPROVED") {
-        const meRes = await api.get("/auth/me");
-        // check if user has posted — we'll use the trips list for now
-        const myTrips = await api.get("/trips?page=1");
-        const hasPosted = myTrips.data.trips.some(
-          (t: Trip) => t.traveler.id === user.id,
-        );
-        setViewerCanSeeContact(hasPosted);
-      }
     } catch (err) {
       console.error(err);
     } finally {

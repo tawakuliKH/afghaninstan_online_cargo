@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -6,7 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/authStore'
 import api from '../lib/axios'
 import toast from 'react-hot-toast'
-import { Package, Loader2 } from 'lucide-react'
+import { Package, Loader2, AlertCircle, X } from 'lucide-react'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -17,8 +18,9 @@ type LoginForm = z.infer<typeof loginSchema>
 
 function Login() {
   const { t } = useTranslation()
-  const { setAuth } = useAuthStore()
+  const { setAuth, fetchAvatar } = useAuthStore()
   const navigate = useNavigate()
+  const [loginError, setLoginError] = useState<string | null>(null)
 
   const {
     register,
@@ -29,12 +31,14 @@ function Login() {
   const onSubmit = async (data: LoginForm) => {
     try {
       const res = await api.post('/auth/login', data)
+      setLoginError(null)
       setAuth(res.data.user, res.data.accessToken)
+      fetchAvatar()
       toast.success('Welcome back!')
       navigate('/')
     } catch (err: any) {
-      const msg = err.response?.data?.error || 'Login failed'
-      toast.error(msg)
+      const msg = err.response?.data?.error || 'Login failed. Please try again.'
+      setLoginError(msg)
     }
   }
 
@@ -67,7 +71,9 @@ function Login() {
                 {t('auth.email')}
               </label>
               <input
-                {...register('email')}
+                {...register('email', {
+                  onChange: () => loginError && setLoginError(null),
+                })}
                 type="email"
                 autoComplete="email"
                 placeholder="you@example.com"
@@ -83,7 +89,9 @@ function Login() {
                 {t('auth.password')}
               </label>
               <input
-                {...register('password')}
+                {...register('password', {
+                  onChange: () => loginError && setLoginError(null),
+                })}
                 type="password"
                 autoComplete="current-password"
                 placeholder="••••••••"
@@ -93,6 +101,21 @@ function Login() {
                 <p className="mt-1 text-xs text-brand-danger">{errors.password.message}</p>
               )}
             </div>
+
+            {loginError && (
+              <div className="flex items-start gap-2 rounded-lg border border-brand-danger/30 bg-brand-danger/10 px-4 py-3 text-sm text-brand-danger">
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                <p className="flex-1">{loginError}</p>
+                <button
+                  type="button"
+                  onClick={() => setLoginError(null)}
+                  aria-label="Dismiss"
+                  className="shrink-0 text-brand-danger/70 hover:text-brand-danger"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
 
             <button
               type="submit"

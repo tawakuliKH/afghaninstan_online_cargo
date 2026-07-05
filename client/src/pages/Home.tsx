@@ -147,7 +147,10 @@ function HowItWorks() {
 
 function TripMiniCard({ trip }: { trip: any }) {
   return (
-    <div className="rounded-xl bg-white p-4 shadow-sm">
+    <Link
+      to={`/trips/${trip.id}`}
+      className="block rounded-xl bg-white p-4 shadow-sm transition hover:shadow-md"
+    >
       <div className="flex items-center gap-2 mb-2">
         <MapPin className="h-4 w-4 text-brand-accent" />
         <span className="text-sm font-medium text-brand-primary">
@@ -161,13 +164,16 @@ function TripMiniCard({ trip }: { trip: any }) {
       <p className="mt-1 text-xs text-brand-muted">
         By: {trip.traveler?.nickname}
       </p>
-    </div>
+    </Link>
   )
 }
 
 function PackageMiniCard({ pkg }: { pkg: any }) {
   return (
-    <div className="rounded-xl bg-white p-4 shadow-sm">
+    <Link
+      to={`/packages/${pkg.id}`}
+      className="block rounded-xl bg-white p-4 shadow-sm transition hover:shadow-md"
+    >
       {pkg.goodsPhotoUrl ? (
         <img
           src={pkg.goodsPhotoUrl}
@@ -195,7 +201,7 @@ function PackageMiniCard({ pkg }: { pkg: any }) {
       <p className="mt-1 text-xs text-brand-muted">
         By: {pkg.sender?.nickname}
       </p>
-    </div>
+    </Link>
   )
 }
 

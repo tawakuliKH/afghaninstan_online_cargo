@@ -108,17 +108,29 @@ router.get('/', async (req, res) => {
 router.get('/:id', optionalAuth, async (req, res) => {
   const trip = await prisma.trip.findUnique({
     where: { id: req.params.id as string },
-    include: { traveler: true }, // full user record now, we'll shape it below
+    include: {
+      traveler: true, // full user record now, we'll shape it below
+      deliveries: {
+        where: { status: { in: ['PROPOSED', 'ACCEPTED', 'FINALIZED'] } },
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          status: true,
+          package: { select: { id: true, title: true, destCity: true, destCountry: true } },
+        },
+      },
+    },
   })
   if (!trip) return res.status(404).json({ error: 'Trip not found' })
 
   const viewer = await getViewerContext(req.user?.userId)
-  const { traveler, ...tripData } = trip
+  const { traveler, deliveries, ...tripData } = trip
 
   res.json({
     trip: {
       ...tripData,
       traveler: shapeUserForViewer(traveler, viewer),
+      activeDeliveries: deliveries,
     },
     viewerCanSeeContact: viewer.isAuthenticated && (viewer.hasPosted || viewer.userId === traveler.id),
   })

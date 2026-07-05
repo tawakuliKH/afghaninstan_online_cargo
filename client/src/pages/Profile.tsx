@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuthStore } from "../store/authStore";
 import api from "../lib/axios";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import {
   Clock,
@@ -17,6 +17,9 @@ import {
   Weight,
   Loader2,
   Trash2,
+  Wallet,
+  TrendingDown,
+  TrendingUp,
 } from "lucide-react";
 import { AgreementModal } from "../components/AgreementModal";
 
@@ -57,6 +60,7 @@ const statusConfig = {
 };
 
 function MyTrips() {
+  const navigate = useNavigate();
   const [trips, setTrips] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -104,7 +108,11 @@ function MyTrips() {
   return (
     <div className="space-y-4">
       {trips.map((trip) => (
-        <div key={trip.id} className="rounded-xl bg-white p-5 shadow-sm">
+        <div
+          key={trip.id}
+          onClick={() => navigate(`/trips/${trip.id}`)}
+          className="cursor-pointer rounded-xl bg-white p-5 shadow-sm transition hover:shadow-md"
+        >
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4 text-brand-accent" />
@@ -114,7 +122,10 @@ function MyTrips() {
               </span>
             </div>
             <button
-              onClick={() => handleDelete(trip.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete(trip.id);
+              }}
               className="text-brand-muted hover:text-brand-danger"
             >
               <Trash2 className="h-4 w-4" />
@@ -144,17 +155,29 @@ function MyTrips() {
 }
 
 function MyPackages() {
+  const navigate = useNavigate();
   const [packages, setPackages] = useState<any[]>([]);
+  const [proposedPackageIds, setProposedPackageIds] = useState<Set<string>>(
+    new Set()
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api
-      .get("/packages?page=1")
-      .then((res) => {
+    Promise.all([
+      api.get("/packages?page=1"),
+      api.get("/deliveries/mine"),
+    ])
+      .then(([packagesRes, deliveriesRes]) => {
         const { user } = useAuthStore.getState();
         setPackages(
-          res.data.packages.filter((p: any) => p.senderId === user?.id)
+          packagesRes.data.packages.filter(
+            (p: any) => p.senderId === user?.id
+          )
         );
+        const activeIds = deliveriesRes.data.deliveries
+          .filter((d: any) => d.status === "PROPOSED" || d.status === "ACCEPTED")
+          .map((d: any) => d.package?.id ?? d.packageId);
+        setProposedPackageIds(new Set(activeIds));
       })
       .finally(() => setLoading(false));
   }, []);
@@ -193,7 +216,11 @@ function MyPackages() {
   return (
     <div className="space-y-4">
       {packages.map((pkg) => (
-        <div key={pkg.id} className="rounded-xl bg-white p-5 shadow-sm">
+        <div
+          key={pkg.id}
+          onClick={() => navigate(`/packages/${pkg.id}`)}
+          className="cursor-pointer rounded-xl bg-white p-5 shadow-sm transition hover:shadow-md"
+        >
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2">
               <Package className="h-4 w-4 text-brand-accent" />
@@ -202,15 +229,26 @@ function MyPackages() {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <Link
-                to={`/packages/${pkg.id}/propose`}
-                className="flex items-center gap-1 rounded-lg bg-brand-accent/10 px-2 py-1 text-xs font-semibold text-brand-accent hover:bg-brand-accent/20 transition"
-              >
-                <Truck className="h-3 w-3" />
-                Propose Delivery
-              </Link>
+              {proposedPackageIds.has(pkg.id) ? (
+                <span className="flex items-center gap-1 rounded-lg bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700">
+                  <Truck className="h-3 w-3" />
+                  Proposed
+                </span>
+              ) : (
+                <Link
+                  to={`/packages/${pkg.id}/propose`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center gap-1 rounded-lg bg-brand-accent/10 px-2 py-1 text-xs font-semibold text-brand-accent hover:bg-brand-accent/20 transition"
+                >
+                  <Truck className="h-3 w-3" />
+                  Propose Delivery
+                </Link>
+              )}
               <button
-                onClick={() => handleDelete(pkg.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(pkg.id);
+                }}
                 className="text-brand-muted hover:text-brand-danger"
               >
                 <Trash2 className="h-4 w-4" />
@@ -351,9 +389,12 @@ function MyDeliveries() {
             <div key={d.id} className="rounded-xl bg-white p-5 shadow-sm">
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="font-medium text-brand-primary">
+                  <Link
+                    to={`/packages/${d.package?.id}`}
+                    className="font-medium text-brand-primary hover:text-brand-accent"
+                  >
                     {d.package?.title}
-                  </p>
+                  </Link>
                   <p className="text-xs text-brand-muted">
                     {d.package?.destCity}, {d.package?.destCountry}
                   </p>
@@ -556,6 +597,122 @@ function MyNotifications() {
   );
 }
 
+interface WalletTransaction {
+  id: string;
+  packageTitle: string;
+  agreedAmount: number;
+  currency: string;
+  commissionAmount: number;
+  commissionPaid: boolean;
+  finalizedAt: string | null;
+  type: "earning" | "commission_owed";
+}
+
+interface WalletData {
+  totalEarned: number;
+  totalCommissionOwed: number;
+  totalCommissionPaid: number;
+  balance: number;
+  transactions: WalletTransaction[];
+}
+
+function WalletCard() {
+  const [wallet, setWallet] = useState<WalletData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    api
+      .get("/auth/me/wallet")
+      .then((res) => setWallet(res.data))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="mb-6 flex justify-center rounded-2xl bg-white p-6 shadow-sm">
+        <Loader2 className="h-5 w-5 animate-spin text-brand-primary" />
+      </div>
+    );
+  }
+
+  if (!wallet) return null;
+
+  const earnings = wallet.transactions.filter((t) => t.type === "earning");
+
+  return (
+    <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="rounded-full bg-brand-accent/10 p-2">
+            <Wallet className="h-5 w-5 text-brand-accent" />
+          </div>
+          <h2 className="font-semibold text-brand-primary">Wallet</h2>
+        </div>
+        <div className="text-right">
+          <p className="text-xs text-brand-muted">Balance</p>
+          <p className="text-xl font-bold text-brand-primary">
+            {wallet.balance.toFixed(2)}
+          </p>
+        </div>
+      </div>
+
+      {wallet.totalCommissionOwed > 0 && (
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-brand-danger/30 bg-brand-danger/5 px-3 py-2 text-xs text-brand-danger">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          You have {wallet.totalCommissionOwed.toFixed(2)} in unpaid commission.
+        </div>
+      )}
+
+      {earnings.length === 0 ? (
+        <p className="text-sm text-brand-muted">No earnings yet.</p>
+      ) : (
+        <div className="space-y-2">
+          {wallet.transactions.map((t) => (
+            <div
+              key={t.id}
+              className="flex items-center justify-between border-b border-brand-muted/10 py-2 last:border-0"
+            >
+              <div className="flex items-center gap-2">
+                {t.type === "earning" ? (
+                  <TrendingUp className="h-4 w-4 shrink-0 text-green-500" />
+                ) : (
+                  <TrendingDown className="h-4 w-4 shrink-0 text-brand-danger" />
+                )}
+                <div>
+                  <p className="text-sm font-medium text-brand-primary">
+                    {t.packageTitle}
+                  </p>
+                  <p className="text-xs text-brand-muted">
+                    {t.type === "earning"
+                      ? t.commissionPaid
+                        ? "Delivery earning · commission settled"
+                        : "Delivery earning"
+                      : "Commission owed"}
+                    {t.finalizedAt &&
+                      ` · ${new Date(t.finalizedAt).toLocaleDateString()}`}
+                  </p>
+                </div>
+              </div>
+              <span
+                className={`text-sm font-semibold ${
+                  t.type === "earning"
+                    ? "text-green-600"
+                    : t.commissionPaid
+                    ? "text-brand-muted"
+                    : "text-brand-danger"
+                }`}
+              >
+                {t.agreedAmount > 0 ? "+" : "-"}
+                {Math.abs(t.agreedAmount).toFixed(2)} {t.currency}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const TABS = [
   { id: "trips", label: "My Trips", icon: MapPin },
   { id: "packages", label: "My Packages", icon: Package },
@@ -565,7 +722,7 @@ const TABS = [
 ];
 
 function Profile() {
-  const { user } = useAuthStore();
+  const { user, avatarUrl } = useAuthStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "trips";
 
@@ -597,9 +754,12 @@ function Profile() {
       <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
         <div className="flex items-center gap-4">
           <img
-            src={`https://api.dicebear.com/9.x/personas/svg?seed=${user.id}&backgroundColor=e8edf5`}
+            src={
+              avatarUrl ||
+              `https://api.dicebear.com/9.x/personas/svg?seed=${user.id}&backgroundColor=e8edf5`
+            }
             alt={user.nickname}
-            className="h-16 w-16 rounded-full border-2 border-brand-primary/10"
+            className="h-16 w-16 rounded-full border-2 border-brand-primary/10 object-cover"
           />
           <div>
             <h1 className="text-xl font-bold text-brand-primary">
@@ -623,6 +783,8 @@ function Profile() {
 
       {user.accountStatus === "APPROVED" ? (
         <>
+          <WalletCard />
+
           <div className="mb-6 flex gap-1 overflow-x-auto rounded-xl bg-white p-1 shadow-sm">
             {TABS.map((tab) => {
               const Icon = tab.icon;

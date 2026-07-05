@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/authStore";
 import api from "../lib/axios";
 import {
@@ -30,6 +30,7 @@ interface PackageItem {
   notes?: string;
   goodsPhotoUrl?: string;
   createdAt: string;
+  deliveryStatus?: "PROPOSED" | "ACCEPTED" | "FINALIZED" | "CANCELLED" | null;
   sender: {
     id: string;
     nickname: string;
@@ -37,6 +38,32 @@ interface PackageItem {
     whatsappNumber?: string;
     email?: string;
   };
+}
+
+const DELIVERY_STATUS_BADGES: Record<
+  string,
+  { label: string; className: string }
+> = {
+  NONE: { label: "Active", className: "bg-green-100 text-green-700" },
+  PROPOSED: { label: "Proposed", className: "bg-yellow-100 text-yellow-700" },
+  ACCEPTED: { label: "In Transit", className: "bg-blue-100 text-blue-700" },
+  FINALIZED: { label: "Delivered", className: "bg-green-100 text-green-700" },
+  CANCELLED: { label: "Cancelled", className: "bg-red-100 text-red-700" },
+};
+
+function PackageStatusBadge({
+  status,
+}: {
+  status?: PackageItem["deliveryStatus"];
+}) {
+  const badge = DELIVERY_STATUS_BADGES[status ?? "NONE"];
+  return (
+    <span
+      className={`rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}
+    >
+      {badge.label}
+    </span>
+  );
 }
 
 interface SearchForm {
@@ -79,7 +106,11 @@ function ContactInfo({
       <p className="text-xs italic text-brand-muted">
         {!canSeeContact ? (
           <>
-            <Link to="/register" className="text-brand-accent hover:underline">
+            <Link
+              to="/register"
+              onClick={(e) => e.stopPropagation()}
+              className="text-brand-accent hover:underline"
+            >
               Create an account and post a trip or package
             </Link>{" "}
             to see contact details
@@ -99,8 +130,12 @@ function PackageCard({
   pkg: PackageItem;
   viewerCanSeeContact: boolean;
 }) {
+  const navigate = useNavigate();
   return (
-    <div className="rounded-xl bg-white p-5 shadow-sm transition hover:shadow-md">
+    <div
+      onClick={() => navigate(`/packages/${pkg.id}`)}
+      className="cursor-pointer rounded-xl bg-white p-5 shadow-sm transition hover:shadow-md"
+    >
       {/* Photo or placeholder */}
 {pkg.goodsPhotoUrl ? (
   <img
@@ -127,10 +162,13 @@ function PackageCard({
           <Package className="h-4 w-4 shrink-0 text-brand-accent" />
           <h3 className="font-semibold text-brand-primary">{pkg.title}</h3>
         </div>
-        <span className="flex items-center gap-1 rounded-full bg-brand-secondary/10 px-2 py-0.5 text-xs text-brand-secondary">
-          <Weight className="h-3 w-3" />
-          {pkg.weight} kg
-        </span>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <PackageStatusBadge status={pkg.deliveryStatus} />
+          <span className="flex items-center gap-1 rounded-full bg-brand-secondary/10 px-2 py-0.5 text-xs text-brand-secondary">
+            <Weight className="h-3 w-3" />
+            {pkg.weight} kg
+          </span>
+        </div>
       </div>
 
       {/* Route */}
@@ -175,6 +213,7 @@ function PackageCard({
             <p className="text-xs text-brand-muted">Sender</p>
             <Link
               to={`/users/${pkg.sender.id}`}
+              onClick={(e) => e.stopPropagation()}
               className="text-sm font-medium text-brand-primary hover:text-brand-accent"
             >
               {pkg.sender.legalFullName || pkg.sender.nickname}
@@ -199,7 +238,7 @@ function Packages() {
   const [totalPages, setTotalPages] = useState(1);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-  const [viewerCanSeeContact, setViewerCanSeeContact] = useState(false);
+  const viewerCanSeeContact = Boolean(user && user.hasPosted);
   const [activeFilters, setActiveFilters] = useState({
     originCountry: "",
     destCountry: "",
@@ -222,14 +261,6 @@ function Packages() {
       const res = await api.get(`/packages?${params.toString()}`);
       setPackages(res.data.packages);
       setTotalPages(res.data.pagination.totalPages);
-
-      if (user?.accountStatus === "APPROVED") {
-        const myPackages = await api.get("/packages?page=1");
-        const hasPosted = myPackages.data.packages.some(
-          (p: PackageItem) => p.sender.id === user.id,
-        );
-        setViewerCanSeeContact(hasPosted);
-      }
     } catch (err) {
       console.error(err);
     } finally {

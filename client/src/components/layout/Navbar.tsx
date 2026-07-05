@@ -12,14 +12,40 @@ import {
   X,
   ShieldCheck,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 export function Navbar() {
   const { t, i18n } = useTranslation();
-  const { user, clearAuth } = useAuthStore();
+  const { user, avatarUrl, clearAuth } = useAuthStore();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [unreadTotal, setUnreadTotal] = useState(0);
+
+  useEffect(() => {
+    if (!user) {
+      setUnreadTotal(0);
+      return;
+    }
+
+    const fetchUnread = async () => {
+      try {
+        const [notifRes, msgRes] = await Promise.all([
+          api.get("/notifications/unread-count"),
+          api.get("/messages/unread-count"),
+        ]);
+        setUnreadTotal(
+          (notifRes.data.unreadCount || 0) + (msgRes.data.unreadCount || 0)
+        );
+      } catch {
+        // ignore transient polling failures
+      }
+    };
+
+    fetchUnread();
+    const interval = setInterval(fetchUnread, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const handleLogout = async () => {
     try {
@@ -95,6 +121,11 @@ export function Navbar() {
                 className="relative text-white/80 transition hover:text-brand-accent"
               >
                 <Bell className="h-5 w-5" />
+                {unreadTotal > 0 && (
+                  <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-brand-danger px-1 text-[10px] font-bold leading-none text-white">
+                    {unreadTotal > 99 ? "99+" : unreadTotal}
+                  </span>
+                )}
               </Link>
 
               {/* Profile */}
@@ -103,9 +134,12 @@ export function Navbar() {
                 className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm text-white transition hover:bg-white/20"
               >
                 <img
-                  src={`https://api.dicebear.com/9.x/personas/svg?seed=${user.id}&backgroundColor=e8edf5`}
+                  src={
+                    avatarUrl ||
+                    `https://api.dicebear.com/9.x/personas/svg?seed=${user.id}&backgroundColor=e8edf5`
+                  }
                   alt={user.nickname}
-                  className="h-6 w-6 rounded-full"
+                  className="h-6 w-6 rounded-full object-cover"
                 />
                 {user.nickname}
               </Link>

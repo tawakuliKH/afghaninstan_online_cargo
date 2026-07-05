@@ -5,6 +5,7 @@ import { upload } from '../middleware/upload'
 import { registerSchema } from '../schemas/auth.schema'
 import { prisma } from '../lib/prisma'
 import { uploadKycFile } from '../lib/storage'
+import { supabase } from '../lib/supabase'
 import { loginSchema } from '../schemas/auth.schema'
 import { signAccessToken, signRefreshToken } from '../lib/jwt'
 import { verifyRefreshToken } from '../lib/jwt'
@@ -26,7 +27,87 @@ router.get('/me', requireAuth, async (req, res) => {
       isAdmin: true,
     },
   })
-  res.json({ user })
+  if (!user) return res.status(404).json({ error: 'User not found' })
+
+  const [tripsCount, packagesCount] = await Promise.all([
+    prisma.trip.count({ where: { travelerId: user.id } }),
+    prisma.package.count({ where: { senderId: user.id } }),
+  ])
+
+  res.json({ user: { ...user, hasPosted: tripsCount + packagesCount > 0 } })
+})
+
+// Signed URL for the logged-in user's own face photo (private KYC bucket)
+router.get('/me/avatar', requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({
+    where: { id: req.user!.userId },
+    select: { facePhotoUrl: true },
+  })
+  if (!user) return res.status(404).json({ error: 'User not found' })
+
+  const { data, error } = await supabase.storage
+    .from('kyc-documents')
+    .createSignedUrl(user.facePhotoUrl, 300)
+
+  if (error || !data) return res.json({ signedUrl: null })
+
+  res.json({ signedUrl: data.signedUrl })
+})
+
+// Wallet — earnings and commission owed/paid for deliveries where this user was the traveler
+router.get('/me/wallet', requireAuth, async (req, res) => {
+  const deliveries = await prisma.delivery.findMany({
+    where: { travelerId: req.user!.userId, status: 'FINALIZED' },
+    orderBy: { finalizedAt: 'desc' },
+    include: { package: { select: { title: true } } },
+  })
+
+  let totalEarned = 0
+  let totalCommissionOwed = 0
+  let totalCommissionPaid = 0
+  const transactions: any[] = []
+
+  for (const d of deliveries) {
+    totalEarned += d.agreedAmount
+    const commission = d.commissionAmount ?? 0
+    if (d.commissionPaid) {
+      totalCommissionPaid += commission
+    } else {
+      totalCommissionOwed += commission
+    }
+
+    transactions.push({
+      id: d.id,
+      packageTitle: d.package?.title ?? 'Unknown package',
+      agreedAmount: d.agreedAmount,
+      currency: d.currency,
+      commissionAmount: commission,
+      commissionPaid: d.commissionPaid,
+      finalizedAt: d.finalizedAt,
+      type: 'earning',
+    })
+
+    if (!d.commissionPaid && commission > 0) {
+      transactions.push({
+        id: `${d.id}-commission`,
+        packageTitle: d.package?.title ?? 'Unknown package',
+        agreedAmount: -commission,
+        currency: d.currency,
+        commissionAmount: commission,
+        commissionPaid: false,
+        finalizedAt: d.finalizedAt,
+        type: 'commission_owed',
+      })
+    }
+  }
+
+  res.json({
+    totalEarned,
+    totalCommissionOwed,
+    totalCommissionPaid,
+    balance: totalEarned - totalCommissionOwed,
+    transactions,
+  })
 })
 
 router.get('/users/:id/profile', optionalAuth, async (req, res) => {
@@ -114,6 +195,11 @@ router.post('/login', async (req, res) => {
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days, in milliseconds
   })
 
+  const [tripsCount, packagesCount] = await Promise.all([
+    prisma.trip.count({ where: { travelerId: user.id } }),
+    prisma.package.count({ where: { senderId: user.id } }),
+  ])
+
   res.json({
     accessToken,
     user: {
@@ -122,6 +208,7 @@ router.post('/login', async (req, res) => {
       nickname: user.nickname,
       isAdmin: user.isAdmin,
       accountStatus: user.accountStatus,
+      hasPosted: tripsCount + packagesCount > 0,
     },
   })
 })

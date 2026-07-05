@@ -4,6 +4,7 @@ import helmet from 'helmet'
 import cookieParser from 'cookie-parser'
 import dotenv from 'dotenv'
 
+import { prisma } from './lib/prisma'
 import authRoutes from './routes/auth.routes'
 import tripRoutes from './routes/trip.routes'
 import packageRoutes from './routes/package.routes'
@@ -24,8 +25,14 @@ app.use(cors({ origin: 'http://localhost:5173', credentials: true }))
 app.use(express.json())
 app.use(cookieParser())
 
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() })
+app.get('/api/health', async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`
+    res.json({ status: 'ok', timestamp: new Date().toISOString() })
+  } catch (err) {
+    console.error('Health check failed — database unreachable:', err)
+    res.status(503).json({ status: 'error', error: 'Database unreachable' })
+  }
 })
 
 app.use('/api/auth', authRoutes)
@@ -38,6 +45,19 @@ app.use('/api/notifications', notificationRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/agreements', agreementRoutes)
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`)
-})
+async function start() {
+  try {
+    await prisma.$queryRaw`SELECT 1`
+    console.log('Database connection established')
+  } catch (err) {
+    console.error('Failed to connect to the database. Server will not start.')
+    console.error(err)
+    process.exit(1)
+  }
+
+  app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`)
+  })
+}
+
+start()

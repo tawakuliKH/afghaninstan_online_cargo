@@ -1,27 +1,40 @@
 import { useEffect } from 'react'
 import { useAuthStore } from '../store/authStore'
+import { useHealthStore } from '../store/healthStore'
 import api from '../lib/axios'
 
 export function useBootstrapAuth() {
-  const { setAuth, clearAuth, setLoading } = useAuthStore()
+  const { setAuth, clearAuth, setLoading, fetchAvatar } = useAuthStore()
+  const { setHealthy } = useHealthStore()
 
   useEffect(() => {
-    const token = localStorage.getItem('accessToken')
-    if (!token) {
-      setLoading(false)
-      return
-    }
-
     api
-      .get('/auth/me')
+      .get('/health')
       .then((res) => {
-        setAuth(res.data.user, token)
+        setHealthy(res.status === 200 && res.data.status === 'ok')
       })
       .catch(() => {
-        clearAuth()
+        setHealthy(false)
       })
       .finally(() => {
-        setLoading(false)
+        const token = localStorage.getItem('accessToken')
+        if (!token) {
+          setLoading(false)
+          return
+        }
+
+        api
+          .get('/auth/me')
+          .then((res) => {
+            setAuth(res.data.user, token)
+            fetchAvatar()
+          })
+          .catch(() => {
+            clearAuth()
+          })
+          .finally(() => {
+            setLoading(false)
+          })
       })
   }, [])
 }
