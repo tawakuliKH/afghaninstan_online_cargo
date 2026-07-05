@@ -23,16 +23,6 @@ router.post('/', requireAuth, requireApproved, async (req, res) => {
   res.status(201).json({ trip })
 })
 
-// LIST (no filters/pagination yet — next step)
-router.get('/', async (_req, res) => {
-  const trips = await prisma.trip.findMany({
-    orderBy: { departureDate: 'asc' },
-    include: { traveler: { select: { id: true, nickname: true, legalFullName: true } } },
-  })
-  res.json({ trips })
-})
-
-
 // UPDATE
 router.patch('/:id', requireAuth, requireApproved, async (req, res) => {
   const trip = await prisma.trip.findUnique({ where: { id: req.params.id as string } })
@@ -71,7 +61,7 @@ router.delete('/:id', requireAuth, requireApproved, async (req, res) => {
 })
 
 // LIST with filters + pagination
-router.get('/', async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   const page = Math.max(1, Number(req.query.page) || 1)
   const pageSize = 10
   const skip = (page - 1) * pageSize
@@ -87,16 +77,23 @@ router.get('/', async (req, res) => {
     if (endDate) where.departureDate.lte = new Date(String(endDate))
   }
 
-  const [trips, total] = await Promise.all([
+  const viewer = await getViewerContext(req.user?.userId, req.user?.isAdmin)
+
+  const [rawTrips, total] = await Promise.all([
     prisma.trip.findMany({
       where,
       orderBy: { departureDate: 'asc' },
-      include: { traveler: { select: { id: true, nickname: true, legalFullName: true } } },
+      include: { traveler: { select: { id: true, nickname: true, legalFullName: true, whatsappNumber: true, email: true } } },
       skip,
       take: pageSize,
     }),
     prisma.trip.count({ where }),
   ])
+
+  const trips = rawTrips.map(({ traveler, ...trip }) => ({
+    ...trip,
+    traveler: shapeUserForViewer(traveler, viewer),
+  }))
 
   res.json({
     trips,
@@ -123,7 +120,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
   })
   if (!trip) return res.status(404).json({ error: 'Trip not found' })
 
-  const viewer = await getViewerContext(req.user?.userId)
+  const viewer = await getViewerContext(req.user?.userId, req.user?.isAdmin)
   const { traveler, deliveries, ...tripData } = trip
 
   res.json({
@@ -132,7 +129,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
       traveler: shapeUserForViewer(traveler, viewer),
       activeDeliveries: deliveries,
     },
-    viewerCanSeeContact: viewer.isAuthenticated && (viewer.hasPosted || viewer.userId === traveler.id),
+    viewerCanSeeContact: viewer.hasFullAccess,
   })
 })
 

@@ -40,10 +40,13 @@ type RegisterForm = z.infer<typeof registerSchema>
 const countries = getData().sort((a, b) => a.name.localeCompare(b.name))
 
 // Reusable field wrapper
-function Field({ label, error, children }: { label: string; error?: string; children: React.ReactNode }) {
+function Field({ label, error, required, children }: { label: string; error?: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div>
-      <label className="mb-1.5 block text-sm font-medium text-brand-primary">{label}</label>
+      <label className="mb-1.5 block text-sm font-medium text-brand-primary">
+        {label}
+        {required && <span className="text-brand-danger"> *</span>}
+      </label>
       {children}
       {error && <p className="mt-1 text-xs text-brand-danger">{error}</p>}
     </div>
@@ -71,16 +74,25 @@ function Select({ className = '', ...props }: React.SelectHTMLAttributes<HTMLSel
 }
 
 // File upload button
-function FileField({ label, accept, onChange, fileName }: {
+function FileField({ label, accept, onChange, fileName, required, error }: {
   label: string
   accept: string
   onChange: (file: File) => void
   fileName?: string
+  required?: boolean
+  error?: string
 }) {
   return (
     <div>
-      <label className="mb-1.5 block text-sm font-medium text-brand-primary">{label}</label>
-      <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-brand-muted/40 bg-brand-bg px-4 py-3 transition hover:border-brand-primary">
+      <label className="mb-1.5 block text-sm font-medium text-brand-primary">
+        {label}
+        {required && <span className="text-brand-danger"> *</span>}
+      </label>
+      <label
+        className={`flex cursor-pointer items-center gap-3 rounded-lg border border-dashed bg-brand-bg px-4 py-3 transition hover:border-brand-primary ${
+          error ? 'border-brand-danger' : 'border-brand-muted/40'
+        }`}
+      >
         {fileName ? (
           <CheckCircle className="h-5 w-5 shrink-0 text-green-500" />
         ) : (
@@ -96,6 +108,7 @@ function FileField({ label, accept, onChange, fileName }: {
           onChange={(e) => { if (e.target.files?.[0]) onChange(e.target.files[0]) }}
         />
       </label>
+      {error && <p className="mt-1 text-xs text-brand-danger">{error}</p>}
     </div>
   )
 }
@@ -106,6 +119,7 @@ function Register() {
   const [passportFile, setPassportFile] = useState<File | null>(null)
   const [faceFile, setFaceFile] = useState<File | null>(null)
   const [visaFile, setVisaFile] = useState<File | null>(null)
+  const [fileErrors, setFileErrors] = useState<{ passport?: string; face?: string; visa?: string }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const {
@@ -120,10 +134,16 @@ function Register() {
 
   const documentType = watch('documentType')
   const currentCountry = watch('currentCountry')
+  const visaRequired = Boolean(currentCountry) && currentCountry !== 'Afghanistan'
 
   const onSubmit = async (data: RegisterForm) => {
-    if (!passportFile) return toast.error('Passport/Tazkira photo is required')
-    if (!faceFile) return toast.error('Face photo is required')
+    const newFileErrors: { passport?: string; face?: string; visa?: string } = {}
+    if (!passportFile) newFileErrors.passport = documentType === 'TAZKIRA' ? 'Tazkira photo is required' : 'Passport photo is required'
+    if (!faceFile) newFileErrors.face = 'Face photo is required'
+    if (visaRequired && !visaFile) newFileErrors.visa = 'Visa or residency document is required for non-Afghan residents'
+
+    setFileErrors(newFileErrors)
+    if (Object.keys(newFileErrors).length > 0) return
 
     setIsSubmitting(true)
     try {
@@ -169,14 +189,14 @@ function Register() {
               Account Details
             </h2>
             <div className="space-y-4">
-              <Field label="Email address" error={errors.email?.message}>
+              <Field label="Email address" required error={errors.email?.message}>
                 <Input {...register('email')} type="email" placeholder="you@example.com" />
               </Field>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Password" error={errors.password?.message}>
+                <Field label="Password" required error={errors.password?.message}>
                   <Input {...register('password')} type="password" placeholder="Min. 8 characters" />
                 </Field>
-                <Field label="Confirm password" error={errors.confirmPassword?.message}>
+                <Field label="Confirm password" required error={errors.confirmPassword?.message}>
                   <Input {...register('confirmPassword')} type="password" placeholder="Repeat password" />
                 </Field>
               </div>
@@ -189,18 +209,18 @@ function Register() {
               Personal Information
             </h2>
             <div className="space-y-4">
-              <Field label="Legal full name (as on your document)" error={errors.legalFullName?.message}>
+              <Field label="Legal full name (as on your document)" required error={errors.legalFullName?.message}>
                 <Input {...register('legalFullName')} placeholder="Exactly as on your ID" />
               </Field>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Nickname (shown publicly)" error={errors.nickname?.message}>
+                <Field label="Nickname (shown publicly)" required error={errors.nickname?.message}>
                   <Input {...register('nickname')} placeholder="Your public name" />
                 </Field>
-                <Field label="Date of birth" error={errors.dateOfBirth?.message}>
+                <Field label="Date of birth" required error={errors.dateOfBirth?.message}>
                   <Input {...register('dateOfBirth')} type="date" />
                 </Field>
               </div>
-              <Field label="WhatsApp number" error={errors.whatsappNumber?.message}>
+              <Field label="WhatsApp number" required error={errors.whatsappNumber?.message}>
                 <Input {...register('whatsappNumber')} placeholder="+1 234 567 8900" />
               </Field>
             </div>
@@ -212,18 +232,18 @@ function Register() {
               Identity Document
             </h2>
             <div className="space-y-4">
-              <Field label="Document type" error={errors.documentType?.message}>
+              <Field label="Document type" required error={errors.documentType?.message}>
                 <Select {...register('documentType')}>
                   <option value="PASSPORT">Passport</option>
                   <option value="TAZKIRA">Afghan Tazkira (National ID)</option>
                 </Select>
               </Field>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Document number" error={errors.documentNumber?.message}>
+                <Field label="Document number" required error={errors.documentNumber?.message}>
                   <Input {...register('documentNumber')} placeholder="e.g. AB1234567" />
                 </Field>
                 {documentType === 'PASSPORT' && (
-                  <Field label="Issuing country" error={errors.documentIssuingCountry?.message}>
+                  <Field label="Issuing country" required error={errors.documentIssuingCountry?.message}>
                     <Select {...register('documentIssuingCountry')}>
                       <option value="">Select country</option>
                       {countries.map((c) => (
@@ -243,7 +263,7 @@ function Register() {
             </h2>
             <div className="space-y-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Permanent country" error={errors.permanentCountry?.message}>
+                <Field label="Permanent country" required error={errors.permanentCountry?.message}>
                   <Select {...register('permanentCountry')}>
                     <option value="">Select country</option>
                     {countries.map((c) => (
@@ -251,12 +271,12 @@ function Register() {
                     ))}
                   </Select>
                 </Field>
-                <Field label="Permanent city" error={errors.permanentCity?.message}>
+                <Field label="Permanent city" required error={errors.permanentCity?.message}>
                   <Input {...register('permanentCity')} placeholder="City" />
                 </Field>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Field label="Current country" error={errors.currentCountry?.message}>
+                <Field label="Current country" required error={errors.currentCountry?.message}>
                   <Select {...register('currentCountry')}>
                     <option value="">Select country</option>
                     {countries.map((c) => (
@@ -264,7 +284,7 @@ function Register() {
                     ))}
                   </Select>
                 </Field>
-                <Field label="Current city" error={errors.currentCity?.message}>
+                <Field label="Current city" required error={errors.currentCity?.message}>
                   <Input {...register('currentCity')} placeholder="City" />
                 </Field>
               </div>
@@ -278,27 +298,42 @@ function Register() {
             </h2>
             <div className="space-y-4">
               <FileField
-                label={documentType === 'TAZKIRA' ? 'Tazkira photo (first page) *' : 'Passport photo (first page) *'}
+                label={documentType === 'TAZKIRA' ? 'Tazkira photo (first page)' : 'Passport photo (first page)'}
+                required
+                error={fileErrors.passport}
                 accept="image/jpeg,image/png,image/webp,application/pdf"
-                onChange={setPassportFile}
+                onChange={(file) => {
+                  setPassportFile(file)
+                  setFileErrors((prev) => ({ ...prev, passport: undefined }))
+                }}
                 fileName={passportFile?.name}
               />
               <FileField
-                label="Your face photo *"
+                label="Your face photo"
+                required
+                error={fileErrors.face}
                 accept="image/jpeg,image/png,image/webp"
-                onChange={setFaceFile}
+                onChange={(file) => {
+                  setFaceFile(file)
+                  setFileErrors((prev) => ({ ...prev, face: undefined }))
+                }}
                 fileName={faceFile?.name}
               />
-              {currentCountry && currentCountry !== 'Afghanistan' && (
+              {visaRequired && (
                 <FileField
                   label="Visa or residency permit in current country"
+                  required
+                  error={fileErrors.visa}
                   accept="image/jpeg,image/png,image/webp,application/pdf"
-                  onChange={setVisaFile}
+                  onChange={(file) => {
+                    setVisaFile(file)
+                    setFileErrors((prev) => ({ ...prev, visa: undefined }))
+                  }}
                   fileName={visaFile?.name}
                 />
               )}
               <p className="text-xs text-brand-muted">
-                * Documents are stored securely and only visible to administrators.
+                Documents are stored securely and only visible to administrators.
               </p>
             </div>
           </div>

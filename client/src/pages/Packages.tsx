@@ -12,6 +12,7 @@ import {
   ChevronRight,
   Loader2,
   Plus,
+  AlertTriangle,
 } from "lucide-react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -78,6 +79,8 @@ function ContactInfo({
   pkg: PackageItem;
   canSeeContact: boolean;
 }) {
+  const { user } = useAuthStore();
+
   if (canSeeContact && (pkg.sender.whatsappNumber || pkg.sender.email)) {
     return (
       <div className="mt-3 space-y-1 border-t border-brand-muted/10 pt-3">
@@ -104,7 +107,7 @@ function ContactInfo({
   return (
     <div className="mt-3 border-t border-brand-muted/10 pt-3">
       <p className="text-xs italic text-brand-muted">
-        {!canSeeContact ? (
+        {!user ? (
           <>
             <Link
               to="/register"
@@ -238,7 +241,9 @@ function Packages() {
   const [totalPages, setTotalPages] = useState(1);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-  const viewerCanSeeContact = Boolean(user && user.hasPosted);
+  const viewerCanSeeContact = Boolean(
+    user && (user.isAdmin || (user.accountStatus === "APPROVED" && user.hasPosted))
+  );
   const [activeFilters, setActiveFilters] = useState({
     originCountry: "",
     destCountry: "",
@@ -296,16 +301,31 @@ function Packages() {
             Browse packages that need a traveler to carry them
           </p>
         </div>
-        {user?.accountStatus === "APPROVED" && (
-          <Link
-            to="/packages/new"
-            className="flex items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
-          >
-            <Plus className="h-4 w-4" />
-            Post a package
-          </Link>
-        )}
+        {user?.accountStatus === "APPROVED" &&
+          (user.hasUnpaidCommission ? (
+            <span
+              title="You have unpaid commission. Please settle it before posting new packages."
+              className="flex cursor-not-allowed items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white opacity-50"
+            >
+              <Plus className="h-4 w-4" />
+              Post a package
+            </span>
+          ) : (
+            <Link
+              to="/packages/new"
+              className="flex items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+            >
+              <Plus className="h-4 w-4" />
+              Post a package
+            </Link>
+          ))}
       </div>
+      {user?.accountStatus === "APPROVED" && user.hasUnpaidCommission && (
+        <div className="mb-6 flex items-center gap-2 rounded-lg border border-brand-danger/30 bg-brand-danger/5 px-4 py-3 text-sm text-brand-danger">
+          <AlertTriangle className="h-4 w-4 shrink-0" />
+          You have unpaid commission. Please settle it before posting new packages.
+        </div>
+      )}
 
       {/* Search form */}
       <form

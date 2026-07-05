@@ -4,7 +4,8 @@ import { z } from "zod";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, AlertTriangle } from "lucide-react";
+import { useAuthStore } from "../store/authStore";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { getData } from "country-list";
@@ -27,16 +28,19 @@ type TripForm = z.infer<typeof tripSchema>;
 function Field({
   label,
   error,
+  required,
   children,
 }: {
   label: string;
   error?: string;
+  required?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <div>
       <label className="mb-1.5 block text-sm font-medium text-brand-primary">
         {label}
+        {required && <span className="text-brand-danger"> *</span>}
       </label>
       {children}
       {error && <p className="mt-1 text-xs text-brand-danger">{error}</p>}
@@ -70,6 +74,8 @@ function Select({
 
 function NewTrip() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const hasUnpaidCommission = Boolean(user?.hasUnpaidCommission);
 
   const {
     register,
@@ -108,6 +114,13 @@ function NewTrip() {
           Post a Trip
         </h1>
 
+        {hasUnpaidCommission && (
+          <div className="mb-6 flex items-center gap-2 rounded-lg border border-brand-danger/30 bg-brand-danger/5 px-4 py-3 text-sm text-brand-danger">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            You have unpaid commission. Please settle it before posting new trips.
+          </div>
+        )}
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Route */}
           <div>
@@ -115,7 +128,7 @@ function NewTrip() {
               Route
             </h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="From country" error={errors.originCountry?.message}>
+              <Field label="From country" required error={errors.originCountry?.message}>
                 <Select {...register("originCountry")}>
                   <option value="">Select country</option>
                   {countries.map((c) => (
@@ -125,10 +138,10 @@ function NewTrip() {
                   ))}
                 </Select>
               </Field>
-              <Field label="From city" error={errors.originCity?.message}>
+              <Field label="From city" required error={errors.originCity?.message}>
                 <Input {...register("originCity")} placeholder="City" />
               </Field>
-              <Field label="To country" error={errors.destCountry?.message}>
+              <Field label="To country" required error={errors.destCountry?.message}>
                 <Select {...register("destCountry")}>
                   <option value="">Select country</option>
                   {countries.map((c) => (
@@ -138,7 +151,7 @@ function NewTrip() {
                   ))}
                 </Select>
               </Field>
-              <Field label="To city" error={errors.destCity?.message}>
+              <Field label="To city" required error={errors.destCity?.message}>
                 <Input {...register("destCity")} placeholder="City" />
               </Field>
             </div>
@@ -152,6 +165,7 @@ function NewTrip() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field
                 label="Departure date"
+                required
                 error={errors.departureDate?.message}
               >
                 <Controller
@@ -209,7 +223,7 @@ function NewTrip() {
 
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || hasUnpaidCommission}
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
           >
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}

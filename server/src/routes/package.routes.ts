@@ -35,7 +35,7 @@ router.post('/', requireAuth, requireApproved, upload.single('goodsPhoto'), asyn
 })
 
 // LIST with filters + pagination
-router.get('/', async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   const page = Math.max(1, Number(req.query.page) || 1)
   const pageSize = 10
   const skip = (page - 1) * pageSize
@@ -51,12 +51,14 @@ router.get('/', async (req, res) => {
     if (endDate) where.createdAt.lte = new Date(String(endDate))
   }
 
+  const viewer = await getViewerContext(req.user?.userId, req.user?.isAdmin)
+
   const [rawPackages, total] = await Promise.all([
     prisma.package.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       include: {
-        sender: { select: { id: true, nickname: true, legalFullName: true } },
+        sender: { select: { id: true, nickname: true, legalFullName: true, whatsappNumber: true, email: true } },
         deliveries: { orderBy: { createdAt: 'desc' }, take: 1, select: { status: true } },
       },
       skip,
@@ -65,9 +67,11 @@ router.get('/', async (req, res) => {
     prisma.package.count({ where }),
   ])
 
-  const packages = rawPackages.map(({ deliveries, ...pkg }) => ({
+  const packages = rawPackages.map(({ deliveries, sender, recipientName, recipientWhatsapp, recipientEmail, ...pkg }) => ({
     ...pkg,
+    ...(viewer.hasFullAccess ? { recipientName, recipientWhatsapp, recipientEmail } : {}),
     deliveryStatus: deliveries[0]?.status ?? null,
+    sender: shapeUserForViewer(sender, viewer),
   }))
 
   res.json({
@@ -133,8 +137,8 @@ router.get('/:id', optionalAuth, async (req, res) => {
   })
   if (!pkg) return res.status(404).json({ error: 'Package not found' })
 
-  const viewer = await getViewerContext(req.user?.userId)
-  const viewerCanSeeContact = viewer.isAuthenticated && (viewer.hasPosted || viewer.userId === pkg.sender.id)
+  const viewer = await getViewerContext(req.user?.userId, req.user?.isAdmin)
+  const viewerCanSeeContact = viewer.hasFullAccess
   const { sender, deliveries, recipientName, recipientWhatsapp, recipientEmail, ...packageData } = pkg
 
   res.json({

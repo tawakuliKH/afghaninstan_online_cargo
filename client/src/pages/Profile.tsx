@@ -20,6 +20,7 @@ import {
   Wallet,
   TrendingDown,
   TrendingUp,
+  Pencil,
 } from "lucide-react";
 import { AgreementModal } from "../components/AgreementModal";
 
@@ -154,12 +155,18 @@ function MyTrips() {
   );
 }
 
+const PACKAGE_DELIVERY_BADGES: Record<string, { label: string; className: string }> = {
+  PROPOSED: { label: "Delivery Proposed", className: "bg-yellow-100 text-yellow-700" },
+  ACCEPTED: { label: "In Transit", className: "bg-blue-100 text-blue-700" },
+  FINALIZED: { label: "Delivered ✓", className: "bg-green-100 text-green-700" },
+};
+
 function MyPackages() {
   const navigate = useNavigate();
   const [packages, setPackages] = useState<any[]>([]);
-  const [proposedPackageIds, setProposedPackageIds] = useState<Set<string>>(
-    new Set()
-  );
+  const [latestDeliveryStatus, setLatestDeliveryStatus] = useState<
+    Record<string, string>
+  >({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -174,10 +181,16 @@ function MyPackages() {
             (p: any) => p.senderId === user?.id
           )
         );
-        const activeIds = deliveriesRes.data.deliveries
-          .filter((d: any) => d.status === "PROPOSED" || d.status === "ACCEPTED")
-          .map((d: any) => d.package?.id ?? d.packageId);
-        setProposedPackageIds(new Set(activeIds));
+        // /deliveries/mine is ordered by createdAt desc, so the first entry
+        // seen per package is that package's latest delivery.
+        const statusByPackage: Record<string, string> = {};
+        for (const d of deliveriesRes.data.deliveries) {
+          const packageId = d.package?.id ?? d.packageId;
+          if (packageId && !(packageId in statusByPackage)) {
+            statusByPackage[packageId] = d.status;
+          }
+        }
+        setLatestDeliveryStatus(statusByPackage);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -229,21 +242,27 @@ function MyPackages() {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              {proposedPackageIds.has(pkg.id) ? (
-                <span className="flex items-center gap-1 rounded-lg bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-700">
-                  <Truck className="h-3 w-3" />
-                  Proposed
-                </span>
-              ) : (
-                <Link
-                  to={`/packages/${pkg.id}/propose`}
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex items-center gap-1 rounded-lg bg-brand-accent/10 px-2 py-1 text-xs font-semibold text-brand-accent hover:bg-brand-accent/20 transition"
-                >
-                  <Truck className="h-3 w-3" />
-                  Propose Delivery
-                </Link>
-              )}
+              {(() => {
+                const status = latestDeliveryStatus[pkg.id];
+                const badge = status ? PACKAGE_DELIVERY_BADGES[status] : undefined;
+                return badge ? (
+                  <span
+                    className={`flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold ${badge.className}`}
+                  >
+                    <Truck className="h-3 w-3" />
+                    {badge.label}
+                  </span>
+                ) : (
+                  <Link
+                    to={`/packages/${pkg.id}/propose`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center gap-1 rounded-lg bg-brand-accent/10 px-2 py-1 text-xs font-semibold text-brand-accent hover:bg-brand-accent/20 transition"
+                  >
+                    <Truck className="h-3 w-3" />
+                    Propose Delivery
+                  </Link>
+                );
+              })()}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -528,6 +547,7 @@ function MyMessages() {
 }
 
 function MyNotifications() {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -549,6 +569,11 @@ function MyNotifications() {
     );
   };
 
+  const handleClick = (n: any) => {
+    if (!n.readAt) markRead(n.id);
+    if (n.link) navigate(n.link);
+  };
+
   if (loading)
     return (
       <div className="flex justify-center py-8">
@@ -568,7 +593,7 @@ function MyNotifications() {
       {notifications.map((n) => (
         <div
           key={n.id}
-          onClick={() => !n.readAt && markRead(n.id)}
+          onClick={() => handleClick(n)}
           className={`cursor-pointer rounded-xl p-4 shadow-sm transition hover:shadow-md ${
             n.readAt
               ? "bg-white"
@@ -591,6 +616,11 @@ function MyNotifications() {
           <p className="mt-1 text-xs text-brand-muted/60">
             {new Date(n.createdAt).toLocaleDateString()}
           </p>
+          {n.type === "DELIVERY_FINALIZED" && n.link && (
+            <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-brand-accent">
+              Leave a Review →
+            </span>
+          )}
         </div>
       ))}
     </div>
@@ -752,32 +782,41 @@ function Profile() {
       )}
 
       <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
-        <div className="flex items-center gap-4">
-          <img
-            src={
-              avatarUrl ||
-              `https://api.dicebear.com/9.x/personas/svg?seed=${user.id}&backgroundColor=e8edf5`
-            }
-            alt={user.nickname}
-            className="h-16 w-16 rounded-full border-2 border-brand-primary/10 object-cover"
-          />
-          <div>
-            <h1 className="text-xl font-bold text-brand-primary">
-              {user.nickname}
-            </h1>
-            <p className="text-sm text-brand-muted">{user.email}</p>
-            <span
-              className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
-                user.accountStatus === "APPROVED"
-                  ? "bg-green-100 text-green-700"
-                  : user.accountStatus === "PENDING"
-                  ? "bg-yellow-100 text-yellow-700"
-                  : "bg-red-100 text-red-700"
-              }`}
-            >
-              {status?.label || user.accountStatus}
-            </span>
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <img
+              src={
+                avatarUrl ||
+                `https://api.dicebear.com/9.x/personas/svg?seed=${user.id}&backgroundColor=e8edf5`
+              }
+              alt={user.nickname}
+              className="h-16 w-16 rounded-full border-2 border-brand-primary/10 object-cover"
+            />
+            <div>
+              <h1 className="text-xl font-bold text-brand-primary">
+                {user.nickname}
+              </h1>
+              <p className="text-sm text-brand-muted">{user.email}</p>
+              <span
+                className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+                  user.accountStatus === "APPROVED"
+                    ? "bg-green-100 text-green-700"
+                    : user.accountStatus === "PENDING"
+                    ? "bg-yellow-100 text-yellow-700"
+                    : "bg-red-100 text-red-700"
+                }`}
+              >
+                {status?.label || user.accountStatus}
+              </span>
+            </div>
           </div>
+          <Link
+            to="/profile/edit"
+            className="flex shrink-0 items-center gap-2 rounded-lg border border-brand-muted/30 px-3 py-2 text-sm font-medium text-brand-primary transition hover:bg-brand-bg"
+          >
+            <Pencil className="h-4 w-4" />
+            <span className="hidden sm:inline">Edit Profile</span>
+          </Link>
         </div>
       </div>
 

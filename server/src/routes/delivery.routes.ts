@@ -162,6 +162,16 @@ router.post('/:id/finalize', requireAuth, requireApproved, async (req, res) => {
       travelerUser.nickname
     )
     await sendEmail(senderUser.email, subject, html)
+
+    await prisma.notification.create({
+      data: {
+        userId: delivery.senderId,
+        type: 'DELIVERY_FINALIZED',
+        title: 'Your package has been delivered!',
+        body: `${travelerUser.nickname} has confirmed delivery of ${pkgData.title}. Please confirm and leave a review.`,
+        link: `/deliveries/${delivery.id}/review`,
+      },
+    })
   }
   res.json({
     delivery: updatedDelivery,
@@ -219,6 +229,7 @@ router.get('/:id', requireAuth, requireApproved, async (req, res) => {
       package: true,
       sender: { select: { id: true, nickname: true, legalFullName: true } },
       traveler: { select: { id: true, nickname: true, legalFullName: true } },
+      review: true,
     },
   })
   if (!delivery) return res.status(404).json({ error: 'Delivery not found' })

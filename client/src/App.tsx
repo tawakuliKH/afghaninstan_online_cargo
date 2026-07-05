@@ -24,6 +24,8 @@ import UserProfile from "./pages/UserProfile";
 import ProposeDelivery from "./pages/ProposeDelivery";
 import PackageDetail from "./pages/PackageDetail";
 import TripDetail from "./pages/TripDetail";
+import EditProfile from "./pages/EditProfile";
+import DeliveryReview from "./pages/DeliveryReview";
 
 function App() {
   const { isLoading } = useAuthStore();
@@ -83,6 +85,14 @@ function App() {
             }
           />
           <Route
+            path="/profile/edit"
+            element={
+              <ProtectedRoute>
+                <EditProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/trips/new"
             element={
               <ProtectedRoute requireApproved>
@@ -103,6 +113,14 @@ function App() {
             element={
               <ProtectedRoute requireApproved>
                 <ProposeDelivery />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/deliveries/:deliveryId/review"
+            element={
+              <ProtectedRoute requireApproved>
+                <DeliveryReview />
               </ProtectedRoute>
             }
           />

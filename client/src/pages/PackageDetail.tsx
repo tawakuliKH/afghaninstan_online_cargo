@@ -83,7 +83,10 @@ function PackageDetail() {
     );
 
   const isSender = user?.id === pkg.sender.id;
-  const canPropose = user?.accountStatus === "APPROVED" && !isSender && !pkg.activeDelivery;
+  const canPropose =
+    user?.accountStatus === "APPROVED" &&
+    isSender &&
+    (!pkg.activeDelivery || pkg.activeDelivery.status === "CANCELLED");
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">

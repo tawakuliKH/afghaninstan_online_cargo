@@ -188,6 +188,7 @@ enum NotificationType {
   DELIVERY_PROPOSED
   DELIVERY_ACCEPTED
   DELIVERY_FINALIZED
+  PROFILE_UPDATED
 }
 
 model Message {

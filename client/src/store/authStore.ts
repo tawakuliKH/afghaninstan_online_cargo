@@ -8,6 +8,13 @@ export interface AuthUser {
   isAdmin: boolean
   accountStatus: string
   hasPosted?: boolean
+  hasUnpaidCommission?: boolean
+  legalFullName?: string
+  whatsappNumber?: string
+  permanentCountry?: string
+  permanentCity?: string
+  currentCountry?: string
+  currentCity?: string
 }
 
 interface AuthState {
@@ -16,6 +23,7 @@ interface AuthState {
   avatarUrl: string | null
   isLoading: boolean
   setAuth: (user: AuthUser, token: string) => void
+  updateUser: (partial: Partial<AuthUser>) => void
   clearAuth: () => void
   setLoading: (loading: boolean) => void
   setAvatarUrl: (url: string | null) => void
@@ -30,6 +38,9 @@ export const useAuthStore = create<AuthState>((set) => ({
   setAuth: (user, token) => {
     localStorage.setItem('accessToken', token)
     set({ user, accessToken: token })
+  },
+  updateUser: (partial) => {
+    set((state) => ({ user: state.user ? { ...state.user, ...partial } : state.user }))
   },
   clearAuth: () => {
     localStorage.removeItem('accessToken')

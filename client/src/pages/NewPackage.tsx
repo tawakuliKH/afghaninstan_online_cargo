@@ -5,8 +5,9 @@ import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
-import { Loader2, ArrowLeft, Upload, CheckCircle } from "lucide-react";
+import { Loader2, ArrowLeft, Upload, CheckCircle, AlertTriangle } from "lucide-react";
 import { getData } from "country-list";
+import { useAuthStore } from "../store/authStore";
 
 const countries = getData().sort((a, b) => a.name.localeCompare(b.name));
 
@@ -28,16 +29,19 @@ type PackageForm = z.infer<typeof packageSchema>;
 function Field({
   label,
   error,
+  required,
   children,
 }: {
   label: string;
   error?: string;
+  required?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <div>
       <label className="mb-1.5 block text-sm font-medium text-brand-primary">
         {label}
+        {required && <span className="text-brand-danger"> *</span>}
       </label>
       {children}
       {error && <p className="mt-1 text-xs text-brand-danger">{error}</p>}
@@ -71,6 +75,8 @@ function Select({
 
 function NewPackage() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const hasUnpaidCommission = Boolean(user?.hasUnpaidCommission);
   const [goodsPhoto, setGoodsPhoto] = useState<File | null>(null);
 
   const {
@@ -113,6 +119,13 @@ function NewPackage() {
           Post a Package
         </h1>
 
+        {hasUnpaidCommission && (
+          <div className="mb-6 flex items-center gap-2 rounded-lg border border-brand-danger/30 bg-brand-danger/5 px-4 py-3 text-sm text-brand-danger">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            You have unpaid commission. Please settle it before posting new packages.
+          </div>
+        )}
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Package details */}
           <div>
@@ -122,6 +135,7 @@ function NewPackage() {
             <div className="space-y-4">
               <Field
                 label="Package title / description"
+                required
                 error={errors.title?.message}
               >
                 <Input
@@ -129,7 +143,7 @@ function NewPackage() {
                   placeholder="e.g. Box of clothes"
                 />
               </Field>
-              <Field label="Weight (kg)" error={errors.weight?.message}>
+              <Field label="Weight (kg)" required error={errors.weight?.message}>
                 <Input
                   {...register("weight")}
                   type="number"
@@ -172,7 +186,7 @@ function NewPackage() {
               Route
             </h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="From country" error={errors.originCountry?.message}>
+              <Field label="From country" required error={errors.originCountry?.message}>
                 <Select {...register("originCountry")}>
                   <option value="">Select country</option>
                   {countries.map((c) => (
@@ -182,10 +196,10 @@ function NewPackage() {
                   ))}
                 </Select>
               </Field>
-              <Field label="From city" error={errors.originCity?.message}>
+              <Field label="From city" required error={errors.originCity?.message}>
                 <Input {...register("originCity")} placeholder="City" />
               </Field>
-              <Field label="To country" error={errors.destCountry?.message}>
+              <Field label="To country" required error={errors.destCountry?.message}>
                 <Select {...register("destCountry")}>
                   <option value="">Select country</option>
                   {countries.map((c) => (
@@ -195,7 +209,7 @@ function NewPackage() {
                   ))}
                 </Select>
               </Field>
-              <Field label="To city" error={errors.destCity?.message}>
+              <Field label="To city" required error={errors.destCity?.message}>
                 <Input {...register("destCity")} placeholder="City" />
               </Field>
             </div>
@@ -209,6 +223,7 @@ function NewPackage() {
             <div className="space-y-4">
               <Field
                 label="Recipient full name"
+                required
                 error={errors.recipientName?.message}
               >
                 <Input
@@ -219,6 +234,7 @@ function NewPackage() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Field
                   label="Recipient WhatsApp"
+                  required
                   error={errors.recipientWhatsapp?.message}
                 >
                   <Input
@@ -228,6 +244,7 @@ function NewPackage() {
                 </Field>
                 <Field
                   label="Recipient email"
+                  required
                   error={errors.recipientEmail?.message}
                 >
                   <Input
@@ -255,7 +272,7 @@ function NewPackage() {
 
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || hasUnpaidCommission}
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
           >
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}

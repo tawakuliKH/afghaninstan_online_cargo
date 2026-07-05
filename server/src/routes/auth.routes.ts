@@ -25,16 +25,140 @@ router.get('/me', requireAuth, async (req, res) => {
       nickname: true,
       accountStatus: true,
       isAdmin: true,
+      legalFullName: true,
+      whatsappNumber: true,
+      permanentCountry: true,
+      permanentCity: true,
+      currentCountry: true,
+      currentCity: true,
     },
   })
   if (!user) return res.status(404).json({ error: 'User not found' })
 
-  const [tripsCount, packagesCount] = await Promise.all([
+  const [tripsCount, packagesCount, unpaidCommissionCount] = await Promise.all([
     prisma.trip.count({ where: { travelerId: user.id } }),
     prisma.package.count({ where: { senderId: user.id } }),
+    prisma.delivery.count({ where: { travelerId: user.id, status: 'FINALIZED', commissionPaid: false } }),
   ])
 
-  res.json({ user: { ...user, hasPosted: tripsCount + packagesCount > 0 } })
+  res.json({
+    user: {
+      ...user,
+      hasPosted: tripsCount + packagesCount > 0,
+      hasUnpaidCommission: unpaidCommissionCount > 0,
+    },
+  })
+})
+
+// Update own profile — editable fields + optional KYC document re-uploads
+router.patch(
+  '/me',
+  requireAuth,
+  upload.fields([
+    { name: 'passportPhoto', maxCount: 1 },
+    { name: 'facePhoto', maxCount: 1 },
+    { name: 'visaResidencyDoc', maxCount: 1 },
+  ]),
+  async (req, res) => {
+    const user = await prisma.user.findUnique({ where: { id: req.user!.userId } })
+    if (!user) return res.status(404).json({ error: 'User not found' })
+
+    const body = req.body as Record<string, string | undefined>
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined
+
+    const data: Record<string, unknown> = {}
+    const editableFields = [
+      'nickname',
+      'whatsappNumber',
+      'permanentCountry',
+      'permanentCity',
+      'currentCountry',
+      'currentCity',
+    ] as const
+    for (const field of editableFields) {
+      if (body[field]) data[field] = body[field]
+    }
+
+    let sensitiveChange = false
+
+    const passportFile = files?.passportPhoto?.[0]
+    if (passportFile) {
+      const ext = passportFile.originalname.split('.').pop()
+      const path = await uploadKycFile(`${user.id}/passport.${ext}`, passportFile.buffer, passportFile.mimetype, true)
+      data.passportPhotoUrl = path
+      sensitiveChange = true
+    }
+
+    const faceFile = files?.facePhoto?.[0]
+    if (faceFile) {
+      const ext = faceFile.originalname.split('.').pop()
+      const path = await uploadKycFile(`${user.id}/face.${ext}`, faceFile.buffer, faceFile.mimetype, true)
+      data.facePhotoUrl = path
+      sensitiveChange = true
+    }
+
+    const visaFile = files?.visaResidencyDoc?.[0]
+    if (visaFile) {
+      const ext = visaFile.originalname.split('.').pop()
+      const path = await uploadKycFile(`${user.id}/visa.${ext}`, visaFile.buffer, visaFile.mimetype, true)
+      data.visaResidencyDocUrl = path
+      sensitiveChange = true
+    }
+
+    if (sensitiveChange) {
+      data.accountStatus = 'PENDING'
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data,
+      select: {
+        id: true,
+        email: true,
+        nickname: true,
+        accountStatus: true,
+        isAdmin: true,
+        legalFullName: true,
+        whatsappNumber: true,
+        permanentCountry: true,
+        permanentCity: true,
+        currentCountry: true,
+        currentCity: true,
+      },
+    })
+
+    if (sensitiveChange) {
+      await prisma.notification.create({
+        data: {
+          userId: user.id,
+          type: 'PROFILE_UPDATED',
+          title: 'Profile pending re-approval',
+          body: 'Your profile has been updated and is pending re-approval.',
+          link: '/profile',
+        },
+      })
+    }
+
+    res.json({ user: updated })
+  }
+)
+
+// Delete own account — soft delete to preserve delivery records for legal audit trail
+router.delete('/me', requireAuth, async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.user!.userId } })
+  if (!user) return res.status(404).json({ error: 'User not found' })
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      accountStatus: 'SUSPENDED',
+      whatsappNumber: '',
+      adminNote: `Account deleted by user on ${new Date().toISOString()}`,
+    },
+  })
+
+  res.clearCookie('refreshToken')
+  res.json({ message: 'Account deleted' })
 })
 
 // Signed URL for the logged-in user's own face photo (private KYC bucket)
@@ -130,8 +254,9 @@ router.get('/users/:id/profile', optionalAuth, async (req, res) => {
   })
   if (!user) return res.status(404).json({ error: 'User not found' })
 
-  const viewer = await getViewerContext(req.user?.userId)
-  const shaped = shapeUserForViewer(user, viewer)
+  const viewer = await getViewerContext(req.user?.userId, req.user?.isAdmin)
+  const { legalFullName, whatsappNumber, email, ...publicStats } = user
+  const shapedContact = shapeUserForViewer(user, viewer)
 
   const reviews = await prisma.review.findMany({
     where: { revieweeId: user.id },
@@ -141,9 +266,9 @@ router.get('/users/:id/profile', optionalAuth, async (req, res) => {
   })
 
   res.json({
-    user: shaped,
+    user: { ...publicStats, ...shapedContact },
     reviews,
-    viewerCanSeeContact: viewer.isAuthenticated && (viewer.hasPosted === true || viewer.userId === user.id)
+    viewerCanSeeContact: viewer.hasFullAccess,
   })
 })
 
@@ -195,9 +320,10 @@ router.post('/login', async (req, res) => {
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days, in milliseconds
   })
 
-  const [tripsCount, packagesCount] = await Promise.all([
+  const [tripsCount, packagesCount, unpaidCommissionCount] = await Promise.all([
     prisma.trip.count({ where: { travelerId: user.id } }),
     prisma.package.count({ where: { senderId: user.id } }),
+    prisma.delivery.count({ where: { travelerId: user.id, status: 'FINALIZED', commissionPaid: false } }),
   ])
 
   res.json({
@@ -209,6 +335,7 @@ router.post('/login', async (req, res) => {
       isAdmin: user.isAdmin,
       accountStatus: user.accountStatus,
       hasPosted: tripsCount + packagesCount > 0,
+      hasUnpaidCommission: unpaidCommissionCount > 0,
     },
   })
 })
@@ -234,6 +361,9 @@ router.post(
 
     if (!passportFile || !faceFile) {
       return res.status(400).json({ error: 'Passport/Tazkira photo and face photo are required' })
+    }
+    if (data.currentCountry !== 'Afghanistan' && !visaFile) {
+      return res.status(400).json({ error: 'A visa or residency document is required for residents outside Afghanistan' })
     }
 
     // Friendly uniqueness checks BEFORE we touch storage or the DB insert
