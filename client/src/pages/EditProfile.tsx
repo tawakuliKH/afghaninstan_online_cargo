@@ -113,7 +113,7 @@ function FileField({
 
 function EditProfile() {
   const navigate = useNavigate();
-  const { updateUser, clearAuth } = useAuthStore();
+  const { updateUser } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -180,18 +180,19 @@ function EditProfile() {
   const handleDeleteAccount = async () => {
     if (
       !confirm(
-        "Are you sure? Your account will be deactivated. Your delivery records are preserved for legal purposes. This cannot be undone."
+        "Are you sure? This will submit a deletion request for admin review. Your account will be set to pending until an admin processes it. This cannot be undone once actioned."
       )
     )
       return;
 
     setDeleting(true);
     try {
-      await api.delete("/auth/me");
-      clearAuth();
-      navigate("/");
+      const res = await api.delete("/auth/me");
+      updateUser({ accountStatus: "PENDING" });
+      toast.success(res.data.message || "Deletion request submitted");
+      navigate("/profile");
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "Failed to delete account");
+      toast.error(err.response?.data?.error || "Failed to submit deletion request");
     } finally {
       setDeleting(false);
     }
@@ -214,9 +215,17 @@ function EditProfile() {
       </Link>
 
       <div className="rounded-2xl bg-white p-8 shadow-lg">
-        <h1 className="mb-6 text-2xl font-bold text-brand-primary">
+        <h1 className="mb-4 text-2xl font-bold text-brand-primary">
           Edit Profile
         </h1>
+
+        <div className="mb-6 flex items-start gap-2 rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm text-orange-700">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>
+            Note: Any profile changes require admin re-approval. Your account
+            will be set to Pending until an admin reviews your changes.
+          </p>
+        </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-4">
@@ -312,7 +321,9 @@ function EditProfile() {
             Danger Zone
           </h2>
           <p className="mb-3 text-xs text-brand-muted">
-            Deleting your account deactivates it. Your delivery records are
+            Deleting your account submits a request for admin review — it does
+            not deactivate immediately. Your account will show as Pending
+            until an admin processes the request. Delivery records are
             preserved for legal purposes.
           </p>
           <button

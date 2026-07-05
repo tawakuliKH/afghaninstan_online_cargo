@@ -26,6 +26,12 @@ interface Traveler {
   legalFullName?: string
   rating: number
   packagesDeliveredCount: number
+  tripCount: number
+  mostRecentTrip: {
+    destCountry: string
+    destCity: string
+    departureDate: string
+  } | null
 }
 
 const proposeSchema = z.object({
@@ -180,8 +186,11 @@ function ProposeDelivery() {
                 <option key={t.id} value={t.id}>
                   {t.nickname}
                   {t.legalFullName ? ` (${t.legalFullName})` : ''}
-                  {t.packagesDeliveredCount > 0 ? ` — ${t.packagesDeliveredCount} delivered` : ''}
-                  {t.rating > 0 ? ` ⭐ ${t.rating.toFixed(1)}` : ''}
+                  {t.mostRecentTrip
+                    ? ` — ${t.mostRecentTrip.destCity}, ${t.mostRecentTrip.destCountry} (departs ${new Date(t.mostRecentTrip.departureDate).toLocaleDateString()})`
+                    : ''}
+                  {t.rating > 0 ? ` · ⭐ ${t.rating.toFixed(1)}` : ''}
+                  {t.packagesDeliveredCount > 0 ? ` · ${t.packagesDeliveredCount} delivered` : ''}
                 </option>
               ))}
             </select>
@@ -205,9 +214,15 @@ function ProposeDelivery() {
                     <p className="text-xs text-brand-muted">{selectedTraveler.legalFullName}</p>
                   )}
                   <div className="mt-1 flex gap-3 text-xs text-brand-muted">
-                    <span>⭐ {selectedTraveler.rating > 0 ? selectedTraveler.rating.toFixed(1) : 'No ratings'}</span>
-                    <span>{selectedTraveler.packagesDeliveredCount} packages delivered</span>
+                    <span>⭐ <span className="font-bold text-brand-primary">{selectedTraveler.rating > 0 ? selectedTraveler.rating.toFixed(1) : 'No ratings'}</span></span>
+                    <span><span className="font-bold text-brand-primary">{selectedTraveler.packagesDeliveredCount}</span> packages delivered</span>
                   </div>
+                  {selectedTraveler.mostRecentTrip && (
+                    <p className="mt-1 text-xs text-brand-muted">
+                      Most recent trip: {selectedTraveler.mostRecentTrip.destCity}, {selectedTraveler.mostRecentTrip.destCountry}
+                      {' '}(departs {new Date(selectedTraveler.mostRecentTrip.departureDate).toLocaleDateString()})
+                    </p>
+                  )}
                 </div>
                 <Link
                   to={`/users/${selectedTraveler.id}`}

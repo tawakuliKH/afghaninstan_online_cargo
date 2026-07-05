@@ -21,8 +21,12 @@ import {
   TrendingDown,
   TrendingUp,
   Pencil,
+  Lock,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { AgreementModal } from "../components/AgreementModal";
+import { WorkflowTimeline, type WorkflowDelivery } from "../components/WorkflowTimeline";
 
 const statusConfig = {
   PENDING: {
@@ -59,6 +63,107 @@ const statusConfig = {
     message: "Your account has been suspended. Please contact support.",
   },
 };
+
+function CollapsibleWorkflow({
+  delivery,
+  viewerId,
+  onAccept,
+  onFinalize,
+}: {
+  delivery: WorkflowDelivery;
+  viewerId?: string;
+  onAccept?: () => void;
+  onFinalize?: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="rounded-xl bg-white p-4 shadow-sm">
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        className="flex w-full items-center justify-between text-left"
+      >
+        <div>
+          <p className="font-medium text-brand-primary">{delivery.package.title}</p>
+          <p className="text-xs text-brand-muted">
+            {delivery.status === "FINALIZED"
+              ? "Delivered"
+              : delivery.status === "CANCELLED"
+              ? "Cancelled"
+              : "In progress"}
+          </p>
+        </div>
+        {expanded ? (
+          <ChevronUp className="h-4 w-4 shrink-0 text-brand-muted" />
+        ) : (
+          <ChevronDown className="h-4 w-4 shrink-0 text-brand-muted" />
+        )}
+      </button>
+      {expanded && (
+        <div className="mt-4 border-t border-brand-muted/10 pt-4">
+          <WorkflowTimeline
+            delivery={delivery}
+            viewerId={viewerId}
+            onAccept={onAccept}
+            onFinalize={onFinalize}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function WorkflowSection({
+  deliveries,
+  viewerId,
+  onAccept,
+  onFinalize,
+}: {
+  deliveries: WorkflowDelivery[];
+  viewerId?: string;
+  onAccept?: (deliveryId: string) => void;
+  onFinalize?: (deliveryId: string) => void;
+}) {
+  if (deliveries.length === 0) return null;
+
+  const active = deliveries.filter((d) => d.status !== "FINALIZED");
+  const completed = deliveries.filter((d) => d.status === "FINALIZED");
+
+  return (
+    <div className="mb-6 space-y-4">
+      {active.length > 0 && (
+        <div>
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-brand-muted">
+            Active Workflows
+          </h3>
+          <div className="space-y-2">
+            {active.map((d) => (
+              <CollapsibleWorkflow
+                key={d.id}
+                delivery={d}
+                viewerId={viewerId}
+                onAccept={onAccept ? () => onAccept(d.id) : undefined}
+                onFinalize={onFinalize ? () => onFinalize(d.id) : undefined}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+      {completed.length > 0 && (
+        <div>
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-brand-muted">
+            Completed
+          </h3>
+          <div className="space-y-2">
+            {completed.map((d) => (
+              <CollapsibleWorkflow key={d.id} delivery={d} viewerId={viewerId} />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function MyTrips() {
   const navigate = useNavigate();
@@ -163,9 +268,10 @@ const PACKAGE_DELIVERY_BADGES: Record<string, { label: string; className: string
 
 function MyPackages() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
   const [packages, setPackages] = useState<any[]>([]);
-  const [latestDeliveryStatus, setLatestDeliveryStatus] = useState<
-    Record<string, string>
+  const [deliveriesByPackage, setDeliveriesByPackage] = useState<
+    Record<string, WorkflowDelivery>
   >({});
   const [loading, setLoading] = useState(true);
 
@@ -182,18 +288,24 @@ function MyPackages() {
           )
         );
         // /deliveries/mine is ordered by createdAt desc, so the first entry
-        // seen per package is that package's latest delivery.
-        const statusByPackage: Record<string, string> = {};
+        // seen per package is that package's latest delivery. Only keep
+        // deliveries for packages this user actually sent (not ones where
+        // they're the traveler on someone else's package).
+        const byPackage: Record<string, WorkflowDelivery> = {};
         for (const d of deliveriesRes.data.deliveries) {
           const packageId = d.package?.id ?? d.packageId;
-          if (packageId && !(packageId in statusByPackage)) {
-            statusByPackage[packageId] = d.status;
+          if (packageId && d.senderId === user?.id && !(packageId in byPackage)) {
+            byPackage[packageId] = d;
           }
         }
-        setLatestDeliveryStatus(statusByPackage);
+        setDeliveriesByPackage(byPackage);
       })
       .finally(() => setLoading(false));
   }, []);
+
+  const latestDeliveryStatus = Object.fromEntries(
+    Object.entries(deliveriesByPackage).map(([id, d]) => [id, d.status])
+  );
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this package?")) return;
@@ -227,7 +339,10 @@ function MyPackages() {
     );
 
   return (
-    <div className="space-y-4">
+    <div>
+      <WorkflowSection deliveries={Object.values(deliveriesByPackage)} viewerId={user?.id} />
+
+      <div className="space-y-4">
       {packages.map((pkg) => (
         <div
           key={pkg.id}
@@ -263,15 +378,24 @@ function MyPackages() {
                   </Link>
                 );
               })()}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete(pkg.id);
-                }}
-                className="text-brand-muted hover:text-brand-danger"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+              {latestDeliveryStatus[pkg.id] === "FINALIZED" ? (
+                <span
+                  title="This package has been delivered and cannot be deleted."
+                  className="text-brand-muted"
+                >
+                  <Lock className="h-4 w-4" />
+                </span>
+              ) : (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(pkg.id);
+                  }}
+                  className="text-brand-muted hover:text-brand-danger"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              )}
             </div>
           </div>
           <div className="mt-2 flex gap-3">
@@ -291,6 +415,7 @@ function MyPackages() {
       >
         + Post another package
       </Link>
+      </div>
     </div>
   );
 }
@@ -398,6 +523,13 @@ function MyDeliveries() {
           role={agreementModal.role}
         />
       )}
+
+      <WorkflowSection
+        deliveries={deliveries}
+        viewerId={user?.id}
+        onAccept={handleAccept}
+        onFinalize={handleFinalize}
+      />
 
       <div className="space-y-4">
         {deliveries.map((d) => {

@@ -37,6 +37,8 @@ interface Trip {
     legalFullName?: string;
     whatsappNumber?: string;
     email?: string;
+    rating: number;
+    packagesDeliveredCount: number;
   };
 }
 
@@ -182,6 +184,11 @@ function TripCard({
             >
               {trip.traveler.legalFullName || trip.traveler.nickname}
             </Link>
+            <p className="text-xs text-brand-muted">
+              ⭐ {trip.traveler.rating > 0 ? trip.traveler.rating.toFixed(1) : "—"}
+              {" · "}
+              {trip.traveler.packagesDeliveredCount} delivered
+            </p>
           </div>
         </div>
       </div>

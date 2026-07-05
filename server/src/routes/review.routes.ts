@@ -62,6 +62,22 @@ router.post('/:deliveryId', requireAuth, requireApproved, async (req, res) => {
     }),
   ])
 
+  const [reviewerUser, pkgData] = await Promise.all([
+    prisma.user.findUnique({ where: { id: req.user!.userId }, select: { nickname: true } }),
+    prisma.package.findUnique({ where: { id: delivery.packageId }, select: { title: true } }),
+  ])
+  if (reviewerUser && pkgData) {
+    await prisma.notification.create({
+      data: {
+        userId: delivery.travelerId,
+        type: 'REVIEW_RECEIVED',
+        title: 'You received a new review!',
+        body: `${reviewerUser.nickname} left you a ${newRating}-star review for ${pkgData.title}.`,
+        link: `/users/${delivery.travelerId}`,
+      },
+    })
+  }
+
   res.status(201).json({ review })
 })
 

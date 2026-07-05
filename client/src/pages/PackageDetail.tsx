@@ -10,6 +10,8 @@ import {
   Weight,
   Loader2,
   Truck,
+  Trash2,
+  Lock,
 } from "lucide-react";
 
 interface PackageData {
@@ -87,6 +89,18 @@ function PackageDetail() {
     user?.accountStatus === "APPROVED" &&
     isSender &&
     (!pkg.activeDelivery || pkg.activeDelivery.status === "CANCELLED");
+  const isFinalized = pkg.activeDelivery?.status === "FINALIZED";
+
+  const handleDelete = async () => {
+    if (!confirm("Delete this package?")) return;
+    try {
+      await api.delete(`/packages/${pkg.id}`);
+      toast.success("Package deleted");
+      navigate("/profile?tab=packages");
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to delete package");
+    }
+  };
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
@@ -105,16 +119,34 @@ function PackageDetail() {
               {pkg.title}
             </h1>
           </div>
-          {pkg.activeDelivery && (
-            <span
-              className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
-                STATUS_LABELS[pkg.activeDelivery.status]?.className ?? ""
-              }`}
-            >
-              {STATUS_LABELS[pkg.activeDelivery.status]?.label ??
-                pkg.activeDelivery.status}
-            </span>
-          )}
+          <div className="flex shrink-0 items-center gap-2">
+            {pkg.activeDelivery && (
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-medium ${
+                  STATUS_LABELS[pkg.activeDelivery.status]?.className ?? ""
+                }`}
+              >
+                {STATUS_LABELS[pkg.activeDelivery.status]?.label ??
+                  pkg.activeDelivery.status}
+              </span>
+            )}
+            {isSender &&
+              (isFinalized ? (
+                <span
+                  title="This package has been delivered and cannot be deleted."
+                  className="text-brand-muted"
+                >
+                  <Lock className="h-4 w-4" />
+                </span>
+              ) : (
+                <button
+                  onClick={handleDelete}
+                  className="text-brand-muted hover:text-brand-danger"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              ))}
+          </div>
         </div>
 
         {pkg.goodsPhotoUrl ? (

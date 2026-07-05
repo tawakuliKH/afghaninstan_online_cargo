@@ -58,7 +58,12 @@ router.get('/', optionalAuth, async (req, res) => {
       where,
       orderBy: { createdAt: 'desc' },
       include: {
-        sender: { select: { id: true, nickname: true, legalFullName: true, whatsappNumber: true, email: true } },
+        sender: {
+          select: {
+            id: true, nickname: true, legalFullName: true, whatsappNumber: true, email: true,
+            rating: true, packagesDeliveredCount: true,
+          },
+        },
         deliveries: { orderBy: { createdAt: 'desc' }, take: 1, select: { status: true } },
       },
       skip,
@@ -67,12 +72,15 @@ router.get('/', optionalAuth, async (req, res) => {
     prisma.package.count({ where }),
   ])
 
-  const packages = rawPackages.map(({ deliveries, sender, recipientName, recipientWhatsapp, recipientEmail, ...pkg }) => ({
-    ...pkg,
-    ...(viewer.hasFullAccess ? { recipientName, recipientWhatsapp, recipientEmail } : {}),
-    deliveryStatus: deliveries[0]?.status ?? null,
-    sender: shapeUserForViewer(sender, viewer),
-  }))
+  const packages = rawPackages.map(({ deliveries, sender, recipientName, recipientWhatsapp, recipientEmail, ...pkg }) => {
+    const { rating, packagesDeliveredCount, ...senderContact } = sender
+    return {
+      ...pkg,
+      ...(viewer.hasFullAccess ? { recipientName, recipientWhatsapp, recipientEmail } : {}),
+      deliveryStatus: deliveries[0]?.status ?? null,
+      sender: { ...shapeUserForViewer(senderContact, viewer), rating, packagesDeliveredCount },
+    }
+  })
 
   res.json({
     packages,
@@ -111,6 +119,13 @@ router.delete('/:id', requireAuth, requireApproved, async (req, res) => {
   const isOwner = pkg.senderId === req.user!.userId
   if (!isOwner && !req.user!.isAdmin) {
     return res.status(403).json({ error: 'You can only delete your own packages' })
+  }
+
+  const finalizedDelivery = await prisma.delivery.findFirst({
+    where: { packageId: pkg.id, status: 'FINALIZED' },
+  })
+  if (finalizedDelivery) {
+    return res.status(403).json({ error: 'Finalized packages cannot be deleted. Contact admin.' })
   }
 
   await prisma.package.delete({ where: { id: req.params.id as string } })

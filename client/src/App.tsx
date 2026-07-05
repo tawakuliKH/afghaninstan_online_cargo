@@ -26,6 +26,8 @@ import PackageDetail from "./pages/PackageDetail";
 import TripDetail from "./pages/TripDetail";
 import EditProfile from "./pages/EditProfile";
 import DeliveryReview from "./pages/DeliveryReview";
+import UserSearch from "./pages/UserSearch";
+import HelpChat from "./components/HelpChat";
 
 function App() {
   const { isLoading } = useAuthStore();
@@ -75,6 +77,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/rules" element={<Rules />} />
+          <Route path="/search" element={<UserSearch />} />
           <Route path="/users/:userId" element={<UserProfile />} />
           <Route
             path="/profile"
@@ -144,6 +147,7 @@ function App() {
         </Routes>
       </main>
       <Footer />
+      <HelpChat />
     </div>
   );
 }

@@ -83,17 +83,27 @@ router.get('/', optionalAuth, async (req, res) => {
     prisma.trip.findMany({
       where,
       orderBy: { departureDate: 'asc' },
-      include: { traveler: { select: { id: true, nickname: true, legalFullName: true, whatsappNumber: true, email: true } } },
+      include: {
+        traveler: {
+          select: {
+            id: true, nickname: true, legalFullName: true, whatsappNumber: true, email: true,
+            rating: true, packagesDeliveredCount: true,
+          },
+        },
+      },
       skip,
       take: pageSize,
     }),
     prisma.trip.count({ where }),
   ])
 
-  const trips = rawTrips.map(({ traveler, ...trip }) => ({
-    ...trip,
-    traveler: shapeUserForViewer(traveler, viewer),
-  }))
+  const trips = rawTrips.map(({ traveler, ...trip }) => {
+    const { rating, packagesDeliveredCount, ...travelerContact } = traveler
+    return {
+      ...trip,
+      traveler: { ...shapeUserForViewer(travelerContact, viewer), rating, packagesDeliveredCount },
+    }
+  })
 
   res.json({
     trips,

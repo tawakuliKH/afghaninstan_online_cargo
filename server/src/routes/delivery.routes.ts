@@ -63,13 +63,23 @@ router.post('/propose', requireAuth, requireApproved, async (req, res) => {
     },
   })
 
-  // Notify traveler by email
+  // Notify traveler — in-app notification + email
   const [senderUser, travelerUser, pkgData] = await Promise.all([
     prisma.user.findUnique({ where: { id: req.user!.userId }, select: { nickname: true } }),
     prisma.user.findUnique({ where: { id: data.travelerId }, select: { email: true, nickname: true } }),
-    prisma.package.findUnique({ where: { id: data.packageId }, select: { title: true } }),
+    prisma.package.findUnique({ where: { id: data.packageId }, select: { title: true, destCity: true, destCountry: true } }),
   ])
   if (senderUser && travelerUser && pkgData) {
+    await prisma.notification.create({
+      data: {
+        userId: data.travelerId,
+        type: 'DELIVERY_PROPOSED',
+        title: 'New delivery request',
+        body: `${senderUser.nickname} wants you to carry ${pkgData.title} to ${pkgData.destCity}, ${pkgData.destCountry}.`,
+        link: '/profile?tab=deliveries',
+      },
+    })
+
     const { subject, html } = emailTemplates.deliveryProposed(
       travelerUser.nickname,
       pkgData.title,
@@ -100,6 +110,7 @@ router.post('/:id/accept', requireAuth, requireApproved, async (req, res) => {
     where: { id: req.params.id as string },
     data: {
       status: 'ACCEPTED',
+      acceptedAt: new Date(),
       estimatedDeliveryDate: parseResult.data.estimatedDeliveryDate,
     },
   })
@@ -110,11 +121,23 @@ router.post('/:id/accept', requireAuth, requireApproved, async (req, res) => {
     prisma.package.findUnique({ where: { id: delivery.packageId }, select: { title: true } }),
   ])
   if (travelerUser && senderUser && pkgData && updated.estimatedDeliveryDate) {
+    const estimatedDateStr = new Date(updated.estimatedDeliveryDate).toLocaleDateString()
+
+    await prisma.notification.create({
+      data: {
+        userId: delivery.senderId,
+        type: 'DELIVERY_ACCEPTED',
+        title: 'Your delivery request was accepted!',
+        body: `${travelerUser.nickname} accepted your delivery for ${pkgData.title}. Estimated delivery: ${estimatedDateStr}.`,
+        link: '/profile?tab=packages',
+      },
+    })
+
     const { subject, html } = emailTemplates.deliveryAccepted(
       senderUser.nickname,
       pkgData.title,
       travelerUser.nickname,
-      new Date(updated.estimatedDeliveryDate).toLocaleDateString()
+      estimatedDateStr
     )
     await sendEmail(senderUser.email, subject, html)
   }
@@ -212,9 +235,10 @@ router.get('/mine', requireAuth, requireApproved, async (req, res) => {
     },
     orderBy: { createdAt: 'desc' },
     include: {
-      package: { select: { id: true, title: true, destCountry: true, destCity: true } },
+      package: { select: { id: true, title: true, destCountry: true, destCity: true, createdAt: true } },
       sender: { select: { id: true, nickname: true } },
       traveler: { select: { id: true, nickname: true } },
+      review: true,
     },
   })
 

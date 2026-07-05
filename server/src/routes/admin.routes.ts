@@ -46,6 +46,7 @@ router.get('/users', async (req, res) => {
         createdAt: true,
         currentCountry: true,
         currentCity: true,
+        adminNote: true,
       },
     }),
     prisma.user.count({ where }),

@@ -198,13 +198,13 @@ function UserProfile() {
             <div className="flex justify-center">
               <StarRating rating={profileUser.rating} />
             </div>
-            <p className="mt-1 text-lg font-bold text-brand-primary">
+            <p className="mt-1 text-3xl font-bold text-brand-primary">
               {profileUser.rating > 0 ? profileUser.rating.toFixed(1) : "—"}
             </p>
             <p className="text-xs text-brand-muted">Rating</p>
           </div>
           <div className="text-center">
-            <p className="text-lg font-bold text-brand-primary">
+            <p className="text-3xl font-bold text-brand-primary">
               {profileUser.reviewCount}
             </p>
             <p className="text-xs text-brand-muted">Reviews</p>
@@ -213,10 +213,10 @@ function UserProfile() {
             <div className="flex justify-center">
               <Package className="h-5 w-5 text-brand-accent" />
             </div>
-            <p className="text-lg font-bold text-brand-primary">
+            <p className="text-3xl font-bold text-brand-primary">
               {profileUser.packagesDeliveredCount}
             </p>
-            <p className="text-xs text-brand-muted">Delivered</p>
+            <p className="text-xs text-brand-muted">Packages Delivered</p>
           </div>
         </div>
 

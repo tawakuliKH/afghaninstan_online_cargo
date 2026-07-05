@@ -154,6 +154,7 @@ model Delivery {
   paymentLocation       PaymentLocation
   status                DeliveryStatus  @default(PROPOSED)
   estimatedDeliveryDate DateTime?
+  acceptedAt            DateTime?
   finalizedAt           DateTime?
   commissionAmount      Float?
   commissionPaid        Boolean         @default(false)
@@ -189,6 +190,7 @@ enum NotificationType {
   DELIVERY_ACCEPTED
   DELIVERY_FINALIZED
   PROFILE_UPDATED
+  REVIEW_RECEIVED
 }
 
 model Message {

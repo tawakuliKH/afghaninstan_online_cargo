@@ -79,14 +79,11 @@ router.patch(
       if (body[field]) data[field] = body[field]
     }
 
-    let sensitiveChange = false
-
     const passportFile = files?.passportPhoto?.[0]
     if (passportFile) {
       const ext = passportFile.originalname.split('.').pop()
       const path = await uploadKycFile(`${user.id}/passport.${ext}`, passportFile.buffer, passportFile.mimetype, true)
       data.passportPhotoUrl = path
-      sensitiveChange = true
     }
 
     const faceFile = files?.facePhoto?.[0]
@@ -94,7 +91,6 @@ router.patch(
       const ext = faceFile.originalname.split('.').pop()
       const path = await uploadKycFile(`${user.id}/face.${ext}`, faceFile.buffer, faceFile.mimetype, true)
       data.facePhotoUrl = path
-      sensitiveChange = true
     }
 
     const visaFile = files?.visaResidencyDoc?.[0]
@@ -102,10 +98,11 @@ router.patch(
       const ext = visaFile.originalname.split('.').pop()
       const path = await uploadKycFile(`${user.id}/visa.${ext}`, visaFile.buffer, visaFile.mimetype, true)
       data.visaResidencyDocUrl = path
-      sensitiveChange = true
     }
 
-    if (sensitiveChange) {
+    // ANY profile edit sends the account back to PENDING for admin re-approval
+    const hasChanges = Object.keys(data).length > 0
+    if (hasChanges) {
       data.accountStatus = 'PENDING'
     }
 
@@ -127,23 +124,26 @@ router.patch(
       },
     })
 
-    if (sensitiveChange) {
-      await prisma.notification.create({
-        data: {
-          userId: user.id,
-          type: 'PROFILE_UPDATED',
-          title: 'Profile pending re-approval',
-          body: 'Your profile has been updated and is pending re-approval.',
-          link: '/profile',
-        },
-      })
+    if (hasChanges) {
+      const admins = await prisma.user.findMany({ where: { isAdmin: true }, select: { id: true } })
+      if (admins.length > 0) {
+        await prisma.notification.createMany({
+          data: admins.map((admin) => ({
+            userId: admin.id,
+            type: 'PROFILE_UPDATED' as const,
+            title: 'Profile update pending review',
+            body: `${user.nickname} updated their profile and requires re-approval.`,
+            link: '/admin?tab=pending',
+          })),
+        })
+      }
     }
 
     res.json({ user: updated })
   }
 )
 
-// Delete own account — soft delete to preserve delivery records for legal audit trail
+// Request own account deletion — does not deactivate immediately; admin must action it
 router.delete('/me', requireAuth, async (req, res) => {
   const user = await prisma.user.findUnique({ where: { id: req.user!.userId } })
   if (!user) return res.status(404).json({ error: 'User not found' })
@@ -151,14 +151,25 @@ router.delete('/me', requireAuth, async (req, res) => {
   await prisma.user.update({
     where: { id: user.id },
     data: {
-      accountStatus: 'SUSPENDED',
-      whatsappNumber: '',
-      adminNote: `Account deleted by user on ${new Date().toISOString()}`,
+      accountStatus: 'PENDING',
+      adminNote: `DELETION_REQUESTED: User requested account deletion on ${new Date().toISOString()}.`,
     },
   })
 
-  res.clearCookie('refreshToken')
-  res.json({ message: 'Account deleted' })
+  const admins = await prisma.user.findMany({ where: { isAdmin: true }, select: { id: true } })
+  if (admins.length > 0) {
+    await prisma.notification.createMany({
+      data: admins.map((admin) => ({
+        userId: admin.id,
+        type: 'PROFILE_UPDATED' as const,
+        title: 'Account deletion request',
+        body: `${user.nickname} has requested account deletion. Please review and action.`,
+        link: '/admin?tab=pending',
+      })),
+    })
+  }
+
+  res.json({ message: 'Your deletion request has been submitted. Admin will process it shortly.' })
 })
 
 // Signed URL for the logged-in user's own face photo (private KYC bucket)
@@ -232,6 +243,51 @@ router.get('/me/wallet', requireAuth, async (req, res) => {
     balance: totalEarned - totalCommissionOwed,
     transactions,
   })
+})
+
+// Public user search — no auth required
+router.get('/users/search', optionalAuth, async (req, res) => {
+  const q = String(req.query.q || '').trim()
+  if (q.length < 2) {
+    return res.json({ users: [] })
+  }
+
+  const viewer = await getViewerContext(req.user?.userId, req.user?.isAdmin)
+
+  const users = await prisma.user.findMany({
+    where: {
+      accountStatus: 'APPROVED',
+      OR: [
+        { nickname: { contains: q, mode: 'insensitive' } },
+        { legalFullName: { contains: q, mode: 'insensitive' } },
+      ],
+    },
+    select: {
+      id: true,
+      nickname: true,
+      legalFullName: true,
+      whatsappNumber: true,
+      email: true,
+      rating: true,
+      packagesDeliveredCount: true,
+      currentCity: true,
+      currentCountry: true,
+      createdAt: true,
+    },
+    take: 20,
+    orderBy: { nickname: 'asc' },
+  })
+
+  const shaped = users.map(({ rating, packagesDeliveredCount, currentCity, currentCountry, createdAt, ...contact }) => ({
+    ...shapeUserForViewer(contact, viewer),
+    rating,
+    packagesDeliveredCount,
+    currentCity,
+    currentCountry,
+    createdAt,
+  }))
+
+  res.json({ users: shaped })
 })
 
 router.get('/users/:id/profile', optionalAuth, async (req, res) => {
@@ -429,19 +485,37 @@ router.post(
   }
 )
 
+// Travelers eligible to be proposed a delivery — approved users who have posted at least one trip
 router.get('/users', requireAuth, requireApproved, async (req, res) => {
   const users = await prisma.user.findMany({
-    where: { accountStatus: 'APPROVED' },
+    where: {
+      accountStatus: 'APPROVED',
+      trips: { some: {} },
+      id: { not: req.user!.userId },
+    },
     select: {
       id: true,
       nickname: true,
       legalFullName: true,
       rating: true,
       packagesDeliveredCount: true,
+      _count: { select: { trips: true } },
+      trips: {
+        orderBy: { createdAt: 'desc' },
+        take: 1,
+        select: { destCountry: true, destCity: true, departureDate: true },
+      },
     },
     orderBy: { nickname: 'asc' },
   })
-  res.json({ users })
+
+  const shaped = users.map(({ _count, trips, ...u }) => ({
+    ...u,
+    tripCount: _count.trips,
+    mostRecentTrip: trips[0] ?? null,
+  }))
+
+  res.json({ users: shaped })
 })
 
 export default router

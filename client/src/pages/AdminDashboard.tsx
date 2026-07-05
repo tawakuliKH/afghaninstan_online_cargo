@@ -33,6 +33,7 @@ interface AdminUser {
   currentCity: string
   accountStatus: string
   createdAt: string
+  adminNote?: string | null
 }
 
 interface AdminPackage {
@@ -479,7 +480,14 @@ function PendingUsers() {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium text-brand-primary">{u.legalFullName}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-brand-primary">{u.legalFullName}</p>
+                      {u.adminNote?.includes('DELETION_REQUESTED') && (
+                        <span className="rounded-full bg-brand-danger/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-brand-danger">
+                          Deletion Requested
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-brand-muted">{u.email}</p>
                     <p className="text-xs text-brand-muted">
                       {u.documentType}: {u.documentNumber}
@@ -576,6 +584,16 @@ function PendingUsers() {
 
           {/* Actions */}
           <div className="space-y-3">
+            {selectedUser.adminNote?.includes('DELETION_REQUESTED') && (
+              <button
+                onClick={() => handleSuspend(selectedUser.id)}
+                disabled={actionLoading}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-danger px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete Account (per user request)
+              </button>
+            )}
             <><div className="flex gap-2">
                   <button
                       onClick={() => handleApprove(selectedUser.id)}

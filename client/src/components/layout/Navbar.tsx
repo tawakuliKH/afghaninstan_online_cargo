@@ -11,6 +11,7 @@ import {
   Menu,
   X,
   ShieldCheck,
+  Search,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -91,6 +92,15 @@ export function Navbar() {
 
         {/* Right side controls */}
         <div className="hidden items-center gap-3 md:flex">
+          {/* Search */}
+          <Link
+            to="/search"
+            className="text-white/80 transition hover:text-brand-accent"
+            aria-label="Search users"
+          >
+            <Search className="h-5 w-5" />
+          </Link>
+
           {/* Language switcher */}
           <button
             onClick={() =>
@@ -197,6 +207,13 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
+            <Link
+              to="/search"
+              onClick={() => setMobileOpen(false)}
+              className="text-sm font-medium text-white/80 transition hover:text-brand-accent"
+            >
+              Search Users
+            </Link>
             <hr className="border-white/10" />
             {user ? (
               <>

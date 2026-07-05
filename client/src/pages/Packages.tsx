@@ -38,6 +38,8 @@ interface PackageItem {
     legalFullName?: string;
     whatsappNumber?: string;
     email?: string;
+    rating: number;
+    packagesDeliveredCount: number;
   };
 }
 
@@ -221,6 +223,11 @@ function PackageCard({
             >
               {pkg.sender.legalFullName || pkg.sender.nickname}
             </Link>
+            <p className="text-xs text-brand-muted">
+              ⭐ {pkg.sender.rating > 0 ? pkg.sender.rating.toFixed(1) : "—"}
+              {" · "}
+              {pkg.sender.packagesDeliveredCount} delivered
+            </p>
           </div>
         </div>
         <p className="text-xs text-brand-muted">
