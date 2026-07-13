@@ -82,21 +82,22 @@ router.patch(
     const passportFile = files?.passportPhoto?.[0]
     if (passportFile) {
       const ext = passportFile.originalname.split('.').pop()
-      const path = await uploadKycFile(`${user.id}/passport.${ext}`, passportFile.buffer, passportFile.mimetype, true)
+     const path = await uploadKycFile(`${user.id}/passport.${ext}`, passportFile.buffer, passportFile.mimetype)
       data.passportPhotoUrl = path
     }
 
     const faceFile = files?.facePhoto?.[0]
     if (faceFile) {
       const ext = faceFile.originalname.split('.').pop()
-      const path = await uploadKycFile(`${user.id}/face.${ext}`, faceFile.buffer, faceFile.mimetype, true)
+      const path = await uploadKycFile(`${user.id}/face.${ext}`, faceFile.buffer, faceFile.mimetype)
+
       data.facePhotoUrl = path
     }
 
     const visaFile = files?.visaResidencyDoc?.[0]
     if (visaFile) {
       const ext = visaFile.originalname.split('.').pop()
-      const path = await uploadKycFile(`${user.id}/visa.${ext}`, visaFile.buffer, visaFile.mimetype, true)
+      const path = await uploadKycFile(`${user.id}/visa.${ext}`, visaFile.buffer, visaFile.mimetype)
       data.visaResidencyDocUrl = path
     }
 
