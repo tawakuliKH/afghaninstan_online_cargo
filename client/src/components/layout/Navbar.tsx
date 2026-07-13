@@ -6,7 +6,6 @@ import {
   Package,
   Globe,
   LogOut,
-  User,
   Bell,
   Menu,
   X,
