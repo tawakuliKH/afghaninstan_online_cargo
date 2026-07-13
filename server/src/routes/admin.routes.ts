@@ -4,6 +4,7 @@ import { requireAuth, requireAdmin } from '../middleware/auth'
 import { supabase } from '../lib/supabase'
 import { z } from 'zod'
 import { sendEmail, emailTemplates } from '../lib/email'
+import { getKycSignedUrl } from '../lib/storage'
 
 const router = Router()
 
@@ -64,17 +65,14 @@ router.get('/users/:id', async (req, res) => {
 
   // Generate signed URLs for private KYC documents (5 minute expiry)
   const signedUrls: Record<string, string> = {}
-  const filesToSign = [
-    { key: 'passportPhotoUrl', path: user.passportPhotoUrl },
-    { key: 'facePhotoUrl', path: user.facePhotoUrl },
-    ...(user.visaResidencyDocUrl ? [{ key: 'visaResidencyDocUrl', path: user.visaResidencyDocUrl }] : []),
-  ]
-
-  for (const file of filesToSign) {
-    const { data, error } = await supabase.storage
-      .from('kyc-documents')
-      .createSignedUrl(file.path, 300) // 300 seconds = 5 minutes
-    if (!error && data) signedUrls[file.key] = data.signedUrl
+  try {
+    signedUrls.passportPhotoUrl = await getKycSignedUrl(user.passportPhotoUrl)
+    signedUrls.facePhotoUrl = await getKycSignedUrl(user.facePhotoUrl)
+    if (user.visaResidencyDocUrl) {
+      signedUrls.visaResidencyDocUrl = await getKycSignedUrl(user.visaResidencyDocUrl)
+    }
+  } catch (err) {
+    console.error('Failed to generate signed URLs:', err)
   }
 
   res.json({ user: { ...user, ...signedUrls } })
@@ -135,17 +133,17 @@ router.patch('/users/:id/reject', async (req, res) => {
     },
   })
   // After prisma.notification.create in reject route:
-const rejectedUser = await prisma.user.findUnique({
-  where: { id: user.id },
-  select: { email: true, nickname: true }
-})
-if (rejectedUser) {
-  const { subject, html } = emailTemplates.accountRejected(
-    rejectedUser.nickname,
-    parseResult.data.reason
-  )
-  await sendEmail(rejectedUser.email, subject, html)
-}
+  const rejectedUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { email: true, nickname: true }
+  })
+  if (rejectedUser) {
+    const { subject, html } = emailTemplates.accountRejected(
+      rejectedUser.nickname,
+      parseResult.data.reason
+    )
+    await sendEmail(rejectedUser.email, subject, html)
+  }
 
   res.json({ user })
 })

@@ -173,20 +173,21 @@ router.delete('/me', requireAuth, async (req, res) => {
 })
 
 // Signed URL for the logged-in user's own face photo (private KYC bucket)
+import { getKycSignedUrl } from '../lib/storage'
+
 router.get('/me/avatar', requireAuth, async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.user!.userId },
     select: { facePhotoUrl: true },
   })
-  if (!user) return res.status(404).json({ error: 'User not found' })
+  if (!user?.facePhotoUrl) return res.json({ signedUrl: null })
 
-  const { data, error } = await supabase.storage
-    .from('kyc-documents')
-    .createSignedUrl(user.facePhotoUrl, 300)
-
-  if (error || !data) return res.json({ signedUrl: null })
-
-  res.json({ signedUrl: data.signedUrl })
+  try {
+    const signedUrl = await getKycSignedUrl(user.facePhotoUrl)
+    res.json({ signedUrl })
+  } catch {
+    res.json({ signedUrl: null })
+  }
 })
 
 // Wallet — earnings and commission owed/paid for deliveries where this user was the traveler
