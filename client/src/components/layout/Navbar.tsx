@@ -23,7 +23,7 @@ export function Navbar() {
   const [unreadTotal, setUnreadTotal] = useState(0);
 
   useEffect(() => {
-    if (!user) {
+    if (!user || user.accountStatus !== "APPROVED") {
       setUnreadTotal(0);
       return;
     }
@@ -229,8 +229,16 @@ export function Navbar() {
                 <Link
                   to="/profile"
                   onClick={() => setMobileOpen(false)}
-                  className="text-sm text-white/80"
+                  className="flex items-center gap-2 text-sm text-white/80"
                 >
+                  <img
+                    src={
+                      avatarUrl ||
+                      `https://api.dicebear.com/9.x/personas/svg?seed=${user.id}&backgroundColor=e8edf5`
+                    }
+                    alt={user.nickname}
+                    className="h-6 w-6 rounded-full object-cover"
+                  />
                   {t("nav.profile")} — {user.nickname}
                 </Link>
                 <button
