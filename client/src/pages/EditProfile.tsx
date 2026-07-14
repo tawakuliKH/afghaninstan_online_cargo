@@ -14,6 +14,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { ConfirmModal } from "../components/ConfirmModal";
+import SEO from "../components/SEO";
 
 const countries = getData().sort((a, b) => a.name.localeCompare(b.name));
 
