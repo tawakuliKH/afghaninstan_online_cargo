@@ -45,7 +45,27 @@ type RegisterForm = z.infer<typeof registerSchema>;
 
 const countries = getData().sort((a, b) => a.name.localeCompare(b.name));
 
-// Reusable field wrapper
+// ── Structured Data ─────────────────────────────────────────
+
+const REGISTER_STRUCTURED_DATA = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  "name": "Create Account — Afghanistan Online Cargo",
+  "alternateName": "ثبت‌نام — کارگو آنلاین افغانستان",
+  "description": "Register on Afghanistan Online Cargo with your verified identity documents. Join thousands of Afghan senders and travelers for safe cross-border package coordination.",
+  "url": "https://afghancargo.online/register",
+  "inLanguage": ["en", "fa"],
+  "breadcrumb": {
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://afghancargo.online" },
+      { "@type": "ListItem", "position": 2, "name": "Register", "item": "https://afghancargo.online/register" }
+    ]
+  }
+}
+
+// ── Reusable components ──────────────────────────────────────
+
 function Field({
   label,
   error,
@@ -69,7 +89,6 @@ function Field({
   );
 }
 
-// Reusable text input
 function Input({
   className = "",
   ...props
@@ -82,7 +101,6 @@ function Input({
   );
 }
 
-// Reusable select
 function Select({
   className = "",
   ...props
@@ -95,7 +113,6 @@ function Select({
   );
 }
 
-// File upload button
 function FileField({
   label,
   accept,
@@ -144,6 +161,8 @@ function FileField({
   );
 }
 
+// ── Main Register page ───────────────────────────────────────
+
 function Register() {
   useTranslation();
   const navigate = useNavigate();
@@ -163,7 +182,7 @@ function Register() {
     watch,
     formState: { errors },
   } = useForm<RegisterForm>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(registerSchema) as any,
     defaultValues: { documentType: "PASSPORT" },
   });
 
@@ -173,8 +192,11 @@ function Register() {
     Boolean(currentCountry) && currentCountry !== "Afghanistan";
 
   const onSubmit = async (data: RegisterForm) => {
-    const newFileErrors: { passport?: string; face?: string; visa?: string } =
-      {};
+    const newFileErrors: {
+      passport?: string;
+      face?: string;
+      visa?: string;
+    } = {};
     if (!passportFile)
       newFileErrors.passport =
         documentType === "TAZKIRA"
@@ -204,7 +226,7 @@ function Register() {
       });
 
       toast.success(
-        "Registration submitted! Your account is pending admin approval.",
+        "Registration submitted! Your account is pending admin approval."
       );
       navigate("/login");
     } catch (err: any) {
@@ -219,21 +241,45 @@ function Register() {
   return (
     <div className="mx-auto max-w-2xl px-4 py-12">
       <SEO
-        titleEn="Create Your Account"
-        titleFa="حساب خود را بسازید"
-        descriptionEn="Register with your identity documents to start sending or carrying packages on Afghanistan Online Cargo."
-        descriptionFa="با اسناد هویتی خود ثبت‌نام کنید تا ارسال یا حمل بسته‌ها را در کارگو آنلاین افغانستان آغاز کنید."
+        titleEn="Join Afghanistan Online Cargo — Create Your Verified Account"
+        titleFa="به کارگو آنلاین افغانستان بپیوندید — حساب تأیید شده خود را بسازید"
+        descriptionEn="Register on Afghanistan Online Cargo with your passport or Tazkira. Join verified Afghan senders and travelers for safe, KYC-verified cross-border package coordination. Free to join."
+        descriptionFa="در کارگو آنلاین افغانستان با پاسپورت یا تذکره خود ثبت‌نام کنید. به فرستندگان و مسافران افغانی تأیید شده برای هماهنگی امن بسته‌های بین‌المللی بپیوندید. ثبت‌نام رایگان است."
+        keywordsEn="register Afghanistan cargo, join Afghan delivery, create account Afghan cargo, Afghan traveler register, Afghan sender register, KYC verification Afghanistan, join Afghan package platform, ثبت نام کارگو افغانستان"
+        keywordsFa="ثبت نام کارگو افغانستان، پیوستن به تحویل افغانی، ساختن حساب کارگو افغانی، ثبت نام مسافر افغانی، ثبت نام فرستنده افغانی، تأیید هویت افغانستان، پیوستن به پلتفرم بسته افغانی"
         path="/register"
+        noIndex={false}
+        structuredData={REGISTER_STRUCTURED_DATA}
       />
+
       <div className="rounded-2xl bg-white p-8 shadow-lg">
         {/* Header */}
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-bold text-brand-primary">
             Create your account
           </h1>
-          <p className="mt-1 text-sm text-brand-muted">
+          <p className="mt-0.5 text-xs font-medium text-brand-accent">
+            حساب خود را بسازید
+          </p>
+          <p className="mt-2 text-sm text-brand-muted">
             All information must match your identity document exactly.
           </p>
+          <p className="mt-0.5 text-xs text-brand-muted/70">
+            تمام اطلاعات باید دقیقاً با سند هویتی شما مطابقت داشته باشد.
+          </p>
+
+          {/* Trust indicators */}
+          <div className="mt-4 flex flex-wrap justify-center gap-3">
+            <span className="flex items-center gap-1 rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700">
+              🔒 Free to join
+            </span>
+            <span className="flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+              🛡️ KYC Verified
+            </span>
+            <span className="flex items-center gap-1 rounded-full bg-brand-primary/5 px-3 py-1 text-xs font-medium text-brand-primary">
+              ✅ Admin reviewed
+            </span>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -252,6 +298,7 @@ function Register() {
                   {...register("email")}
                   type="email"
                   placeholder="you@example.com"
+                  autoComplete="email"
                 />
               </Field>
               <Field
@@ -263,6 +310,7 @@ function Register() {
                   {...register("confirmEmail")}
                   type="email"
                   placeholder="Re-enter your email"
+                  autoComplete="email"
                 />
               </Field>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -275,6 +323,7 @@ function Register() {
                     {...register("password")}
                     type="password"
                     placeholder="Min. 8 characters"
+                    autoComplete="new-password"
                   />
                 </Field>
                 <Field
@@ -286,6 +335,7 @@ function Register() {
                     {...register("confirmPassword")}
                     type="password"
                     placeholder="Repeat password"
+                    autoComplete="new-password"
                   />
                 </Field>
               </div>
@@ -306,6 +356,7 @@ function Register() {
                 <Input
                   {...register("legalFullName")}
                   placeholder="Exactly as on your ID"
+                  autoComplete="name"
                 />
               </Field>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -317,6 +368,7 @@ function Register() {
                   <Input
                     {...register("nickname")}
                     placeholder="Your public name"
+                    autoComplete="username"
                   />
                 </Field>
                 <Field
@@ -324,7 +376,11 @@ function Register() {
                   required
                   error={errors.dateOfBirth?.message}
                 >
-                  <Input {...register("dateOfBirth")} type="date" />
+                  <Input
+                    {...register("dateOfBirth")}
+                    type="date"
+                    autoComplete="bday"
+                  />
                 </Field>
               </div>
               <Field
@@ -335,6 +391,7 @@ function Register() {
                 <Input
                   {...register("whatsappNumber")}
                   placeholder="+1 234 567 8900"
+                  autoComplete="tel"
                 />
               </Field>
             </div>
@@ -352,8 +409,10 @@ function Register() {
                 error={errors.documentType?.message}
               >
                 <Select {...register("documentType")}>
-                  <option value="PASSPORT">Passport</option>
-                  <option value="TAZKIRA">Afghan Tazkira (National ID)</option>
+                  <option value="PASSPORT">Passport — پاسپورت</option>
+                  <option value="TAZKIRA">
+                    Afghan Tazkira (National ID) — تذکره افغانی
+                  </option>
                 </Select>
               </Field>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -390,7 +449,7 @@ function Register() {
           {/* Section: Residence */}
           <div>
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-brand-muted">
-              Residence
+              Residence — محل اقامت
             </h2>
             <div className="space-y-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -413,7 +472,11 @@ function Register() {
                   required
                   error={errors.permanentCity?.message}
                 >
-                  <Input {...register("permanentCity")} placeholder="City" />
+                  <Input
+                    {...register("permanentCity")}
+                    placeholder="City"
+                    autoComplete="address-level2"
+                  />
                 </Field>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -436,7 +499,11 @@ function Register() {
                   required
                   error={errors.currentCity?.message}
                 >
-                  <Input {...register("currentCity")} placeholder="City" />
+                  <Input
+                    {...register("currentCity")}
+                    placeholder="City"
+                    autoComplete="address-level2"
+                  />
                 </Field>
               </div>
             </div>
@@ -445,14 +512,14 @@ function Register() {
           {/* Section: Documents upload */}
           <div>
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-brand-muted">
-              Document Uploads
+              Document Uploads — بارگذاری اسناد
             </h2>
             <div className="space-y-4">
               <FileField
                 label={
                   documentType === "TAZKIRA"
-                    ? "Tazkira photo (first page)"
-                    : "Passport photo (first page)"
+                    ? "Tazkira photo (first page) — عکس تذکره (صفحه اول)"
+                    : "Passport photo (first page) — عکس پاسپورت (صفحه اول)"
                 }
                 required
                 error={fileErrors.passport}
@@ -463,8 +530,9 @@ function Register() {
                 }}
                 fileName={passportFile?.name}
               />
+
               <FileField
-                label="Your face photo"
+                label="Your face photo — عکس چهره شما"
                 required
                 error={fileErrors.face}
                 accept="image/jpeg,image/png,image/webp"
@@ -474,14 +542,23 @@ function Register() {
                 }}
                 fileName={faceFile?.name}
               />
-              <p className="mt-1 text-xs italic text-brand-muted">
-                Your face must be clearly visible, well-lit, and directly
-                comparable to your identity document photo. Blurry, masked, or
-                obscured photos will result in rejection.
-              </p>
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                <p className="text-xs text-amber-700 leading-relaxed">
+                  <strong>📸 Photo requirements:</strong> Your face must be
+                  clearly visible, well-lit, and directly comparable to your
+                  identity document photo. Blurry, masked, or obscured photos
+                  will result in rejection.
+                </p>
+                <p className="mt-1 text-xs text-amber-600/80 leading-relaxed">
+                  چهره شما باید به وضوح قابل مشاهده، با نور کافی و مستقیماً
+                  قابل مقایسه با عکس سند هویتی شما باشد. عکس‌های تاریک، با
+                  ماسک یا مبهم منجر به رد شدن درخواست می‌شوند.
+                </p>
+              </div>
+
               {visaRequired && (
                 <FileField
-                  label="Visa or residency permit in current country"
+                  label="Visa or residency permit — ویزا یا اجازه اقامت"
                   required
                   error={fileErrors.visa}
                   accept="image/jpeg,image/png,image/webp,application/pdf"
@@ -492,10 +569,20 @@ function Register() {
                   fileName={visaFile?.name}
                 />
               )}
-              <p className="text-xs text-brand-muted">
-                Documents are stored securely and only visible to
-                administrators.
-              </p>
+
+              <div className="rounded-lg border border-brand-secondary/20 bg-brand-secondary/5 p-3">
+                <p className="text-xs text-brand-muted leading-relaxed">
+                  🔒 <strong>Your documents are safe.</strong> All uploaded
+                  files are stored in private encrypted storage and are only
+                  accessible to platform administrators for identity
+                  verification. They are never shared with other users.
+                </p>
+                <p className="mt-1 text-xs text-brand-muted/70 leading-relaxed">
+                  تمام فایل‌های آپلود شده در حافظه خصوصی رمزگذاری شده ذخیره
+                  می‌شوند و فقط برای مدیران پلتفرم برای تأیید هویت قابل دسترسی
+                  هستند. آن‌ها هرگز با سایر کاربران به اشتراک گذاشته نمی‌شوند.
+                </p>
+              </div>
             </div>
           </div>
 
@@ -506,7 +593,7 @@ function Register() {
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
           >
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            Submit registration
+            Submit registration — ثبت‌نام
           </button>
 
           <p className="text-center text-sm text-brand-muted">
@@ -515,9 +602,23 @@ function Register() {
               to="/login"
               className="font-medium text-brand-accent hover:underline"
             >
-              Sign in
+              Sign in — ورود
             </Link>
           </p>
+
+          {/* Bottom SEO trust text */}
+          <div className="border-t border-brand-muted/10 pt-4 text-center">
+            <p className="text-xs text-brand-muted/60 leading-relaxed">
+              Afghanistan Online Cargo is free to join. Accounts are manually
+              reviewed within 1-2 business days. You'll receive an email
+              notification when your account is approved.
+            </p>
+            <p className="mt-1 text-xs text-brand-muted/50 leading-relaxed">
+              پیوستن به کارگو آنلاین افغانستان رایگان است. حساب‌ها ظرف ۱-۲
+              روز کاری به صورت دستی بررسی می‌شوند. پس از تأیید حساب، یک
+              اعلان ایمیل دریافت خواهید کرد.
+            </p>
+          </div>
         </form>
       </div>
     </div>
