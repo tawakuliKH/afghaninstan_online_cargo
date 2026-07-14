@@ -50,7 +50,6 @@ export function SEO({
   const title = isDari
     ? `${titleFa} — ${SITE_NAME_FA}`
     : `${titleEn} — ${SITE_NAME}`
-  const description = isDari ? descriptionFa : descriptionEn
   const lang = isDari ? 'fa' : 'en'
   const dir = isDari ? 'rtl' : 'ltr'
 

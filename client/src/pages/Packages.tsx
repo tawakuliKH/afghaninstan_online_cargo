@@ -44,16 +44,37 @@ interface PackageItem {
   };
 }
 
-const DELIVERY_STATUS_BADGES: Record<
-  string,
-  { label: string; className: string }
-> = {
+const DELIVERY_STATUS_BADGES: Record<string, { label: string; className: string }> = {
   NONE: { label: "Active", className: "bg-green-100 text-green-700" },
   PROPOSED: { label: "Proposed", className: "bg-yellow-100 text-yellow-700" },
   ACCEPTED: { label: "In Transit", className: "bg-blue-100 text-blue-700" },
   FINALIZED: { label: "Delivered", className: "bg-green-100 text-green-700" },
   CANCELLED: { label: "Cancelled", className: "bg-red-100 text-red-700" },
 };
+
+// ── Structured Data ─────────────────────────────────────────
+
+const PACKAGES_STRUCTURED_DATA = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "Packages to Send — Afghanistan Online Cargo",
+  "alternateName": "بسته‌های ارسالی — کارگو آنلاین افغانستان",
+  "description": "Browse packages that need verified Afghan travelers to carry them cross-border. Find packages going to Afghanistan, Europe, USA, UAE, Iran, Turkey and worldwide.",
+  "url": "https://afghancargo.online/packages",
+  "inLanguage": ["en", "fa"],
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "Afghanistan Online Cargo",
+    "url": "https://afghancargo.online"
+  },
+  "about": {
+    "@type": "Service",
+    "name": "Package Listings for Cross-Border Delivery",
+    "description": "Verified Afghan senders post packages that need to be carried across borders. Travelers browse these listings and earn by carrying packages on their trips."
+  }
+}
+
+// ── Components ───────────────────────────────────────────────
 
 function PackageStatusBadge({
   status,
@@ -90,17 +111,27 @@ function ContactInfo({
         {pkg.sender.whatsappNumber && (
           <p className="text-xs text-brand-muted">
             WhatsApp:{" "}
-            <span className="font-medium text-brand-primary">
+            <a
+              href={`https://wa.me/${pkg.sender.whatsappNumber.replace(/\D/g, "")}`}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="font-medium text-brand-primary hover:text-brand-accent"
+            >
               {pkg.sender.whatsappNumber}
-            </span>
+            </a>
           </p>
         )}
         {pkg.sender.email && (
           <p className="text-xs text-brand-muted">
             Email:{" "}
-            <span className="font-medium text-brand-primary">
+            <a
+              href={`mailto:${pkg.sender.email}`}
+              onClick={(e) => e.stopPropagation()}
+              className="font-medium text-brand-primary hover:text-brand-accent"
+            >
               {pkg.sender.email}
-            </span>
+            </a>
           </p>
         )}
       </div>
@@ -121,8 +152,19 @@ function ContactInfo({
             </Link>{" "}
             to see contact details
           </>
+        ) : user.accountStatus === "APPROVED" ? (
+          <>
+            <Link
+              to="/packages/new"
+              onClick={(e) => e.stopPropagation()}
+              className="text-brand-accent hover:underline"
+            >
+              Post a trip or package
+            </Link>{" "}
+            to unlock contact details
+          </>
         ) : (
-          "Post a trip or package to see contact details"
+          "Your account is pending approval. Contact details will be visible once approved and you've posted."
         )}
       </p>
     </div>
@@ -143,24 +185,28 @@ function PackageCard({
       className="cursor-pointer rounded-xl bg-white p-5 shadow-sm transition hover:shadow-md"
     >
       {/* Photo or placeholder */}
-{pkg.goodsPhotoUrl ? (
-  <img
-    src={pkg.goodsPhotoUrl}
-    alt={pkg.title}
-    className="mb-4 h-36 w-full rounded-lg object-cover"
-  />
-) : (
-  <div className="mb-4 flex h-36 w-full items-center justify-center rounded-lg bg-brand-primary/5 border border-brand-muted/10">
-    <div className="flex flex-col items-center gap-2 text-brand-primary/30">
-      <svg viewBox="0 0 24 24" className="h-10 w-10 fill-none stroke-current stroke-1">
-        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-        <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-        <line x1="12" y1="22.08" x2="12" y2="12" />
-      </svg>
-      <span className="text-xs font-medium">No photo uploaded</span>
-    </div>
-  </div>
-)}
+      {pkg.goodsPhotoUrl ? (
+        <img
+          src={pkg.goodsPhotoUrl}
+          alt={pkg.title}
+          className="mb-4 h-36 w-full rounded-lg object-cover"
+          loading="lazy"
+        />
+      ) : (
+        <div className="mb-4 flex h-36 w-full items-center justify-center rounded-lg bg-brand-primary/5 border border-brand-muted/10">
+          <div className="flex flex-col items-center gap-2 text-brand-primary/30">
+            <svg
+              viewBox="0 0 24 24"
+              className="h-10 w-10 fill-none stroke-current stroke-1"
+            >
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+              <line x1="12" y1="22.08" x2="12" y2="12" />
+            </svg>
+            <span className="text-xs font-medium">No photo uploaded</span>
+          </div>
+        </div>
+      )}
 
       {/* Title + weight */}
       <div className="flex items-start justify-between gap-2">
@@ -202,19 +248,14 @@ function PackageCard({
       )}
 
       {/* Sender */}
-      {/* Sender */}
       <div className="mt-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <img
             src={`https://api.dicebear.com/9.x/personas/svg?seed=${pkg.sender.id}&backgroundColor=e8edf5`}
             alt={pkg.sender.nickname}
             className="h-10 w-10 rounded-full border-2 border-brand-primary/10 object-cover"
+            loading="lazy"
           />
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-primary/10 text-sm font-bold text-brand-primary">
-            {(pkg.sender.legalFullName || pkg.sender.nickname)
-              .charAt(0)
-              .toUpperCase()}
-          </div>
           <div>
             <p className="text-xs text-brand-muted">Sender</p>
             <Link
@@ -225,9 +266,12 @@ function PackageCard({
               {pkg.sender.legalFullName || pkg.sender.nickname}
             </Link>
             <p className="text-xs text-brand-muted">
-              ⭐ {pkg.sender.rating > 0 ? pkg.sender.rating.toFixed(1) : "—"}
+              ⭐{" "}
+              {pkg.sender.rating > 0
+                ? pkg.sender.rating.toFixed(1)
+                : "—"}
               {" · "}
-              {pkg.sender.packagesDeliveredCount} delivered
+              <strong>{pkg.sender.packagesDeliveredCount}</strong> delivered
             </p>
           </div>
         </div>
@@ -240,6 +284,8 @@ function PackageCard({
     </div>
   );
 }
+
+// ── Main Packages page ────────────────────────────────────────
 
 function Packages() {
   const { user } = useAuthStore();
@@ -299,14 +345,16 @@ function Packages() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <SEO
-        titleEn="Browse Packages to Send"
-        titleFa="مرور بسته‌ها برای ارسال"
-        descriptionEn="Browse packages that need a traveler to carry them and connect with senders heading to your destination."
-        descriptionFa="بسته‌هایی که نیاز به یک مسافر برای حمل دارند را مرور کنید و با فرستنده‌هایی که به مقصد شما می‌روند ارتباط برقرار کنید."
-        keywordsEn="packages, send package, courier packages, Afghanistan shipping, package delivery"
-        keywordsFa="بسته‌ها, ارسال بسته, بسته‌های پیک, حمل و نقل افغانستان, تحویل بسته"
+        titleEn="Browse Packages — Find Items to Carry to Afghanistan and Worldwide"
+        titleFa="مرور بسته‌ها — اقلامی برای حمل به افغانستان و سراسر جهان پیدا کنید"
+        descriptionEn="Browse packages posted by verified Afghan senders. Carry packages to Afghanistan, Europe, USA, UAE, Iran, Turkey and earn from your upcoming trip. Join thousands of verified users."
+        descriptionFa="بسته‌های ارسال شده توسط فرستندگان افغانی تأیید شده را مرور کنید. بسته‌ها را به افغانستان، اروپا، امریکا، امارات، ایران، ترکیه ببرید و از سفر بعدی خود درآمد کسب کنید."
+        keywordsEn="packages to Afghanistan, carry package earn money, Afghan sender packages, package to Kabul, package to Herat, package to Afghanistan from Germany, package from USA to Afghanistan, package from UAE to Afghanistan, earn money carrying packages, Afghan traveler earn"
+        keywordsFa="بسته‌ها به افغانستان، حمل بسته کسب درآمد، بسته‌های فرستنده افغانی، بسته به کابل، بسته به هرات، بسته به افغانستان از آلمان، بسته از امریکا به افغانستان، بسته از امارات به افغانستان، کسب درآمد از حمل بسته، مسافر افغانی کسب درآمد"
         path="/packages"
+        structuredData={PACKAGES_STRUCTURED_DATA}
       />
+
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
@@ -314,15 +362,16 @@ function Packages() {
             Packages to Send
           </h1>
           <p className="text-sm text-brand-muted">
-            Browse packages that need a traveler to carry them
+            Browse packages that need a traveler to carry them —{" "}
+            <span className="text-brand-muted/70">
+              بسته‌هایی که نیاز به مسافر دارند
+            </span>
           </p>
         </div>
         {user && (
           <div className="text-right">
             {user.accountStatus !== "APPROVED" ? (
-              <span
-                className="flex cursor-not-allowed items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white opacity-50"
-              >
+              <span className="flex cursor-not-allowed items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white opacity-50">
                 <Plus className="h-4 w-4" />
                 Post a package
               </span>
@@ -345,16 +394,19 @@ function Packages() {
             )}
             {user.accountStatus !== "APPROVED" && (
               <p className="mt-1 text-xs text-brand-muted">
-                Your account is pending admin approval. You'll be able to post once approved.
+                Your account is pending admin approval. You'll be able to post
+                once approved.
               </p>
             )}
           </div>
         )}
       </div>
+
       {user?.accountStatus === "APPROVED" && user.hasUnpaidCommission && (
         <div className="mb-6 flex items-center gap-2 rounded-lg border border-brand-danger/30 bg-brand-danger/5 px-4 py-3 text-sm text-brand-danger">
           <AlertTriangle className="h-4 w-4 shrink-0" />
-          You have unpaid commission. Please settle it before posting new packages.
+          You have unpaid commission. Please settle it before posting new
+          packages.
         </div>
       )}
 
@@ -446,6 +498,9 @@ function Packages() {
           <p className="text-brand-muted">
             No packages found matching your search.
           </p>
+          <p className="mt-1 text-xs text-brand-muted">
+            هیچ بسته‌ای مطابق جستجوی شما یافت نشد
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -481,6 +536,28 @@ function Packages() {
           </button>
         </div>
       )}
+
+      {/* Bottom SEO text block */}
+      <div className="mt-12 rounded-xl bg-white p-6 text-center shadow-sm">
+        <h2 className="mb-2 text-sm font-semibold text-brand-primary">
+          Earn Money Carrying Packages on Your Next Trip to Afghanistan
+        </h2>
+        <p className="text-xs text-brand-muted leading-relaxed">
+          Are you traveling to Kabul, Herat, Mazar-i-Sharif, Kandahar or
+          anywhere in Afghanistan? Browse packages posted by verified Afghan
+          senders in Germany, USA, UAE, Iran, Turkey, UK, Sweden, Norway,
+          Netherlands, Canada and Australia. Agree on a fee, carry the package,
+          and earn — all legally recorded through Afghanistan Online Cargo.
+        </p>
+        <p className="mt-2 text-xs text-brand-muted/70 leading-relaxed">
+          آیا به کابل، هرات، مزار شریف، قندهار یا هر جای دیگری در افغانستان
+          سفر می‌کنید؟ بسته‌های ارسال شده توسط فرستندگان افغانی تأیید شده در
+          آلمان، امریکا، امارات، ایران، ترکیه، انگلیس، سوئد، نروژ، هلند،
+          کانادا و استرالیا را مرور کنید. روی هزینه توافق کنید، بسته را حمل
+          کنید و درآمد کسب کنید — همه به صورت قانونی از طریق کارگو آنلاین
+          افغانستان ثبت می‌شود.
+        </p>
+      </div>
     </div>
   );
 }
