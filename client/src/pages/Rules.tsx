@@ -3,6 +3,39 @@ import { useTranslation } from 'react-i18next'
 import { Shield, Package, MapPin, CheckCircle } from 'lucide-react'
 import { SEO } from '../components/SEO'
 
+// ── Structured Data ─────────────────────────────────────────
+
+const RULES_STRUCTURED_DATA = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "name": "Rules & Terms — Afghanistan Online Cargo",
+    "alternateName": "قوانین و شرایط — کارگو آنلاین افغانستان",
+    "description": "Platform rules, sender terms, and traveler terms governing cross-border package deliveries on Afghanistan Online Cargo.",
+    "url": "https://afghancargo.online/rules",
+    "inLanguage": ["en", "fa"],
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "Afghanistan Online Cargo",
+      "url": "https://afghancargo.online"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "TermsOfService",
+    "name": "Afghanistan Online Cargo — Terms of Service",
+    "alternateName": "کارگو آنلاین افغانستان — شرایط خدمات",
+    "url": "https://afghancargo.online/rules",
+    "description": "Terms governing the use of Afghanistan Online Cargo platform for cross-border package coordination between Afghan senders and travelers.",
+    "publisher": {
+      "@type": "Person",
+      "name": "Khadim Tawakuli",
+      "url": "https://tawakuli.dev"
+    },
+    "inLanguage": ["en", "fa"]
+  }
+]
+
 function Rules() {
   const { t, i18n } = useTranslation()
   const [activeTab, setActiveTab] = useState<'general' | 'sender' | 'traveler'>('general')
@@ -21,17 +54,31 @@ function Rules() {
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
       <SEO
-        titleEn="Platform Rules & Agreements"
-        titleFa="قوانین و توافقنامه‌های پلتفرم"
-        descriptionEn="Read the general rules, sender terms, and traveler terms that govern package deliveries on Afghanistan Online Cargo."
-        descriptionFa="قوانین عمومی، شرایط فرستنده و شرایط مسافر که تحویل بسته‌ها را در کارگو آنلاین افغانستان اداره می‌کند را بخوانید."
+        titleEn="Platform Rules, Sender Terms & Traveler Terms"
+        titleFa="قوانین پلتفرم، شرایط فرستنده و شرایط مسافر"
+        descriptionEn="Read the complete rules and legal terms governing cross-border package deliveries on Afghanistan Online Cargo. Includes general platform rules, sender agreement, and traveler agreement."
+        descriptionFa="قوانین کامل و شرایط قانونی حاکم بر تحویل بسته‌های بین‌المللی در کارگو آنلاین افغانستان را بخوانید. شامل قوانین عمومی پلتفرم، توافقنامه فرستنده و توافقنامه مسافر."
+        keywordsEn="Afghanistan cargo rules, Afghan delivery terms, package delivery agreement, cross-border delivery terms, Afghan cargo legal, sender agreement, traveler agreement, KYC verification terms"
+        keywordsFa="قوانین کارگو افغانستان، شرایط تحویل افغانی، توافقنامه ارسال بسته، شرایط تحویل بین‌المللی، قانونی کارگو افغانستان، توافقنامه فرستنده، توافقنامه مسافر، شرایط تأیید هویت"
         path="/rules"
+        structuredData={RULES_STRUCTURED_DATA}
       />
 
       {/* Header */}
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-brand-primary">{t('rules.pageTitle')}</h1>
-        <p className="mt-2 text-sm text-brand-muted">{t('rules.pageSubtitle')}</p>
+        <h1 className="text-3xl font-bold text-brand-primary">
+          {t('rules.pageTitle')}
+        </h1>
+        <p className="mt-1 text-xs font-medium text-brand-accent">
+          قوانین و توافقنامه‌های پلتفرم
+        </p>
+        <p className="mt-2 text-sm text-brand-muted">
+          {t('rules.pageSubtitle')}
+        </p>
+        <p className="mt-1 text-xs text-brand-muted/60">
+          Please read all terms carefully before using the platform. |{" "}
+          لطفاً تمام شرایط را قبل از استفاده از پلتفرم به دقت بخوانید.
+        </p>
       </div>
 
       {/* Tabs */}
@@ -72,6 +119,22 @@ function Rules() {
               </li>
             ))}
           </ul>
+
+          {/* SEO footer text */}
+          <div className="mt-8 rounded-xl border border-brand-muted/10 bg-brand-bg p-4">
+            <p className="text-xs text-brand-muted leading-relaxed">
+              Afghanistan Online Cargo is a coordination platform — not a courier service.
+              All physical handovers happen in person between KYC-verified users.
+              Every delivery agreement is timestamped as legal evidence.
+              The platform does not transport, insure, or take custody of any package.
+            </p>
+            <p className="mt-2 text-xs text-brand-muted/70 leading-relaxed">
+              کارگو آنلاین افغانستان یک پلتفرم هماهنگی است — نه یک سرویس پیک.
+              تمام تحویل‌های فیزیکی به صورت حضوری بین کاربران تأیید هویت شده انجام می‌شود.
+              هر توافق تحویل به عنوان مدرک قانونی زمان‌بندی می‌شود.
+              پلتفرم هیچ بسته‌ای را حمل، بیمه یا نگهداری نمی‌کند.
+            </p>
+          </div>
         </div>
       )}
 
@@ -89,8 +152,12 @@ function Rules() {
           <div className="space-y-6">
             {senderSections.map((section, i) => (
               <div key={i}>
-                <h3 className="mb-2 font-semibold text-brand-primary">{section.heading}</h3>
-                <p className="text-sm leading-relaxed text-brand-muted">{section.body}</p>
+                <h3 className="mb-2 font-semibold text-brand-primary">
+                  {section.heading}
+                </h3>
+                <p className="text-sm leading-relaxed text-brand-muted">
+                  {section.body}
+                </p>
               </div>
             ))}
           </div>
@@ -111,8 +178,12 @@ function Rules() {
           <div className="space-y-6">
             {travelerSections.map((section, i) => (
               <div key={i}>
-                <h3 className="mb-2 font-semibold text-brand-primary">{section.heading}</h3>
-                <p className="text-sm leading-relaxed text-brand-muted">{section.body}</p>
+                <h3 className="mb-2 font-semibold text-brand-primary">
+                  {section.heading}
+                </h3>
+                <p className="text-sm leading-relaxed text-brand-muted">
+                  {section.body}
+                </p>
               </div>
             ))}
           </div>
