@@ -184,6 +184,12 @@ function ActionCard({ action }: { action: PendingAction }) {
       <div className="flex-1">
         <p className="text-base font-bold text-brand-primary">{action.title}</p>
         <p className="mt-0.5 text-sm text-brand-muted">{action.description}</p>
+        {action.type === "PROPOSE_DELIVERY" && (
+          <p className="mt-1.5 flex items-start gap-1.5 rounded-md border border-yellow-200 bg-yellow-50 px-2.5 py-1.5 text-xs text-yellow-700">
+            <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+            Only propose after meeting the traveler in person and handing over the package.
+          </p>
+        )}
         <Link
           to={action.actionUrl}
           className={`mt-3 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 ${
@@ -312,6 +318,7 @@ function PackageSummaryCard({ pkg }: { pkg: MyPackageItem }) {
           ) : (
             <Link
               to={`/packages/${pkg.id}/propose`}
+              title="Only propose after meeting the traveler in person and handing over the package."
               className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-accent/10 px-2 py-0.5 text-[10px] font-semibold text-brand-accent hover:bg-brand-accent/20"
             >
               Propose Delivery
@@ -326,7 +333,7 @@ function PackageSummaryCard({ pkg }: { pkg: MyPackageItem }) {
 function TripSummaryCard({ trip }: { trip: MyTripItem }) {
   const isClosed = new Date(trip.departureDate) < new Date();
   return (
-    <div className="rounded-xl bg-white p-4 shadow-sm">
+    <div className={`rounded-xl bg-white p-4 shadow-sm ${isClosed ? "opacity-60 grayscale-[30%]" : ""}`}>
       <div className="flex items-center justify-between">
         <Link to={`/trips/${trip.id}`} className="font-medium text-brand-primary hover:text-brand-accent">
           {trip.originCity} → {trip.destCity}

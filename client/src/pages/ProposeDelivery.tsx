@@ -5,8 +5,9 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import api from '../lib/axios'
 import toast from 'react-hot-toast'
-import { ArrowLeft, Loader2, Package, MapPin, Weight } from 'lucide-react'
+import { ArrowLeft, Loader2, Package, MapPin, Weight, AlertTriangle } from 'lucide-react'
 import { AgreementModal } from '../components/AgreementModal'
+import { SEO } from '../components/SEO'
 
 interface PackageData {
   id: string
@@ -120,6 +121,14 @@ function ProposeDelivery() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
+      <SEO
+        titleEn="Propose Delivery"
+        titleFa="پیشنهاد تحویل"
+        descriptionEn="Propose a delivery to a traveler for your package."
+        descriptionFa="تحویل بسته خود را به یک مسافر پیشنهاد دهید."
+        path={`/packages/${packageId}/propose`}
+        noIndex
+      />
       <Link
         to="/profile?tab=packages"
         className="mb-6 flex items-center gap-2 text-sm text-brand-muted hover:text-brand-primary"
@@ -166,9 +175,19 @@ function ProposeDelivery() {
 
       {/* Propose form */}
       <div className="rounded-2xl bg-white p-6 shadow-sm">
-        <h1 className="mb-6 text-xl font-bold text-brand-primary">
+        <h1 className="mb-4 text-xl font-bold text-brand-primary">
           Propose Delivery
         </h1>
+
+        <div className="mb-6 flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-700">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>
+            Before you continue: only propose a delivery after you have met the
+            traveler in person, verified their identity, and physically handed
+            over the package. This action notifies the traveler immediately and
+            cannot be undone once sent.
+          </p>
+        </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 

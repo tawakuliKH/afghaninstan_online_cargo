@@ -26,6 +26,8 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { AgreementModal } from "../components/AgreementModal";
+import { ConfirmModal } from "../components/ConfirmModal";
+import { SEO } from "../components/SEO";
 import { WorkflowTimeline, type WorkflowDelivery } from "../components/WorkflowTimeline";
 import { WorkflowDashboard } from "../components/WorkflowDashboard";
 
@@ -170,6 +172,8 @@ function MyTrips() {
   const navigate = useNavigate();
   const [trips, setTrips] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     api
@@ -181,14 +185,18 @@ function MyTrips() {
       .finally(() => setLoading(false));
   }, []);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this trip?")) return;
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    setDeleting(true);
     try {
-      await api.delete(`/trips/${id}`);
-      setTrips((prev) => prev.filter((t) => t.id !== id));
+      await api.delete(`/trips/${deleteId}`);
+      setTrips((prev) => prev.filter((t) => t.id !== deleteId));
       toast.success("Trip deleted");
     } catch {
       toast.error("Failed to delete trip");
+    } finally {
+      setDeleting(false);
+      setDeleteId(null);
     }
   };
 
@@ -231,7 +239,7 @@ function MyTrips() {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                handleDelete(trip.id);
+                setDeleteId(trip.id);
               }}
               className="text-brand-muted hover:text-brand-danger"
             >
@@ -257,6 +265,16 @@ function MyTrips() {
       >
         + Post another trip
       </Link>
+      <ConfirmModal
+        isOpen={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        onConfirm={handleDelete}
+        variant="danger"
+        title="Delete this trip?"
+        message="This will permanently remove the trip. This action cannot be undone."
+        confirmLabel="Delete"
+        loading={deleting}
+      />
     </div>
   );
 }
@@ -275,6 +293,8 @@ function MyPackages() {
     Record<string, WorkflowDelivery>
   >({});
   const [loading, setLoading] = useState(true);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -308,14 +328,18 @@ function MyPackages() {
     Object.entries(deliveriesByPackage).map(([id, d]) => [id, d.status])
   );
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this package?")) return;
+  const handleDelete = async () => {
+    if (!deleteId) return;
+    setDeleting(true);
     try {
-      await api.delete(`/packages/${id}`);
-      setPackages((prev) => prev.filter((p) => p.id !== id));
+      await api.delete(`/packages/${deleteId}`);
+      setPackages((prev) => prev.filter((p) => p.id !== deleteId));
       toast.success("Package deleted");
     } catch {
       toast.error("Failed to delete package");
+    } finally {
+      setDeleting(false);
+      setDeleteId(null);
     }
   };
 
@@ -339,9 +363,22 @@ function MyPackages() {
       </div>
     );
 
+  const hasPendingPropose = packages.some((p) => !latestDeliveryStatus[p.id]);
+
   return (
     <div>
       <WorkflowSection deliveries={Object.values(deliveriesByPackage)} viewerId={user?.id} />
+
+      {hasPendingPropose && (
+        <div className="mb-4 flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-700">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>
+            Only click "Propose Delivery" after you've met the traveler in
+            person and handed over the package. This notifies them immediately
+            and cannot be undone.
+          </p>
+        </div>
+      )}
 
       <div className="space-y-4">
       {packages.map((pkg) => (
@@ -390,7 +427,7 @@ function MyPackages() {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleDelete(pkg.id);
+                    setDeleteId(pkg.id);
                   }}
                   className="text-brand-muted hover:text-brand-danger"
                 >
@@ -417,6 +454,16 @@ function MyPackages() {
         + Post another package
       </Link>
       </div>
+      <ConfirmModal
+        isOpen={deleteId !== null}
+        onClose={() => setDeleteId(null)}
+        onConfirm={handleDelete}
+        variant="danger"
+        title="Delete this package?"
+        message="This will permanently remove the package. This action cannot be undone."
+        confirmLabel="Delete"
+        loading={deleting}
+      />
     </div>
   );
 }
@@ -431,6 +478,10 @@ function MyDeliveries() {
     role: "sender" | "traveler";
     onAccepted: () => void;
   } | null>(null);
+  const [finalizeId, setFinalizeId] = useState<string | null>(null);
+  const [finalizing, setFinalizing] = useState(false);
+  const [cancelId, setCancelId] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState(false);
   const { user } = useAuthStore();
 
   const fetchDeliveries = async () => {
@@ -469,25 +520,33 @@ function MyDeliveries() {
     });
   };
 
-  const handleFinalize = async (deliveryId: string) => {
-    if (!confirm("Confirm final delivery to recipient?")) return;
+  const handleFinalize = async () => {
+    if (!finalizeId) return;
+    setFinalizing(true);
     try {
-      await api.post(`/deliveries/${deliveryId}/finalize`);
+      await api.post(`/deliveries/${finalizeId}/finalize`);
       toast.success("Delivery finalized — commission recorded");
       fetchDeliveries();
     } catch {
       toast.error("Failed to finalize delivery");
+    } finally {
+      setFinalizing(false);
+      setFinalizeId(null);
     }
   };
 
-  const handleCancel = async (deliveryId: string) => {
-    if (!confirm("Cancel this delivery?")) return;
+  const handleCancel = async () => {
+    if (!cancelId) return;
+    setCancelling(true);
     try {
-      await api.post(`/deliveries/${deliveryId}/cancel`);
+      await api.post(`/deliveries/${cancelId}/cancel`);
       toast.success("Delivery cancelled");
       fetchDeliveries();
     } catch {
       toast.error("Failed to cancel delivery");
+    } finally {
+      setCancelling(false);
+      setCancelId(null);
     }
   };
 
@@ -525,11 +584,34 @@ function MyDeliveries() {
         />
       )}
 
+      <ConfirmModal
+        isOpen={finalizeId !== null}
+        onClose={() => setFinalizeId(null)}
+        onConfirm={handleFinalize}
+        variant="success"
+        title="Confirm final delivery?"
+        message="This confirms the package has been delivered to the recipient and records the platform commission. This action cannot be undone."
+        confirmLabel="Finalize"
+        loading={finalizing}
+      />
+
+      <ConfirmModal
+        isOpen={cancelId !== null}
+        onClose={() => setCancelId(null)}
+        onConfirm={handleCancel}
+        variant="danger"
+        title="Cancel this delivery?"
+        message="This will cancel the pending delivery request. This action cannot be undone."
+        confirmLabel="Cancel Delivery"
+        cancelLabel="Keep it"
+        loading={cancelling}
+      />
+
       <WorkflowSection
         deliveries={deliveries}
         viewerId={user?.id}
         onAccept={handleAccept}
-        onFinalize={handleFinalize}
+        onFinalize={setFinalizeId}
       />
 
       <div className="space-y-4">
@@ -599,7 +681,7 @@ function MyDeliveries() {
                 )}
                 {isTraveler && d.status === "ACCEPTED" && (
                   <button
-                    onClick={() => handleFinalize(d.id)}
+                    onClick={() => setFinalizeId(d.id)}
                     className="rounded-lg bg-green-500 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
                   >
                     Finalize Delivery
@@ -607,7 +689,7 @@ function MyDeliveries() {
                 )}
                 {d.status === "PROPOSED" && (
                   <button
-                    onClick={() => handleCancel(d.id)}
+                    onClick={() => setCancelId(d.id)}
                     className="rounded-lg bg-brand-danger px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
                   >
                     Cancel
@@ -889,6 +971,13 @@ function Profile() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeTab = searchParams.get("tab") || "trips";
 
+  useEffect(() => {
+    if (activeTab === "deliveries") {
+      const el = document.getElementById("deliveries-section");
+      el?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [activeTab]);
+
   if (!user) return null;
 
   const status = statusConfig[user.accountStatus as keyof typeof statusConfig];
@@ -896,6 +985,14 @@ function Profile() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
+      <SEO
+        titleEn="My Profile"
+        titleFa="پروفایل من"
+        descriptionEn="Manage your trips, packages, deliveries, messages, and notifications."
+        descriptionFa="سفرها، بسته‌ها، تحویل‌ها، پیام‌ها و اعلان‌های خود را مدیریت کنید."
+        path="/profile"
+        noIndex
+      />
       {user.accountStatus !== "APPROVED" && status && (
         <div
           className={`mb-6 rounded-xl border ${status.border} ${status.bg} p-5`}
@@ -972,7 +1069,7 @@ function Profile() {
             </p>
           </div>
 
-          <div className="mb-6 flex gap-1 overflow-x-auto rounded-xl bg-white p-1 shadow-sm">
+          <div id="deliveries-section" className="mb-6 flex gap-1 overflow-x-auto rounded-xl bg-white p-1 shadow-sm">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               return (

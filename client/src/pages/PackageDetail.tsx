@@ -12,7 +12,9 @@ import {
   Truck,
   Trash2,
   Lock,
+  AlertTriangle,
 } from "lucide-react";
+import { SEO } from "../components/SEO";
 
 interface PackageData {
   id: string;
@@ -104,6 +106,13 @@ function PackageDetail() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
+      <SEO
+        titleEn={pkg.title}
+        titleFa={pkg.title}
+        descriptionEn={`Package from ${pkg.originCity}, ${pkg.originCountry} to ${pkg.destCity}, ${pkg.destCountry}. Connect with a traveler to carry it.`}
+        descriptionFa={`بسته‌ای از ${pkg.originCity}, ${pkg.originCountry} به ${pkg.destCity}, ${pkg.destCountry}. برای حمل آن با یک مسافر ارتباط برقرار کنید.`}
+        path={`/packages/${pkg.id}`}
+      />
       <button
         onClick={() => navigate(-1)}
         className="mb-6 flex items-center gap-2 text-sm text-brand-muted hover:text-brand-primary"
@@ -271,13 +280,23 @@ function PackageDetail() {
         )}
 
         {canPropose && (
-          <Link
-            to={`/packages/${pkg.id}/propose`}
-            className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
-          >
-            <Truck className="h-4 w-4" />
-            Propose Delivery
-          </Link>
+          <>
+            <div className="mt-6 flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-700">
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <p>
+                Only propose a delivery after you've met the traveler in person
+                and handed over the package. This notifies them immediately and
+                cannot be undone.
+              </p>
+            </div>
+            <Link
+              to={`/packages/${pkg.id}/propose`}
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+            >
+              <Truck className="h-4 w-4" />
+              Propose Delivery
+            </Link>
+          </>
         )}
       </div>
     </div>
