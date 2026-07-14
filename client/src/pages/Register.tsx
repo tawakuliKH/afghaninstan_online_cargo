@@ -13,6 +13,7 @@ import { SEO } from "../components/SEO";
 const registerSchema = z
   .object({
     email: z.string().email("Invalid email"),
+    confirmEmail: z.string().email("Invalid email"),
     password: z.string().min(8, "Password must be at least 8 characters"),
     confirmPassword: z.string(),
     legalFullName: z.string().min(2, "Full name is required"),
@@ -26,6 +27,10 @@ const registerSchema = z
     permanentCity: z.string().min(1, "Required"),
     currentCountry: z.string().min(1, "Required"),
     currentCity: z.string().min(1, "Required"),
+  })
+  .refine((d) => d.email === d.confirmEmail, {
+    message: "Email addresses do not match",
+    path: ["confirmEmail"],
   })
   .refine((d) => d.password === d.confirmPassword, {
     message: "Passwords do not match",
@@ -187,6 +192,7 @@ function Register() {
     try {
       const formData = new FormData();
       Object.entries(data).forEach(([key, val]) => {
+        if (key === "confirmEmail") return;
         if (val !== undefined && val !== "") formData.append(key, String(val));
       });
       if (passportFile) formData.append("passportPhoto", passportFile);
@@ -246,6 +252,17 @@ function Register() {
                   {...register("email")}
                   type="email"
                   placeholder="you@example.com"
+                />
+              </Field>
+              <Field
+                label="Confirm email address"
+                required
+                error={errors.confirmEmail?.message}
+              >
+                <Input
+                  {...register("confirmEmail")}
+                  type="email"
+                  placeholder="Re-enter your email"
                 />
               </Field>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -458,9 +475,9 @@ function Register() {
                 fileName={faceFile?.name}
               />
               <p className="mt-1 text-xs italic text-brand-muted">
-                Your face must be clearly visible, well-lit, and directly comparable to
-                your identity document photo. Blurry, masked, or obscured photos will
-                result in rejection.
+                Your face must be clearly visible, well-lit, and directly
+                comparable to your identity document photo. Blurry, masked, or
+                obscured photos will result in rejection.
               </p>
               {visaRequired && (
                 <FileField

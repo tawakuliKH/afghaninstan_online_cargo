@@ -1,11 +1,18 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import api from '../lib/axios'
-import { useAuthStore } from '../store/authStore'
-import { WorkflowDashboard } from '../components/WorkflowDashboard'
-import { SEO } from '../components/SEO'
-import { MapPin, Package, ArrowRight, Shield, Clock, Users } from 'lucide-react'
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
+import api from "../lib/axios";
+import { useAuthStore } from "../store/authStore";
+import { WorkflowDashboard } from "../components/WorkflowDashboard";
+import { SEO } from "../components/SEO";
+import {
+  MapPin,
+  Package,
+  ArrowRight,
+  Shield,
+  Clock,
+  Users,
+} from "lucide-react";
 
 // ── Hero animation ──────────────────────────────────────────
 
@@ -22,11 +29,13 @@ function HeroAnimation() {
           strokeDasharray="8 4"
           initial={{ pathLength: 0, opacity: 0 }}
           animate={{ pathLength: 1, opacity: 1 }}
-          transition={{ duration: 2, ease: 'easeInOut' }}
+          transition={{ duration: 2, ease: "easeInOut" }}
         />
         {/* Origin dot */}
         <motion.circle
-          cx="30" cy="90" r="5"
+          cx="30"
+          cy="90"
+          r="5"
           fill="#F2A60D"
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -34,7 +43,9 @@ function HeroAnimation() {
         />
         {/* Destination dot */}
         <motion.circle
-          cx="370" cy="90" r="5"
+          cx="370"
+          cy="90"
+          r="5"
           fill="#F2A60D"
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -49,7 +60,7 @@ function HeroAnimation() {
         animate={{ x: 160, y: -20 }}
         transition={{
           duration: 2,
-          ease: 'easeInOut',
+          ease: "easeInOut",
           repeat: Infinity,
           repeatDelay: 1.5,
         }}
@@ -79,7 +90,7 @@ function HeroAnimation() {
         <p className="text-xs text-white/60">Germany</p>
       </motion.div>
     </div>
-  )
+  );
 }
 
 // ── How it works ────────────────────────────────────────────
@@ -88,25 +99,25 @@ function HowItWorks() {
   const steps = [
     {
       icon: Users,
-      title: 'Verify your identity',
-      desc: 'Register with your passport or Tazkira. Every user is manually reviewed and approved.',
+      title: "Verify your identity",
+      desc: "Register with your passport or Tazkira. Every user is manually reviewed and approved.",
     },
     {
       icon: Package,
-      title: 'Post or find',
-      desc: 'Senders post packages. Travelers post trips. Find each other and connect directly.',
+      title: "Post or find",
+      desc: "Senders post packages. Travelers post trips. Find each other and connect directly.",
     },
     {
       icon: Shield,
-      title: 'Hand over safely',
-      desc: 'Meet in person, verify ID, and hand over the package. The platform records every step as legal proof.',
+      title: "Hand over safely",
+      desc: "Meet in person, verify ID, and hand over the package. The platform records every step as legal proof.",
     },
     {
       icon: Clock,
-      title: 'Track & confirm',
-      desc: 'Both parties confirm handover and final delivery. Reviews build trust over time.',
+      title: "Track & confirm",
+      desc: "Both parties confirm handover and final delivery. Reviews build trust over time.",
     },
-  ]
+  ];
 
   return (
     <div className="py-16">
@@ -114,11 +125,12 @@ function HowItWorks() {
         How Afghanistan Online Cargo Works
       </h2>
       <p className="mb-10 text-center text-sm text-brand-muted">
-        A trusted coordination platform — not a courier. All handovers happen in person between verified users.
+        A trusted coordination platform — not a courier. All handovers happen in
+        person between verified users.
       </p>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {steps.map((step, i) => {
-          const Icon = step.icon
+          const Icon = step.icon;
           return (
             <motion.div
               key={i}
@@ -136,20 +148,22 @@ function HowItWorks() {
               <p className="mb-1 text-xs font-bold uppercase tracking-wide text-brand-accent">
                 Step {i + 1}
               </p>
-              <h3 className="mb-2 font-semibold text-brand-primary">{step.title}</h3>
+              <h3 className="mb-2 font-semibold text-brand-primary">
+                {step.title}
+              </h3>
               <p className="text-xs text-brand-muted">{step.desc}</p>
             </motion.div>
-          )
+          );
         })}
       </div>
     </div>
-  )
+  );
 }
 
 // ── Mini card components ────────────────────────────────────
 
 function TripMiniCard({ trip }: { trip: any }) {
-  const isClosed = new Date(trip.departureDate) < new Date()
+  const isClosed = new Date(trip.departureDate) < new Date();
   return (
     <Link
       to={`/trips/${trip.id}`}
@@ -166,13 +180,17 @@ function TripMiniCard({ trip }: { trip: any }) {
         </div>
         <span
           className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-            isClosed ? "bg-brand-muted/10 text-brand-muted" : "bg-green-100 text-green-700"
+            isClosed
+              ? "bg-brand-muted/10 text-brand-muted"
+              : "bg-green-100 text-green-700"
           }`}
         >
           {isClosed ? "Trip Closed" : "Active"}
         </span>
       </div>
-      <p className="text-xs text-brand-muted">{trip.originCountry} → {trip.destCountry}</p>
+      <p className="text-xs text-brand-muted">
+        {trip.originCountry} → {trip.destCountry}
+      </p>
       <p className="mt-2 text-xs text-brand-muted">
         Departure: {new Date(trip.departureDate).toLocaleDateString()}
       </p>
@@ -180,7 +198,7 @@ function TripMiniCard({ trip }: { trip: any }) {
         By: {trip.traveler?.nickname}
       </p>
     </Link>
-  )
+  );
 }
 
 function PackageMiniCard({ pkg }: { pkg: any }) {
@@ -198,7 +216,10 @@ function PackageMiniCard({ pkg }: { pkg: any }) {
       ) : (
         <div className="mb-3 flex h-28 w-full items-center justify-center rounded-lg bg-brand-primary/5 border border-brand-muted/10">
           <div className="flex flex-col items-center gap-1 text-brand-primary/30">
-            <svg viewBox="0 0 24 24" className="h-8 w-8 fill-none stroke-current stroke-1">
+            <svg
+              viewBox="0 0 24 24"
+              className="h-8 w-8 fill-none stroke-current stroke-1"
+            >
               <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
               <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
               <line x1="12" y1="22.08" x2="12" y2="12" />
@@ -209,32 +230,36 @@ function PackageMiniCard({ pkg }: { pkg: any }) {
       )}
       <div className="flex items-center gap-2 mb-2">
         <Package className="h-4 w-4 text-brand-accent" />
-        <span className="text-sm font-medium text-brand-primary">{pkg.title}</span>
+        <span className="text-sm font-medium text-brand-primary">
+          {pkg.title}
+        </span>
       </div>
-      <p className="text-xs text-brand-muted">{pkg.originCity} → {pkg.destCity}</p>
+      <p className="text-xs text-brand-muted">
+        {pkg.originCity} → {pkg.destCity}
+      </p>
       <p className="mt-2 text-xs text-brand-muted">{pkg.weight} kg</p>
       <p className="mt-1 text-xs text-brand-muted">
         By: {pkg.sender?.nickname}
       </p>
     </Link>
-  )
+  );
 }
 
 // ── Main Home page ──────────────────────────────────────────
 
 function Home() {
-  const { user } = useAuthStore()
-  const [recentTrips, setRecentTrips] = useState<any[]>([])
-  const [recentPackages, setRecentPackages] = useState<any[]>([])
+  const { user } = useAuthStore();
+  const [recentTrips, setRecentTrips] = useState<any[]>([]);
+  const [recentPackages, setRecentPackages] = useState<any[]>([]);
 
   useEffect(() => {
-    api.get('/trips?page=1').then((res) => {
-      setRecentTrips(res.data.trips.slice(0, 3))
-    })
-    api.get('/packages?page=1').then((res) => {
-      setRecentPackages(res.data.packages.slice(0, 3))
-    })
-  }, [])
+    api.get("/trips?page=1").then((res) => {
+      setRecentTrips(res.data.trips.slice(0, 3));
+    });
+    api.get("/packages?page=1").then((res) => {
+      setRecentPackages(res.data.packages.slice(0, 3));
+    });
+  }, []);
 
   return (
     <div>
@@ -263,7 +288,8 @@ function Home() {
           transition={{ delay: 0.4 }}
           className="mx-auto mb-8 max-w-xl text-sm text-white/70 sm:text-base"
         >
-          Connect verified senders and travelers for safe, coordinated cross-border package delivery.
+          Connect verified senders and travelers for safe, coordinated
+          cross-border package delivery.
         </motion.p>
 
         <HeroAnimation />
@@ -286,17 +312,19 @@ function Home() {
           >
             Browse Packages
           </Link>
-          <Link
-            to="/register"
-            className="rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-brand-primary transition hover:opacity-90"
-          >
-            Get Started
-          </Link>
+          {!user && (
+            <Link
+              to="/register"
+              className="rounded-full bg-brand-accent px-6 py-3 text-sm font-semibold text-white transition hover:opacity-90"
+            >
+              Get Started
+            </Link>
+          )}
         </motion.div>
       </section>
 
       {/* Logged-in activity section */}
-      {user && user.accountStatus === 'APPROVED' && (
+      {user && user.accountStatus === "APPROVED" && (
         <section className="bg-brand-bg px-4 py-12">
           <div className="mx-auto max-w-6xl">
             <h2 className="mb-6 text-xl font-bold text-brand-primary">
@@ -306,13 +334,14 @@ function Home() {
           </div>
         </section>
       )}
-      {user && user.accountStatus === 'PENDING' && (
+      {user && user.accountStatus === "PENDING" && (
         <section className="bg-brand-bg px-4 py-8">
           <div className="mx-auto max-w-6xl">
             <div className="flex items-center gap-3 rounded-xl border border-yellow-200 bg-yellow-50 p-5">
               <Clock className="h-5 w-5 shrink-0 text-yellow-600" />
               <p className="text-sm text-brand-muted">
-                Your account is pending approval. You'll be notified as soon as an admin reviews your application.
+                Your account is pending approval. You'll be notified as soon as
+                an admin reviews your application.
               </p>
             </div>
           </div>
@@ -326,11 +355,12 @@ function Home() {
         {/* Recent Trips + Packages side by side */}
         <div className="pb-16">
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-
             {/* Recent Trips */}
             <div>
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-bold text-brand-primary">Recent Trips</h2>
+                <h2 className="text-lg font-bold text-brand-primary">
+                  Recent Trips
+                </h2>
                 <Link
                   to="/trips"
                   className="flex items-center gap-1 text-sm text-brand-accent hover:underline"
@@ -352,7 +382,9 @@ function Home() {
             {/* Recent Packages */}
             <div>
               <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-lg font-bold text-brand-primary">Recent Packages</h2>
+                <h2 className="text-lg font-bold text-brand-primary">
+                  Recent Packages
+                </h2>
                 <Link
                   to="/packages"
                   className="flex items-center gap-1 text-sm text-brand-accent hover:underline"
@@ -361,7 +393,9 @@ function Home() {
                 </Link>
               </div>
               {recentPackages.length === 0 ? (
-                <p className="text-sm text-brand-muted">No packages posted yet.</p>
+                <p className="text-sm text-brand-muted">
+                  No packages posted yet.
+                </p>
               ) : (
                 <div className="space-y-3">
                   {recentPackages.map((pkg) => (
@@ -374,7 +408,7 @@ function Home() {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-export default Home
+export default Home;
