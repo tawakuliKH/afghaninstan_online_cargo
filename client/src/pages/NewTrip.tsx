@@ -5,6 +5,7 @@ import { useNavigate, Link } from "react-router-dom";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 import { Loader2, ArrowLeft, AlertTriangle } from "lucide-react";
+import { SEO } from "../components/SEO";
 import { useAuthStore } from "../store/authStore";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -75,6 +76,7 @@ function Select({
 function NewTrip() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const isNotApproved = user?.accountStatus !== "APPROVED";
   const hasUnpaidCommission = Boolean(user?.hasUnpaidCommission);
 
   const {
@@ -102,6 +104,14 @@ function NewTrip() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
+      <SEO
+        titleEn="Post a Trip"
+        titleFa="ثبت یک سفر"
+        descriptionEn="Post your upcoming trip so senders can find you and propose sending a package with you."
+        descriptionFa="سفر آینده خود را ثبت کنید تا فرستنده‌ها شما را پیدا کنند و ارسال بسته با شما را پیشنهاد دهند."
+        path="/trips/new"
+        noIndex
+      />
       <Link
         to="/trips"
         className="mb-6 flex items-center gap-2 text-sm text-brand-muted hover:text-brand-primary"
@@ -114,7 +124,14 @@ function NewTrip() {
           Post a Trip
         </h1>
 
-        {hasUnpaidCommission && (
+        {isNotApproved && (
+          <div className="mb-6 rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-700">
+            Your account is awaiting admin approval. You cannot post yet. You'll be
+            notified by email as soon as your account is approved.
+          </div>
+        )}
+
+        {!isNotApproved && hasUnpaidCommission && (
           <div className="mb-6 flex items-center gap-2 rounded-lg border border-brand-danger/30 bg-brand-danger/5 px-4 py-3 text-sm text-brand-danger">
             <AlertTriangle className="h-4 w-4 shrink-0" />
             You have unpaid commission. Please settle it before posting new trips.
@@ -223,7 +240,7 @@ function NewTrip() {
 
           <button
             type="submit"
-            disabled={isSubmitting || hasUnpaidCommission}
+            disabled={isSubmitting || hasUnpaidCommission || isNotApproved}
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
           >
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}

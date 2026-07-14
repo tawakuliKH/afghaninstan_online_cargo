@@ -17,6 +17,7 @@ import {
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { getData } from "country-list";
+import { SEO } from "../components/SEO";
 
 const countries = getData().sort((a, b) => a.name.localeCompare(b.name));
 
@@ -50,11 +51,23 @@ interface SearchForm {
 function ContactInfo({
   trip,
   canSeeContact,
+  isClosed,
 }: {
   trip: Trip;
   canSeeContact: boolean;
+  isClosed?: boolean;
 }) {
   const { user } = useAuthStore();
+
+  if (isClosed) {
+    return (
+      <div className="mt-3 border-t border-brand-muted/10 pt-3">
+        <p className="text-xs italic text-brand-muted">
+          This trip has already departed. Contact details are no longer available.
+        </p>
+      </div>
+    );
+  }
 
   if (canSeeContact && (trip.traveler.whatsappNumber || trip.traveler.email)) {
     return (
@@ -114,7 +127,9 @@ function TripCard({
   return (
     <div
       onClick={() => navigate(`/trips/${trip.id}`)}
-      className="cursor-pointer rounded-xl bg-white p-5 shadow-sm transition hover:shadow-md"
+      className={`cursor-pointer rounded-xl bg-white p-5 shadow-sm transition hover:shadow-md ${
+        isClosed ? "opacity-60 grayscale-[30%]" : ""
+      }`}
     >
       {/* Route */}
       <div className="flex items-center justify-between gap-2">
@@ -193,7 +208,7 @@ function TripCard({
         </div>
       </div>
 
-      <ContactInfo trip={trip} canSeeContact={viewerCanSeeContact} />
+      <ContactInfo trip={trip} canSeeContact={viewerCanSeeContact} isClosed={isClosed} />
     </div>
   );
 }
@@ -206,9 +221,7 @@ function Trips() {
   const [totalPages, setTotalPages] = useState(1);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-  const viewerCanSeeContact = Boolean(
-    user && (user.isAdmin || (user.accountStatus === "APPROVED" && user.hasPosted))
-  );
+  const [viewerCanSeeContact, setViewerCanSeeContact] = useState(false);
   const [activeFilters, setActiveFilters] = useState({
     originCountry: "",
     destCountry: "",
@@ -231,6 +244,7 @@ function Trips() {
       const res = await api.get(`/trips?${params.toString()}`);
       setTrips(res.data.trips);
       setTotalPages(res.data.pagination.totalPages);
+      setViewerCanSeeContact(Boolean(res.data.viewerCanSeeContact));
     } catch (err) {
       console.error(err);
     } finally {
@@ -256,6 +270,15 @@ function Trips() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
+      <SEO
+        titleEn="Browse Available Trips"
+        titleFa="مرور سفرهای موجود"
+        descriptionEn="Browse verified travelers heading to your destination and connect with them to carry your package."
+        descriptionFa="مسافران تایید شده‌ای که به مقصد شما می‌روند را مرور کنید و برای حمل بسته خود با آن‌ها ارتباط برقرار کنید."
+        keywordsEn="travelers, trips, carry package, courier trips, Afghanistan travel"
+        keywordsFa="مسافران, سفرها, حمل بسته, سفرهای پیک, سفر افغانستان"
+        path="/trips"
+      />
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
@@ -266,24 +289,39 @@ function Trips() {
             Find travelers who can carry your package
           </p>
         </div>
-        {user?.accountStatus === "APPROVED" &&
-          (user.hasUnpaidCommission ? (
-            <span
-              title="You have unpaid commission. Please settle it before posting new trips."
-              className="flex cursor-not-allowed items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white opacity-50"
-            >
-              <Plus className="h-4 w-4" />
-              Post a trip
-            </span>
-          ) : (
-            <Link
-              to="/trips/new"
-              className="flex items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
-            >
-              <Plus className="h-4 w-4" />
-              Post a trip
-            </Link>
-          ))}
+        {user && (
+          <div className="text-right">
+            {user.accountStatus !== "APPROVED" ? (
+              <span
+                className="flex cursor-not-allowed items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white opacity-50"
+              >
+                <Plus className="h-4 w-4" />
+                Post a trip
+              </span>
+            ) : user.hasUnpaidCommission ? (
+              <span
+                title="You have unpaid commission. Please settle it before posting new trips."
+                className="flex cursor-not-allowed items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white opacity-50"
+              >
+                <Plus className="h-4 w-4" />
+                Post a trip
+              </span>
+            ) : (
+              <Link
+                to="/trips/new"
+                className="flex items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+              >
+                <Plus className="h-4 w-4" />
+                Post a trip
+              </Link>
+            )}
+            {user.accountStatus !== "APPROVED" && (
+              <p className="mt-1 text-xs text-brand-muted">
+                Your account is pending admin approval. You'll be able to post once approved.
+              </p>
+            )}
+          </div>
+        )}
       </div>
       {user?.accountStatus === "APPROVED" && user.hasUnpaidCommission && (
         <div className="mb-6 flex items-center gap-2 rounded-lg border border-brand-danger/30 bg-brand-danger/5 px-4 py-3 text-sm text-brand-danger">

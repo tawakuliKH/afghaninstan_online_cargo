@@ -17,6 +17,7 @@ import {
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { getData } from "country-list";
+import { SEO } from "../components/SEO";
 
 const countries = getData().sort((a, b) => a.name.localeCompare(b.name));
 
@@ -248,9 +249,7 @@ function Packages() {
   const [totalPages, setTotalPages] = useState(1);
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-  const viewerCanSeeContact = Boolean(
-    user && (user.isAdmin || (user.accountStatus === "APPROVED" && user.hasPosted))
-  );
+  const [viewerCanSeeContact, setViewerCanSeeContact] = useState(false);
   const [activeFilters, setActiveFilters] = useState({
     originCountry: "",
     destCountry: "",
@@ -273,6 +272,7 @@ function Packages() {
       const res = await api.get(`/packages?${params.toString()}`);
       setPackages(res.data.packages);
       setTotalPages(res.data.pagination.totalPages);
+      setViewerCanSeeContact(Boolean(res.data.viewerCanSeeContact));
     } catch (err) {
       console.error(err);
     } finally {
@@ -298,6 +298,15 @@ function Packages() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
+      <SEO
+        titleEn="Browse Packages to Send"
+        titleFa="مرور بسته‌ها برای ارسال"
+        descriptionEn="Browse packages that need a traveler to carry them and connect with senders heading to your destination."
+        descriptionFa="بسته‌هایی که نیاز به یک مسافر برای حمل دارند را مرور کنید و با فرستنده‌هایی که به مقصد شما می‌روند ارتباط برقرار کنید."
+        keywordsEn="packages, send package, courier packages, Afghanistan shipping, package delivery"
+        keywordsFa="بسته‌ها, ارسال بسته, بسته‌های پیک, حمل و نقل افغانستان, تحویل بسته"
+        path="/packages"
+      />
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
@@ -308,24 +317,39 @@ function Packages() {
             Browse packages that need a traveler to carry them
           </p>
         </div>
-        {user?.accountStatus === "APPROVED" &&
-          (user.hasUnpaidCommission ? (
-            <span
-              title="You have unpaid commission. Please settle it before posting new packages."
-              className="flex cursor-not-allowed items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white opacity-50"
-            >
-              <Plus className="h-4 w-4" />
-              Post a package
-            </span>
-          ) : (
-            <Link
-              to="/packages/new"
-              className="flex items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
-            >
-              <Plus className="h-4 w-4" />
-              Post a package
-            </Link>
-          ))}
+        {user && (
+          <div className="text-right">
+            {user.accountStatus !== "APPROVED" ? (
+              <span
+                className="flex cursor-not-allowed items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white opacity-50"
+              >
+                <Plus className="h-4 w-4" />
+                Post a package
+              </span>
+            ) : user.hasUnpaidCommission ? (
+              <span
+                title="You have unpaid commission. Please settle it before posting new packages."
+                className="flex cursor-not-allowed items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white opacity-50"
+              >
+                <Plus className="h-4 w-4" />
+                Post a package
+              </span>
+            ) : (
+              <Link
+                to="/packages/new"
+                className="flex items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+              >
+                <Plus className="h-4 w-4" />
+                Post a package
+              </Link>
+            )}
+            {user.accountStatus !== "APPROVED" && (
+              <p className="mt-1 text-xs text-brand-muted">
+                Your account is pending admin approval. You'll be able to post once approved.
+              </p>
+            )}
+          </div>
+        )}
       </div>
       {user?.accountStatus === "APPROVED" && user.hasUnpaidCommission && (
         <div className="mb-6 flex items-center gap-2 rounded-lg border border-brand-danger/30 bg-brand-danger/5 px-4 py-3 text-sm text-brand-danger">
