@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { prisma } from '../lib/prisma'
 import { requireAuth, requireApproved } from '../middleware/auth'
 import { createReviewSchema } from '../schemas/review.schema'
+import { sendEmail, emailTemplates } from '../lib/email'
 
 const router = Router()
 
@@ -62,9 +63,10 @@ router.post('/:deliveryId', requireAuth, requireApproved, async (req, res) => {
     }),
   ])
 
-  const [reviewerUser, pkgData] = await Promise.all([
+  const [reviewerUser, pkgData, travelerUser] = await Promise.all([
     prisma.user.findUnique({ where: { id: req.user!.userId }, select: { nickname: true } }),
     prisma.package.findUnique({ where: { id: delivery.packageId }, select: { title: true } }),
+    prisma.user.findUnique({ where: { id: delivery.travelerId }, select: { nickname: true, email: true } }),
   ])
   if (reviewerUser && pkgData) {
     await prisma.notification.create({
@@ -76,6 +78,16 @@ router.post('/:deliveryId', requireAuth, requireApproved, async (req, res) => {
         link: `/users/${delivery.travelerId}`,
       },
     })
+
+    if (travelerUser) {
+      const { subject, html } = emailTemplates.reviewReceived(
+        travelerUser.nickname,
+        reviewerUser.nickname,
+        newRating,
+        pkgData.title
+      )
+      await sendEmail(travelerUser.email, subject, html)
+    }
   }
 
   res.status(201).json({ review })

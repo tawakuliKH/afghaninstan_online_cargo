@@ -128,6 +128,95 @@ export const emailTemplates = {
     `,
   }),
 
+  registrationReceived: (nickname: string) => ({
+    subject: 'We received your Afghanistan Online Cargo registration',
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+        <div style="background: #1E2A5E; padding: 24px; border-radius: 12px; text-align: center; margin-bottom: 24px;">
+          <h1 style="color: #F2A60D; margin: 0; font-size: 20px;">Afghanistan Online Cargo</h1>
+        </div>
+        <h2 style="color: #1E2A5E;">Hi ${nickname},</h2>
+        <p style="color: #64748B;">Thanks for registering! Your documents have been submitted and are now awaiting review by our admin team.</p>
+        <div style="background: #F8F9FB; border-radius: 8px; padding: 16px; margin: 16px 0;">
+          <p style="color: #1E2A5E; margin: 0;">⏳ Approval typically takes 1-2 business days. You'll receive an email as soon as a decision is made.</p>
+        </div>
+        <p style="color: #64748B; font-size: 12px; margin-top: 32px;">
+          Afghanistan Online Cargo — Cross-border package coordination platform
+        </p>
+      </div>
+    `,
+  }),
+
+  tripPosted: (nickname: string, originCity: string, destCity: string, departureDate: string) => ({
+    subject: 'Your trip has been posted — Afghanistan Online Cargo',
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+        <div style="background: #1E2A5E; padding: 24px; border-radius: 12px; text-align: center; margin-bottom: 24px;">
+          <h1 style="color: #F2A60D; margin: 0; font-size: 20px;">Afghanistan Online Cargo</h1>
+        </div>
+        <h2 style="color: #1E2A5E;">Hi ${nickname},</h2>
+        <p style="color: #64748B;">Your trip has been posted successfully:</p>
+        <div style="background: #F8F9FB; border-radius: 8px; padding: 16px; margin: 16px 0;">
+          <p style="color: #1E2A5E; font-weight: bold; margin: 0;">✈️ ${originCity} → ${destCity}</p>
+          <p style="color: #64748B; margin: 4px 0 0;">Departing ${departureDate}</p>
+        </div>
+        <p style="color: #64748B;">Senders can now find you and contact you about carrying their packages.</p>
+        <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/trips"
+           style="display: inline-block; background: #F2A60D; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 16px;">
+          View Your Trip
+        </a>
+        <p style="color: #64748B; font-size: 12px; margin-top: 32px;">
+          Afghanistan Online Cargo — Cross-border package coordination platform
+        </p>
+      </div>
+    `,
+  }),
+
+  packagePosted: (nickname: string, packageTitle: string, destCity: string) => ({
+    subject: 'Your package has been posted — Afghanistan Online Cargo',
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+        <div style="background: #1E2A5E; padding: 24px; border-radius: 12px; text-align: center; margin-bottom: 24px;">
+          <h1 style="color: #F2A60D; margin: 0; font-size: 20px;">Afghanistan Online Cargo</h1>
+        </div>
+        <h2 style="color: #1E2A5E;">Hi ${nickname},</h2>
+        <p style="color: #64748B;">Your package has been posted successfully:</p>
+        <div style="background: #F8F9FB; border-radius: 8px; padding: 16px; margin: 16px 0;">
+          <p style="color: #1E2A5E; font-weight: bold; margin: 0;">📦 ${packageTitle}</p>
+          <p style="color: #64748B; margin: 4px 0 0;">Destination: ${destCity}</p>
+        </div>
+        <p style="color: #64748B;">Travelers heading your way can now find and contact you.</p>
+        <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/packages"
+           style="display: inline-block; background: #F2A60D; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 16px;">
+          View Your Package
+        </a>
+        <p style="color: #64748B; font-size: 12px; margin-top: 32px;">
+          Afghanistan Online Cargo — Cross-border package coordination platform
+        </p>
+      </div>
+    `,
+  }),
+
+  reviewReceived: (travelerNickname: string, reviewerNickname: string, rating: number, packageTitle: string) => ({
+    subject: `You received a ${rating}-star review — Afghanistan Online Cargo`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+        <div style="background: #1E2A5E; padding: 24px; border-radius: 12px; text-align: center; margin-bottom: 24px;">
+          <h1 style="color: #F2A60D; margin: 0; font-size: 20px;">Afghanistan Online Cargo</h1>
+        </div>
+        <h2 style="color: #1E2A5E;">Hi ${travelerNickname},</h2>
+        <p style="color: #64748B;"><strong>${reviewerNickname}</strong> left you a ${'⭐'.repeat(rating)} review for delivering <strong>${packageTitle}</strong>.</p>
+        <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/profile"
+           style="display: inline-block; background: #F2A60D; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 16px;">
+          View Your Profile
+        </a>
+        <p style="color: #64748B; font-size: 12px; margin-top: 32px;">
+          Afghanistan Online Cargo — Cross-border package coordination platform
+        </p>
+      </div>
+    `,
+  }),
+
   deliveryFinalized: (senderNickname: string, packageTitle: string, travelerNickname: string) => ({
     subject: `Your package has been delivered — Afghanistan Online Cargo`,
     html: `
