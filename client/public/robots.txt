@@ -1,7 +1,26 @@
 User-agent: *
 Allow: /
+Allow: /trips
+Allow: /packages
+Allow: /rules
+Allow: /register
+Allow: /login
+Allow: /search
+Allow: /users/
 Disallow: /admin
 Disallow: /profile
 Disallow: /messages
+Disallow: /deliveries/
+Disallow: /packages/*/propose
+Disallow: /trips/new
+Disallow: /packages/new
+
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 2
 
 Sitemap: https://afghancargo.online/sitemap.xml

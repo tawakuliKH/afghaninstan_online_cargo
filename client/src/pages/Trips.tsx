@@ -48,6 +48,30 @@ interface SearchForm {
   destCountry: string;
 }
 
+// ── Structured Data ─────────────────────────────────────────
+
+const TRIPS_STRUCTURED_DATA = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "Available Trips — Afghanistan Online Cargo",
+  "alternateName": "سفرهای موجود — کارگو آنلاین افغانستان",
+  "description": "Browse verified Afghan travelers available to carry packages cross-border. Find travelers going from Afghanistan to Europe, USA, UAE, Iran, Turkey and worldwide.",
+  "url": "https://afghancargo.online/trips",
+  "inLanguage": ["en", "fa"],
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "Afghanistan Online Cargo",
+    "url": "https://afghancargo.online"
+  },
+  "about": {
+    "@type": "Service",
+    "name": "Trip Listings for Cross-Border Package Delivery",
+    "description": "Verified Afghan travelers post their upcoming trips so package senders can find and connect with them for cross-border delivery coordination."
+  }
+}
+
+// ── Contact Info ─────────────────────────────────────────────
+
 function ContactInfo({
   trip,
   canSeeContact,
@@ -75,17 +99,27 @@ function ContactInfo({
         {trip.traveler.whatsappNumber && (
           <p className="text-xs text-brand-muted">
             WhatsApp:{" "}
-            <span className="font-medium text-brand-primary">
+            <a
+              href={`https://wa.me/${trip.traveler.whatsappNumber.replace(/\D/g, "")}`}
+              target="_blank"
+              rel="noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="font-medium text-brand-primary hover:text-brand-accent"
+            >
               {trip.traveler.whatsappNumber}
-            </span>
+            </a>
           </p>
         )}
         {trip.traveler.email && (
           <p className="text-xs text-brand-muted">
             Email:{" "}
-            <span className="font-medium text-brand-primary">
+            <a
+              href={`mailto:${trip.traveler.email}`}
+              onClick={(e) => e.stopPropagation()}
+              className="font-medium text-brand-primary hover:text-brand-accent"
+            >
               {trip.traveler.email}
-            </span>
+            </a>
           </p>
         )}
       </div>
@@ -106,13 +140,26 @@ function ContactInfo({
             </Link>{" "}
             to see contact details
           </>
+        ) : user.accountStatus === "APPROVED" ? (
+          <>
+            <Link
+              to="/trips/new"
+              onClick={(e) => e.stopPropagation()}
+              className="text-brand-accent hover:underline"
+            >
+              Post a trip or package
+            </Link>{" "}
+            to unlock contact details
+          </>
         ) : (
-          "Post a trip or package to see contact details"
+          "Your account is pending approval. Contact details will be visible once approved and you've posted."
         )}
       </p>
     </div>
   );
 }
+
+// ── Trip Card ─────────────────────────────────────────────────
 
 function TripCard({
   trip,
@@ -182,13 +229,13 @@ function TripCard({
       )}
 
       {/* Traveler */}
-      {/* Traveler */}
       <div className="mt-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <img
-            src={`https://api.dicebear.com/9.x/notionists/svg?seed=${trip.traveler.id}&backgroundColor=b6e3f4,c0aede,d1d4f9&backgroundType=gradientLinear`}
+            src={`https://api.dicebear.com/9.x/personas/svg?seed=${trip.traveler.id}&backgroundColor=e8edf5`}
             alt={trip.traveler.nickname}
             className="h-10 w-10 rounded-full border-2 border-brand-primary/10 object-cover"
+            loading="lazy"
           />
           <div>
             <p className="text-xs text-brand-muted">Traveler</p>
@@ -200,18 +247,27 @@ function TripCard({
               {trip.traveler.legalFullName || trip.traveler.nickname}
             </Link>
             <p className="text-xs text-brand-muted">
-              ⭐ {trip.traveler.rating > 0 ? trip.traveler.rating.toFixed(1) : "—"}
+              ⭐{" "}
+              {trip.traveler.rating > 0
+                ? trip.traveler.rating.toFixed(1)
+                : "—"}
               {" · "}
-              {trip.traveler.packagesDeliveredCount} delivered
+              <strong>{trip.traveler.packagesDeliveredCount}</strong> delivered
             </p>
           </div>
         </div>
       </div>
 
-      <ContactInfo trip={trip} canSeeContact={viewerCanSeeContact} isClosed={isClosed} />
+      <ContactInfo
+        trip={trip}
+        canSeeContact={viewerCanSeeContact}
+        isClosed={isClosed}
+      />
     </div>
   );
 }
+
+// ── Main Trips page ───────────────────────────────────────────
 
 function Trips() {
   const { user } = useAuthStore();
@@ -271,14 +327,16 @@ function Trips() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <SEO
-        titleEn="Browse Available Trips"
-        titleFa="مرور سفرهای موجود"
-        descriptionEn="Browse verified travelers heading to your destination and connect with them to carry your package."
-        descriptionFa="مسافران تایید شده‌ای که به مقصد شما می‌روند را مرور کنید و برای حمل بسته خود با آن‌ها ارتباط برقرار کنید."
-        keywordsEn="travelers, trips, carry package, courier trips, Afghanistan travel"
-        keywordsFa="مسافران, سفرها, حمل بسته, سفرهای پیک, سفر افغانستان"
+        titleEn="Browse Afghan Travelers — Find Someone to Carry Your Package"
+        titleFa="مرور مسافران افغانستان — کسی را برای حمل بسته خود پیدا کنید"
+        descriptionEn="Browse verified Afghan travelers heading to Afghanistan, Europe, USA, UAE, Iran, Turkey and worldwide. Find someone to carry your package safely across borders."
+        descriptionFa="مسافران تأیید شده افغانی که به افغانستان، اروپا، امریکا، امارات، ایران، ترکیه و سراسر جهان می‌روند را مرور کنید. کسی را برای حمل بسته شما به صورت امن از مرزها پیدا کنید."
+        keywordsEn="Afghan travelers, find traveler, carry package Afghanistan, Afghan courier trips, traveler to Kabul, traveler to Afghanistan from Germany, traveler to Afghanistan from USA, traveler to Afghanistan from UAE, مسافر به افغانستان"
+        keywordsFa="مسافران افغان، پیدا کردن مسافر، حمل بسته افغانستان، سفرهای پیک افغانی، مسافر به کابل، مسافر به افغانستان از آلمان، مسافر به افغانستان از امریکا، مسافر به افغانستان از امارات"
         path="/trips"
+        structuredData={TRIPS_STRUCTURED_DATA}
       />
+
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
@@ -286,15 +344,16 @@ function Trips() {
             Available Trips
           </h1>
           <p className="text-sm text-brand-muted">
-            Find travelers who can carry your package
+            Find verified travelers who can carry your package —{" "}
+            <span className="text-brand-muted/70">
+              مسافران تأیید شده برای حمل بسته شما
+            </span>
           </p>
         </div>
         {user && (
           <div className="text-right">
             {user.accountStatus !== "APPROVED" ? (
-              <span
-                className="flex cursor-not-allowed items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white opacity-50"
-              >
+              <span className="flex cursor-not-allowed items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white opacity-50">
                 <Plus className="h-4 w-4" />
                 Post a trip
               </span>
@@ -317,12 +376,14 @@ function Trips() {
             )}
             {user.accountStatus !== "APPROVED" && (
               <p className="mt-1 text-xs text-brand-muted">
-                Your account is pending admin approval. You'll be able to post once approved.
+                Your account is pending admin approval. You'll be able to post
+                once approved.
               </p>
             )}
           </div>
         )}
       </div>
+
       {user?.accountStatus === "APPROVED" && user.hasUnpaidCommission && (
         <div className="mb-6 flex items-center gap-2 rounded-lg border border-brand-danger/30 bg-brand-danger/5 px-4 py-3 text-sm text-brand-danger">
           <AlertTriangle className="h-4 w-4 shrink-0" />
@@ -418,6 +479,9 @@ function Trips() {
           <p className="text-brand-muted">
             No trips found matching your search.
           </p>
+          <p className="mt-1 text-xs text-brand-muted">
+            هیچ سفری مطابق جستجوی شما یافت نشد
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -453,6 +517,26 @@ function Trips() {
           </button>
         </div>
       )}
+
+      {/* Bottom SEO text — keyword rich, helps Google understand the page */}
+      <div className="mt-12 rounded-xl bg-white p-6 text-center shadow-sm">
+        <h2 className="mb-2 text-sm font-semibold text-brand-primary">
+          Finding a Traveler to Carry Your Package to Afghanistan
+        </h2>
+        <p className="text-xs text-brand-muted leading-relaxed">
+          Afghanistan Online Cargo connects verified Afghan senders with trusted
+          travelers heading to Kabul, Herat, Mazar-i-Sharif, Kandahar and all
+          provinces of Afghanistan — from Germany, USA, UAE, Iran, Turkey, UK,
+          Sweden, Norway, Netherlands, Canada, Australia and beyond.
+          All users are KYC-verified. All handovers are legally recorded.
+        </p>
+        <p className="mt-2 text-xs text-brand-muted/70 leading-relaxed">
+          کارگو آنلاین افغانستان فرستندگان افغانی تأیید شده را با مسافران
+          مورد اعتماد که به کابل، هرات، مزار شریف، قندهار و تمام ولایات
+          افغانستان می‌روند — از آلمان، امریکا، امارات، ایران، ترکیه، انگلیس،
+          سوئد، نروژ، هلند، کانادا، استرالیا و بیشتر — متصل می‌کند.
+        </p>
+      </div>
     </div>
   );
 }
