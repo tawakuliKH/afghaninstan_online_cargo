@@ -8,6 +8,7 @@ import { getData } from "country-list";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 import { Loader2, Upload, CheckCircle } from "lucide-react";
+import { SEO } from "../components/SEO";
 
 const registerSchema = z
   .object({
@@ -211,6 +212,13 @@ function Register() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-12">
+      <SEO
+        titleEn="Create Your Account"
+        titleFa="حساب خود را بسازید"
+        descriptionEn="Register with your identity documents to start sending or carrying packages on Afghanistan Online Cargo."
+        descriptionFa="با اسناد هویتی خود ثبت‌نام کنید تا ارسال یا حمل بسته‌ها را در کارگو آنلاین افغانستان آغاز کنید."
+        path="/register"
+      />
       <div className="rounded-2xl bg-white p-8 shadow-lg">
         {/* Header */}
         <div className="mb-8 text-center">
@@ -449,6 +457,11 @@ function Register() {
                 }}
                 fileName={faceFile?.name}
               />
+              <p className="mt-1 text-xs italic text-brand-muted">
+                Your face must be clearly visible, well-lit, and directly comparable to
+                your identity document photo. Blurry, masked, or obscured photos will
+                result in rejection.
+              </p>
               {visaRequired && (
                 <FileField
                   label="Visa or residency permit in current country"
