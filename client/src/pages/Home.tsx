@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import api from '../lib/axios'
 import { useAuthStore } from '../store/authStore'
 import { WorkflowDashboard } from '../components/WorkflowDashboard'
+import { SEO } from '../components/SEO'
 import { MapPin, Package, ArrowRight, Shield, Clock, Users } from 'lucide-react'
 
 // ── Hero animation ──────────────────────────────────────────
@@ -148,15 +149,27 @@ function HowItWorks() {
 // ── Mini card components ────────────────────────────────────
 
 function TripMiniCard({ trip }: { trip: any }) {
+  const isClosed = new Date(trip.departureDate) < new Date()
   return (
     <Link
       to={`/trips/${trip.id}`}
-      className="block rounded-xl bg-white p-4 shadow-sm transition hover:shadow-md"
+      className={`block rounded-xl bg-white p-4 shadow-sm transition hover:shadow-md ${
+        isClosed ? "opacity-60 grayscale-[30%]" : ""
+      }`}
     >
-      <div className="flex items-center gap-2 mb-2">
-        <MapPin className="h-4 w-4 text-brand-accent" />
-        <span className="text-sm font-medium text-brand-primary">
-          {trip.originCity} → {trip.destCity}
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <MapPin className="h-4 w-4 text-brand-accent" />
+          <span className="text-sm font-medium text-brand-primary">
+            {trip.originCity} → {trip.destCity}
+          </span>
+        </div>
+        <span
+          className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+            isClosed ? "bg-brand-muted/10 text-brand-muted" : "bg-green-100 text-green-700"
+          }`}
+        >
+          {isClosed ? "Trip Closed" : "Active"}
         </span>
       </div>
       <p className="text-xs text-brand-muted">{trip.originCountry} → {trip.destCountry}</p>
@@ -225,6 +238,15 @@ function Home() {
 
   return (
     <div>
+      <SEO
+        titleEn="Trusted Cross-Border Package Delivery"
+        titleFa="ارسال قابل اعتماد بسته‌ها میان مرزها"
+        descriptionEn="Connect with KYC-verified travelers to send packages between Afghanistan and the world. Post a trip or a package and get started today."
+        descriptionFa="با مسافران تایید شده KYC ارتباط برقرار کنید تا بسته‌ها را میان افغانستان و جهان ارسال کنید. یک سفر یا بسته پست کنید و همین امروز شروع کنید."
+        keywordsEn="Afghanistan cargo, package delivery, cross-border shipping, traveler courier, send package to Afghanistan"
+        keywordsFa="کارگو افغانستان, ارسال بسته, حمل و نقل بین مرزی, مسافر پیک, ارسال بسته به افغانستان"
+        path="/"
+      />
       {/* Hero */}
       <section className="bg-brand-primary px-4 py-16 text-center">
         <motion.h1

@@ -11,6 +11,7 @@ import {
   Loader2,
   Package,
 } from "lucide-react";
+import { SEO } from "../components/SEO";
 
 interface TripData {
   id: string;
@@ -86,6 +87,13 @@ function TripDetail() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
+      <SEO
+        titleEn={`${trip.originCity} to ${trip.destCity} Trip`}
+        titleFa={`سفر از ${trip.originCity} به ${trip.destCity}`}
+        descriptionEn={`Traveler heading from ${trip.originCity}, ${trip.originCountry} to ${trip.destCity}, ${trip.destCountry}. Connect to send a package on this trip.`}
+        descriptionFa={`مسافری از ${trip.originCity}, ${trip.originCountry} به ${trip.destCity}, ${trip.destCountry} در حال سفر است. برای ارسال بسته در این سفر ارتباط برقرار کنید.`}
+        path={`/trips/${trip.id}`}
+      />
       <button
         onClick={() => navigate(-1)}
         className="mb-6 flex items-center gap-2 text-sm text-brand-muted hover:text-brand-primary"
@@ -163,7 +171,11 @@ function TripDetail() {
               {trip.traveler.legalFullName || trip.traveler.nickname}
             </Link>
           </div>
-          {viewerCanSeeContact ? (
+          {isClosed ? (
+            <p className="mt-3 text-xs italic text-brand-muted">
+              This trip has already departed. Contact details are no longer available.
+            </p>
+          ) : viewerCanSeeContact ? (
             <div className="mt-3 space-y-1 text-sm">
               {trip.traveler.whatsappNumber && (
                 <p className="text-brand-muted">
