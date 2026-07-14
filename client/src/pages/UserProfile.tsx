@@ -11,6 +11,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { SEO } from "../components/SEO";
 
 interface PublicUser {
   id: string;
@@ -139,6 +140,13 @@ function UserProfile() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
+      <SEO
+        titleEn={`${profileUser.nickname}'s Profile`}
+        titleFa={`پروفایل ${profileUser.nickname}`}
+        descriptionEn={`View ${profileUser.nickname}'s rating, reviews, and delivery history on Afghanistan Online Cargo.`}
+        descriptionFa={`امتیاز، نظرات و سابقه تحویل ${profileUser.nickname} را در کارگو آنلاین افغانستان مشاهده کنید.`}
+        path={`/users/${userId}`}
+      />
       <button
         onClick={() => navigate(-1)}
         className="mb-6 flex items-center gap-2 text-sm text-brand-muted hover:text-brand-primary"
