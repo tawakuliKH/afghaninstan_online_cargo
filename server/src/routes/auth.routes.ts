@@ -12,6 +12,7 @@ import { verifyRefreshToken } from '../lib/jwt'
 import { requireAuth, requireApproved } from '../middleware/auth'
 import { optionalAuth } from '../middleware/auth'
 import { getViewerContext, shapeUserForViewer } from '../lib/visibility'
+import { sendEmail, emailTemplates } from '../lib/email'
 
 
 const router = Router()
@@ -144,7 +145,8 @@ router.patch(
   }
 )
 
-// Request own account deletion — does not deactivate immediately; admin must action it
+// Request own account deletion — soft-deletes immediately (hidden from public,
+// visible to admin only); admin can still review/reverse via the deletion-request badge
 router.delete('/me', requireAuth, async (req, res) => {
   const user = await prisma.user.findUnique({ where: { id: req.user!.userId } })
   if (!user) return res.status(404).json({ error: 'User not found' })
@@ -152,7 +154,7 @@ router.delete('/me', requireAuth, async (req, res) => {
   await prisma.user.update({
     where: { id: user.id },
     data: {
-      accountStatus: 'PENDING',
+      accountStatus: 'SUSPENDED',
       adminNote: `DELETION_REQUESTED: User requested account deletion on ${new Date().toISOString()}.`,
     },
   })
@@ -516,6 +518,9 @@ router.get('/users/:id/profile', optionalAuth, async (req, res) => {
     },
   })
   if (!user) return res.status(404).json({ error: 'User not found' })
+  if (user.accountStatus === 'SUSPENDED' && !req.user?.isAdmin) {
+    return res.status(404).json({ error: 'User not found' })
+  }
 
   const viewer = await getViewerContext(req.user?.userId, req.user?.isAdmin)
   const { legalFullName, whatsappNumber, email, ...publicStats } = user
@@ -679,6 +684,9 @@ router.post(
           visaResidencyDocUrl: visaPath,
         },
       })
+
+      const { subject, html } = emailTemplates.registrationReceived(user.nickname)
+      await sendEmail(user.email, subject, html)
 
       res.status(201).json({
         message: 'Registration received. Your account is pending admin approval.',

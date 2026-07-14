@@ -6,6 +6,7 @@ import { createPackageSchema, updatePackageSchema } from '../schemas/package.sch
 import { uploadPackagePhoto } from '../lib/storage'
 import { requireAuth, requireApproved, optionalAuth } from '../middleware/auth'
 import { getViewerContext, shapeUserForViewer } from '../lib/visibility'
+import { sendEmail, emailTemplates } from '../lib/email'
 
 const router = Router()
 
@@ -31,6 +32,15 @@ router.post('/', requireAuth, requireApproved, upload.single('goodsPhoto'), asyn
     },
   })
 
+  const sender = await prisma.user.findUnique({
+    where: { id: req.user!.userId },
+    select: { nickname: true, email: true },
+  })
+  if (sender) {
+    const { subject, html } = emailTemplates.packagePosted(sender.nickname, pkg.title, pkg.destCity)
+    await sendEmail(sender.email, subject, html)
+  }
+
   res.status(201).json({ package: pkg })
 })
 
@@ -49,6 +59,9 @@ router.get('/', optionalAuth, async (req, res) => {
     where.createdAt = {}
     if (startDate) where.createdAt.gte = new Date(String(startDate))
     if (endDate) where.createdAt.lte = new Date(String(endDate))
+  }
+  if (!req.user?.isAdmin) {
+    where.sender = { accountStatus: { not: 'SUSPENDED' } }
   }
 
   const viewer = await getViewerContext(req.user?.userId, req.user?.isAdmin)
@@ -85,6 +98,7 @@ router.get('/', optionalAuth, async (req, res) => {
   res.json({
     packages,
     pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
+    viewerCanSeeContact: viewer.hasFullAccess,
   })
 })
 

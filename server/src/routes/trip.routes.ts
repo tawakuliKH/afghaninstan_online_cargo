@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma'
 import { requireAuth, requireApproved, optionalAuth } from '../middleware/auth'
 import { createTripSchema, updateTripSchema } from '../schemas/trip.schema'
 import { getViewerContext, shapeUserForViewer } from '../lib/visibility'
+import { sendEmail, emailTemplates } from '../lib/email'
 
 const router = Router()
 
@@ -19,6 +20,20 @@ router.post('/', requireAuth, requireApproved, async (req, res) => {
       travelerId: req.user!.userId,
     },
   })
+
+  const traveler = await prisma.user.findUnique({
+    where: { id: req.user!.userId },
+    select: { nickname: true, email: true },
+  })
+  if (traveler) {
+    const { subject, html } = emailTemplates.tripPosted(
+      traveler.nickname,
+      trip.originCity,
+      trip.destCity,
+      new Date(trip.departureDate).toLocaleDateString()
+    )
+    await sendEmail(traveler.email, subject, html)
+  }
 
   res.status(201).json({ trip })
 })
@@ -66,7 +81,7 @@ router.get('/', optionalAuth, async (req, res) => {
   const pageSize = 10
   const skip = (page - 1) * pageSize
 
-  const { originCountry, destCountry, startDate, endDate } = req.query
+  const { originCountry, destCountry, startDate, endDate, status } = req.query
 
   const where: any = {}
   if (originCountry) where.originCountry = { equals: String(originCountry), mode: 'insensitive' }
@@ -75,6 +90,12 @@ router.get('/', optionalAuth, async (req, res) => {
     where.departureDate = {}
     if (startDate) where.departureDate.gte = new Date(String(startDate))
     if (endDate) where.departureDate.lte = new Date(String(endDate))
+  }
+  if (status === 'active') {
+    where.departureDate = { ...where.departureDate, gte: new Date() }
+  }
+  if (!req.user?.isAdmin) {
+    where.traveler = { accountStatus: { not: 'SUSPENDED' } }
   }
 
   const viewer = await getViewerContext(req.user?.userId, req.user?.isAdmin)
@@ -108,6 +129,7 @@ router.get('/', optionalAuth, async (req, res) => {
   res.json({
     trips,
     pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) },
+    viewerCanSeeContact: viewer.hasFullAccess,
   })
 })
 
