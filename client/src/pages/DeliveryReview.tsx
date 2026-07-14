@@ -4,6 +4,7 @@ import { useAuthStore } from "../store/authStore";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 import { ArrowLeft, Loader2, Star, Package } from "lucide-react";
+import { SEO } from "../components/SEO";
 
 interface ReviewData {
   id: string;
@@ -135,6 +136,14 @@ function DeliveryReview() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
+      <SEO
+        titleEn="Leave a Review"
+        titleFa="ثبت نظر"
+        descriptionEn="Leave a review for the traveler who delivered your package."
+        descriptionFa="برای مسافری که بسته شما را تحویل داد نظر بدهید."
+        path="/deliveries/review"
+        noIndex
+      />
       <Link
         to="/profile?tab=deliveries"
         className="mb-6 flex items-center gap-2 text-sm text-brand-muted hover:text-brand-primary"

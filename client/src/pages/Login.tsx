@@ -8,6 +8,7 @@ import { useAuthStore } from '../store/authStore'
 import api from '../lib/axios'
 import toast from 'react-hot-toast'
 import { Package, Loader2, AlertCircle, X } from 'lucide-react'
+import { SEO } from '../components/SEO'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -44,6 +45,14 @@ function Login() {
 
   return (
     <div className="flex min-h-[calc(100vh-64px)] items-center justify-center px-4 py-12">
+      <SEO
+        titleEn="Sign In"
+        titleFa="ورود"
+        descriptionEn="Sign in to your Afghanistan Online Cargo account to manage your trips, packages, and deliveries."
+        descriptionFa="برای مدیریت سفرها، بسته‌ها و تحویل‌های خود وارد حساب کارگو آنلاین افغانستان شوید."
+        path="/login"
+        noIndex
+      />
       <div className="w-full max-w-md">
 
         {/* Card */}

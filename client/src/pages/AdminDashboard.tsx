@@ -9,6 +9,7 @@ import {
   AlertTriangle, Trash2, Search, ChevronLeft, ChevronRight,
   MessageSquare, X, CheckCheck
 } from 'lucide-react'
+import { SEO } from '../components/SEO'
 
 // ── Types ────────────────────────────────────────────────────
 
@@ -1276,6 +1277,14 @@ function AdminDashboard() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
+      <SEO
+        titleEn="Admin Dashboard"
+        titleFa="داشبورد مدیریت"
+        descriptionEn="Platform administration and oversight."
+        descriptionFa="مدیریت و نظارت پلتفرم."
+        path="/admin"
+        noIndex
+      />
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-brand-primary">Admin Dashboard</h1>
         <p className="text-sm text-brand-muted">

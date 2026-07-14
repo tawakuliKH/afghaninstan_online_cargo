@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { WorkflowProgressBar } from "../components/WorkflowProgressBar";
 import { AgreementModal } from "../components/AgreementModal";
+import { SEO } from "../components/SEO";
 
 interface PartyUser {
   id: string;
@@ -175,6 +176,14 @@ function DeliveryDetail() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
+      <SEO
+        titleEn="Delivery Details"
+        titleFa="جزئیات تحویل"
+        descriptionEn="Track the status of this delivery."
+        descriptionFa="وضعیت این تحویل را پیگیری کنید."
+        path={`/deliveries/${deliveryId}`}
+        noIndex
+      />
       {agreementModal && (
         <AgreementModal
           isOpen={agreementModal.isOpen}

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../lib/axios";
 import { Search, MapPin, Package, Star } from "lucide-react";
+import { SEO } from "../components/SEO";
 
 interface SearchResult {
   id: string;
@@ -95,6 +96,13 @@ function UserSearch() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
+      <SEO
+        titleEn="Search Verified Users"
+        titleFa="جستجوی کاربران تایید شده"
+        descriptionEn="Search for verified senders and travelers by name on Afghanistan Online Cargo."
+        descriptionFa="فرستنده‌ها و مسافران تایید شده را با نام در کارگو آنلاین افغانستان جستجو کنید."
+        path="/search"
+      />
       <h1 className="mb-2 text-2xl font-bold text-brand-primary">Search Users</h1>
       <p className="mb-6 text-sm text-brand-muted">
         Find verified senders and travelers by name.

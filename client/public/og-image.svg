@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E2A5E" />
+      <stop offset="100%" stop-color="#16204a" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)" />
+
+  <!-- decorative dashed flight path -->
+  <path d="M 80 470 Q 600 320 1120 470" fill="none" stroke="#2DB7C4" stroke-width="3" stroke-dasharray="10 8" opacity="0.5" />
+  <circle cx="80" cy="470" r="8" fill="#F2A60D" />
+  <circle cx="1120" cy="470" r="8" fill="#F2A60D" />
+
+  <!-- package icon -->
+  <g transform="translate(520, 120)">
+    <rect x="0" y="40" width="160" height="120" rx="10" fill="#F2A60D" />
+    <path d="M 0 70 L 80 30 L 160 70 L 80 110 Z" fill="#ffffff" opacity="0.15" />
+    <line x1="80" y1="40" x2="80" y2="160" stroke="#1E2A5E" stroke-width="4" opacity="0.3" />
+    <line x1="0" y1="100" x2="160" y2="100" stroke="#1E2A5E" stroke-width="4" opacity="0.3" />
+  </g>
+
+  <!-- title -->
+  <text x="600" y="330" text-anchor="middle" font-family="Arial, sans-serif" font-size="56" font-weight="bold" fill="#ffffff">
+    Afghanistan Online Cargo
+  </text>
+
+  <!-- tagline -->
+  <text x="600" y="380" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#b6c2e8">
+    KYC-Verified Cross-Border Package Coordination
+  </text>
+
+  <!-- Dari subtitle -->
+  <text x="600" y="420" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" fill="#8f9cc9">
+    هماهنگی بسته‌های تأیید شده بین‌المللی
+  </text>
+</svg>

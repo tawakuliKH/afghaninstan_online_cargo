@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Shield, Package, MapPin, CheckCircle } from 'lucide-react'
+import { SEO } from '../components/SEO'
 
 function Rules() {
   const { t, i18n } = useTranslation()
@@ -19,6 +20,13 @@ function Rules() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
+      <SEO
+        titleEn="Platform Rules & Agreements"
+        titleFa="قوانین و توافقنامه‌های پلتفرم"
+        descriptionEn="Read the general rules, sender terms, and traveler terms that govern package deliveries on Afghanistan Online Cargo."
+        descriptionFa="قوانین عمومی، شرایط فرستنده و شرایط مسافر که تحویل بسته‌ها را در کارگو آنلاین افغانستان اداره می‌کند را بخوانید."
+        path="/rules"
+      />
 
       {/* Header */}
       <div className="mb-8 text-center">

@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/authStore'
 import api from '../lib/axios'
 import { ArrowLeft, Send, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { SEO } from '../components/SEO'
 
 interface Message {
   id: string
@@ -85,6 +86,14 @@ function MessageThread() {
 
   return (
     <div className="mx-auto flex h-[calc(100vh-64px)] max-w-2xl flex-col px-4 py-6">
+      <SEO
+        titleEn="Messages"
+        titleFa="پیام‌ها"
+        descriptionEn="Your private conversation."
+        descriptionFa="مکالمه خصوصی شما."
+        path="/messages"
+        noIndex
+      />
 
       {/* Header */}
       <div className="mb-4 flex items-center gap-3">
