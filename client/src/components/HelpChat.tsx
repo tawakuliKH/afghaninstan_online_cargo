@@ -89,10 +89,22 @@ export function HelpChat() {
   const [entries, setEntries] = useState<ChatEntry[]>([]);
   const [busy, setBusy] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const chatRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [entries]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (chatRef.current && !chatRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
 
   const askFaq = (item: FaqItem) => {
     if (busy) return;
@@ -115,7 +127,7 @@ export function HelpChat() {
   };
 
   return (
-    <>
+    <div ref={chatRef}>
       {open && (
         <div className="fixed bottom-24 right-6 z-40 flex h-[480px] w-80 max-w-[calc(100vw-3rem)] flex-col rounded-2xl border border-brand-muted/20 bg-white shadow-xl">
           {/* Header */}
@@ -180,6 +192,13 @@ export function HelpChat() {
               </button>
             )}
             <div className="flex max-h-28 flex-wrap gap-1.5 overflow-y-auto">
+              <button
+                disabled={busy}
+                onClick={askContact}
+                className="rounded-full border border-brand-accent/40 bg-brand-accent/5 px-3 py-1 text-xs font-medium text-brand-accent transition hover:bg-brand-accent/10 disabled:opacity-50"
+              >
+                {CONTACT_QUESTION}
+              </button>
               {FAQS.map((item) => (
                 <button
                   key={item.question}
@@ -190,13 +209,6 @@ export function HelpChat() {
                   {item.question}
                 </button>
               ))}
-              <button
-                disabled={busy}
-                onClick={askContact}
-                className="rounded-full border border-brand-accent/40 bg-brand-accent/5 px-3 py-1 text-xs font-medium text-brand-accent transition hover:bg-brand-accent/10 disabled:opacity-50"
-              >
-                {CONTACT_QUESTION}
-              </button>
             </div>
           </div>
         </div>
@@ -215,7 +227,7 @@ export function HelpChat() {
         )}
         <HelpCircle className="h-6 w-6" />
       </button>
-    </>
+    </div>
   );
 }
 
