@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   Trash2,
 } from "lucide-react";
+import { ConfirmModal } from "../components/ConfirmModal";
 
 const countries = getData().sort((a, b) => a.name.localeCompare(b.name));
 
@@ -117,6 +118,7 @@ function EditProfile() {
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [passportFile, setPassportFile] = useState<File | null>(null);
   const [faceFile, setFaceFile] = useState<File | null>(null);
   const [visaFile, setVisaFile] = useState<File | null>(null);
@@ -178,23 +180,17 @@ function EditProfile() {
   };
 
   const handleDeleteAccount = async () => {
-    if (
-      !confirm(
-        "Are you sure? This will submit a deletion request for admin review. Your account will be set to pending until an admin processes it. This cannot be undone once actioned."
-      )
-    )
-      return;
-
     setDeleting(true);
     try {
       const res = await api.delete("/auth/me");
-      updateUser({ accountStatus: "PENDING" });
+      updateUser({ accountStatus: "SUSPENDED" });
       toast.success(res.data.message || "Deletion request submitted");
       navigate("/profile");
     } catch (err: any) {
       toast.error(err.response?.data?.error || "Failed to submit deletion request");
     } finally {
       setDeleting(false);
+      setShowDeleteConfirm(false);
     }
   };
 
@@ -207,6 +203,14 @@ function EditProfile() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
+      <SEO
+        titleEn="Edit Profile"
+        titleFa="ویرایش پروفایل"
+        descriptionEn="Update your profile details and identity documents."
+        descriptionFa="جزئیات پروفایل و اسناد هویتی خود را به‌روزرسانی کنید."
+        path="/profile/edit"
+        noIndex
+      />
       <Link
         to="/profile"
         className="mb-6 flex items-center gap-2 text-sm text-brand-muted hover:text-brand-primary"
@@ -321,13 +325,12 @@ function EditProfile() {
             Danger Zone
           </h2>
           <p className="mb-3 text-xs text-brand-muted">
-            Deleting your account submits a request for admin review — it does
-            not deactivate immediately. Your account will show as Pending
-            until an admin processes the request. Delivery records are
-            preserved for legal purposes.
+            Deleting your account immediately hides you and your listings from
+            other users. An admin can still review your deletion request.
+            Delivery records are preserved for legal purposes.
           </p>
           <button
-            onClick={handleDeleteAccount}
+            onClick={() => setShowDeleteConfirm(true)}
             disabled={deleting}
             className="flex items-center gap-2 rounded-lg border border-brand-danger bg-white px-4 py-2 text-sm font-semibold text-brand-danger transition hover:bg-brand-danger/5 disabled:opacity-60"
           >
@@ -340,6 +343,17 @@ function EditProfile() {
           </button>
         </div>
       </div>
+
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteAccount}
+        variant="danger"
+        title="Delete your account?"
+        message="This will immediately hide you and your listings from other users. Delivery records are preserved for legal purposes. This cannot be undone once actioned."
+        confirmLabel="Delete Account"
+        loading={deleting}
+      />
     </div>
   );
 }
