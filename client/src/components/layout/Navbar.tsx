@@ -35,7 +35,7 @@ export function Navbar() {
           api.get("/messages/unread-count"),
         ]);
         setUnreadTotal(
-          (notifRes.data.unreadCount || 0) + (msgRes.data.unreadCount || 0)
+          (notifRes.data.unreadCount || 0) + (msgRes.data.unreadCount || 0),
         );
       } catch {
         // ignore transient polling failures
@@ -98,6 +98,12 @@ export function Navbar() {
             aria-label="Search users"
           >
             <Search className="h-5 w-5" />
+          </Link>
+          <Link
+            to="/get-app"
+            className="flex items-center gap-1 rounded-full border border-brand-accent/40 px-3 py-1 text-xs font-semibold text-brand-accent transition hover:bg-brand-accent hover:text-white"
+          >
+            📱 Get App
           </Link>
 
           {/* Language switcher */}
@@ -212,6 +218,13 @@ export function Navbar() {
               className="text-sm font-medium text-white/80 transition hover:text-brand-accent"
             >
               Search Users
+            </Link>
+            <Link
+              to="/get-app"
+              onClick={() => setMobileOpen(false)}
+              className="text-sm font-semibold text-brand-accent"
+            >
+              📱 Get the App
             </Link>
             <hr className="border-white/10" />
             {user ? (

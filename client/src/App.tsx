@@ -29,6 +29,7 @@ import DeliveryReview from "./pages/DeliveryReview";
 import UserSearch from "./pages/UserSearch";
 import HelpChat from "./components/HelpChat";
 import DeliveryDetail from "./pages/DeliveryDetail";
+import GetApp from "./pages/GetApp";
 
 function App() {
   const { isLoading } = useAuthStore();
@@ -80,6 +81,7 @@ function App() {
           <Route path="/rules" element={<Rules />} />
           <Route path="/search" element={<UserSearch />} />
           <Route path="/users/:userId" element={<UserProfile />} />
+          <Route path="/get-app" element={<GetApp />} />
           <Route
             path="/profile"
             element={
