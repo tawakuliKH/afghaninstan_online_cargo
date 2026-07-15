@@ -55,7 +55,7 @@ export function Footer() {
               Built by
             </h3>
             <div className="space-y-3">
-              <p className="text-sm font-medium text-white">Khadim Tawakuli</p>
+              <p className="text-sm font-medium text-white">Shayan Ali Mughol</p>
               <p className="text-xs text-white/50 leading-relaxed">
                 Full-stack developer specializing in modern web applications.
               </p>
@@ -80,12 +80,12 @@ export function Footer() {
           <p className="text-xs text-white/40">
             Designed & developed by{' '}
             <a
-              href="https://tawakuli.dev"
+              href="https://shayan.dev"
               target="_blank"
               rel="noreferrer"
               className="text-brand-accent hover:underline"
             >
-              Khadim Tawakuli
+              Shayan Ali Mughol
             </a>
           </p>
         </div>
