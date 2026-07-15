@@ -3,7 +3,7 @@ import { Package } from "lucide-react";
 
 const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.afghancargo.app";
 const APP_STORE_URL = "https://apps.apple.com/app/afghanistan-online-cargo/id000000000";
-const APK_DIRECT_URL = "https://afghancargo.online/downloads/afghancargo.apk";
+// const APK_DIRECT_URL = "https://afghancargo.online/downloads/afghancargo.apk";
 
 function GetApp() {
   return (
