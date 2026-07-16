@@ -3,13 +3,14 @@
         xmlns:xhtml="http://www.w3.org/1999/xhtml"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 
+  <!-- Home — English (default, bare URL) -->
   <url>
     <loc>https://afghancargo.online/</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://afghancargo.online/"/>
-    <xhtml:link rel="alternate" hreflang="fa" href="https://afghancargo.online/"/>
-    <xhtml:link rel="alternate" hreflang="fa-AF" href="https://afghancargo.online/"/>
+    <xhtml:link rel="alternate" hreflang="fa" href="https://afghancargo.online/?lang=fa"/>
+    <xhtml:link rel="alternate" hreflang="fa-AF" href="https://afghancargo.online/?lang=fa"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://afghancargo.online/"/>
-    <lastmod>2026-07-14</lastmod>
+    <lastmod>2026-07-16</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
     <image:image>
@@ -19,64 +20,165 @@
     </image:image>
   </url>
 
+  <!-- Home — Dari -->
+  <url>
+    <loc>https://afghancargo.online/?lang=fa</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://afghancargo.online/"/>
+    <xhtml:link rel="alternate" hreflang="fa" href="https://afghancargo.online/?lang=fa"/>
+    <xhtml:link rel="alternate" hreflang="fa-AF" href="https://afghancargo.online/?lang=fa"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://afghancargo.online/"/>
+    <lastmod>2026-07-16</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+    <image:image>
+      <image:loc>https://afghancargo.online/og-image.svg</image:loc>
+      <image:title>Afghanistan Online Cargo — کارگو آنلاین افغانستان</image:title>
+      <image:caption>KYC-verified cross-border package coordination platform for the Afghan community</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Trips — English -->
   <url>
     <loc>https://afghancargo.online/trips</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://afghancargo.online/trips"/>
-    <xhtml:link rel="alternate" hreflang="fa" href="https://afghancargo.online/trips"/>
+    <xhtml:link rel="alternate" hreflang="fa" href="https://afghancargo.online/trips?lang=fa"/>
+    <xhtml:link rel="alternate" hreflang="fa-AF" href="https://afghancargo.online/trips?lang=fa"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://afghancargo.online/trips"/>
-    <lastmod>2026-07-14</lastmod>
+    <lastmod>2026-07-16</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.9</priority>
   </url>
 
+  <!-- Trips — Dari -->
+  <url>
+    <loc>https://afghancargo.online/trips?lang=fa</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://afghancargo.online/trips"/>
+    <xhtml:link rel="alternate" hreflang="fa" href="https://afghancargo.online/trips?lang=fa"/>
+    <xhtml:link rel="alternate" hreflang="fa-AF" href="https://afghancargo.online/trips?lang=fa"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://afghancargo.online/trips"/>
+    <lastmod>2026-07-16</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Packages — English -->
   <url>
     <loc>https://afghancargo.online/packages</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://afghancargo.online/packages"/>
-    <xhtml:link rel="alternate" hreflang="fa" href="https://afghancargo.online/packages"/>
+    <xhtml:link rel="alternate" hreflang="fa" href="https://afghancargo.online/packages?lang=fa"/>
+    <xhtml:link rel="alternate" hreflang="fa-AF" href="https://afghancargo.online/packages?lang=fa"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://afghancargo.online/packages"/>
-    <lastmod>2026-07-14</lastmod>
+    <lastmod>2026-07-16</lastmod>
     <changefreq>hourly</changefreq>
     <priority>0.9</priority>
   </url>
 
+  <!-- Packages — Dari -->
+  <url>
+    <loc>https://afghancargo.online/packages?lang=fa</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://afghancargo.online/packages"/>
+    <xhtml:link rel="alternate" hreflang="fa" href="https://afghancargo.online/packages?lang=fa"/>
+    <xhtml:link rel="alternate" hreflang="fa-AF" href="https://afghancargo.online/packages?lang=fa"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://afghancargo.online/packages"/>
+    <lastmod>2026-07-16</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Search — English -->
   <url>
     <loc>https://afghancargo.online/search</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://afghancargo.online/search"/>
-    <xhtml:link rel="alternate" hreflang="fa" href="https://afghancargo.online/search"/>
+    <xhtml:link rel="alternate" hreflang="fa" href="https://afghancargo.online/search?lang=fa"/>
+    <xhtml:link rel="alternate" hreflang="fa-AF" href="https://afghancargo.online/search?lang=fa"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://afghancargo.online/search"/>
-    <lastmod>2026-07-14</lastmod>
+    <lastmod>2026-07-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
+  <!-- Search — Dari -->
+  <url>
+    <loc>https://afghancargo.online/search?lang=fa</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://afghancargo.online/search"/>
+    <xhtml:link rel="alternate" hreflang="fa" href="https://afghancargo.online/search?lang=fa"/>
+    <xhtml:link rel="alternate" hreflang="fa-AF" href="https://afghancargo.online/search?lang=fa"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://afghancargo.online/search"/>
+    <lastmod>2026-07-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Register — English -->
   <url>
     <loc>https://afghancargo.online/register</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://afghancargo.online/register"/>
-    <xhtml:link rel="alternate" hreflang="fa" href="https://afghancargo.online/register"/>
+    <xhtml:link rel="alternate" hreflang="fa" href="https://afghancargo.online/register?lang=fa"/>
+    <xhtml:link rel="alternate" hreflang="fa-AF" href="https://afghancargo.online/register?lang=fa"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://afghancargo.online/register"/>
-    <lastmod>2026-07-14</lastmod>
+    <lastmod>2026-07-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
+  <!-- Register — Dari -->
   <url>
-    <loc>https://afghancargo.online/rules</loc>
-    <xhtml:link rel="alternate" hreflang="en" href="https://afghancargo.online/rules"/>
-    <xhtml:link rel="alternate" hreflang="fa" href="https://afghancargo.online/rules"/>
-    <xhtml:link rel="alternate" hreflang="x-default" href="https://afghancargo.online/rules"/>
-    <lastmod>2026-07-14</lastmod>
+    <loc>https://afghancargo.online/register?lang=fa</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://afghancargo.online/register"/>
+    <xhtml:link rel="alternate" hreflang="fa" href="https://afghancargo.online/register?lang=fa"/>
+    <xhtml:link rel="alternate" hreflang="fa-AF" href="https://afghancargo.online/register?lang=fa"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://afghancargo.online/register"/>
+    <lastmod>2026-07-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
 
+  <!-- Rules — English -->
+  <url>
+    <loc>https://afghancargo.online/rules</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://afghancargo.online/rules"/>
+    <xhtml:link rel="alternate" hreflang="fa" href="https://afghancargo.online/rules?lang=fa"/>
+    <xhtml:link rel="alternate" hreflang="fa-AF" href="https://afghancargo.online/rules?lang=fa"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://afghancargo.online/rules"/>
+    <lastmod>2026-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- Rules — Dari -->
+  <url>
+    <loc>https://afghancargo.online/rules?lang=fa</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://afghancargo.online/rules"/>
+    <xhtml:link rel="alternate" hreflang="fa" href="https://afghancargo.online/rules?lang=fa"/>
+    <xhtml:link rel="alternate" hreflang="fa-AF" href="https://afghancargo.online/rules?lang=fa"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://afghancargo.online/rules"/>
+    <lastmod>2026-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- Login — English -->
   <url>
     <loc>https://afghancargo.online/login</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://afghancargo.online/login"/>
-    <xhtml:link rel="alternate" hreflang="fa" href="https://afghancargo.online/login"/>
+    <xhtml:link rel="alternate" hreflang="fa" href="https://afghancargo.online/login?lang=fa"/>
+    <xhtml:link rel="alternate" hreflang="fa-AF" href="https://afghancargo.online/login?lang=fa"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://afghancargo.online/login"/>
-    <lastmod>2026-07-14</lastmod>
+    <lastmod>2026-07-16</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.4</priority>
+  </url>
+
+  <!-- Login — Dari -->
+  <url>
+    <loc>https://afghancargo.online/login?lang=fa</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://afghancargo.online/login"/>
+    <xhtml:link rel="alternate" hreflang="fa" href="https://afghancargo.online/login?lang=fa"/>
+    <xhtml:link rel="alternate" hreflang="fa-AF" href="https://afghancargo.online/login?lang=fa"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://afghancargo.online/login"/>
+    <lastmod>2026-07-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
   </url>
 
 </urlset>

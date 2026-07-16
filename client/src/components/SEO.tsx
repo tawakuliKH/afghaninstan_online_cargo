@@ -1,4 +1,3 @@
-import { Helmet } from 'react-helmet-async'
 import { useTranslation } from 'react-i18next'
 
 const SITE_URL = 'https://afghancargo.online'
@@ -30,6 +29,13 @@ const BASE_KEYWORDS_FA = `کارگو افغانستان, بسته افغانست
 مسافران افغانستان, کارگو آنلاین افغانستان, ارسال پارسل, تحویل بسته کابل,
 مسافر افغانستان به اروپا, مسافر افغانستان به امریکا, مسافر افغانستان به دوبی`
 
+// Renders document metadata tags directly — React 19 natively hoists <title>,
+// <meta>, <link>, and <script> into <head> and reconciles them declaratively
+// like any other JSX, so re-renders update attributes in place instead of
+// accumulating duplicate tags (which a side-effect library like
+// react-helmet-async could under StrictMode's double-invoke in dev).
+// <html lang/dir> is handled separately by useDocumentDirection — those
+// attributes aren't part of React 19's head-hoisting support.
 export function SEO({
   titleEn,
   titleFa,
@@ -50,23 +56,23 @@ export function SEO({
   const title = isDari
     ? `${titleFa} — ${SITE_NAME_FA}`
     : `${titleEn} — ${SITE_NAME}`
-  const lang = isDari ? 'fa' : 'en'
-  const dir = isDari ? 'rtl' : 'ltr'
 
   // Merge page-specific keywords with base keywords
   const keywords = isDari
     ? `${keywordsFa ? keywordsFa + ', ' : ''}${BASE_KEYWORDS_FA}`
     : `${keywordsEn ? keywordsEn + ', ' : ''}${BASE_KEYWORDS_EN}`
 
-  const canonicalUrl = `${SITE_URL}${path}`
+  // Self-referencing canonical per active language: English is the bare/default
+  // URL (no param), Dari is the explicit ?lang=fa variant — matches the hreflang
+  // alternates below so each language has one real, non-duplicate indexable URL.
+  const canonicalUrl = isDari ? `${SITE_URL}${path}?lang=fa` : `${SITE_URL}${path}`
 
   // Combine both language descriptions for richer indexing
   const fullDescription = `${descriptionEn} | ${descriptionFa}`
 
   return (
-    <Helmet>
+    <>
       {/* Basic */}
-      <html lang={lang} dir={dir} />
       <title>{title}</title>
       <meta name="description" content={fullDescription} />
       <meta name="keywords" content={keywords} />
@@ -86,11 +92,11 @@ export function SEO({
       {/* Language */}
       <meta name="language" content={isDari ? 'Dari, Persian, فارسی, دری' : 'English, Dari'} />
 
-      {/* hreflang alternates — no ?lang param, just path */}
+      {/* hreflang alternates — bare URL = English (default), ?lang=fa = Dari */}
       <link rel="alternate" hrefLang="en" href={`${SITE_URL}${path}`} />
-      <link rel="alternate" hrefLang="fa" href={`${SITE_URL}${path}`} />
-      <link rel="alternate" hrefLang="fa-AF" href={`${SITE_URL}${path}`} />
-      <link rel="alternate" hrefLang="x-default" href={canonicalUrl} />
+      <link rel="alternate" hrefLang="fa" href={`${SITE_URL}${path}?lang=fa`} />
+      <link rel="alternate" hrefLang="fa-AF" href={`${SITE_URL}${path}?lang=fa`} />
+      <link rel="alternate" hrefLang="x-default" href={`${SITE_URL}${path}`} />
 
       {/* Open Graph */}
       <meta property="og:type" content={ogType} />
@@ -123,7 +129,7 @@ export function SEO({
           )}
         </script>
       )}
-    </Helmet>
+    </>
   )
 }
 

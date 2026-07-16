@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../../store/authStore";
 import api from "../../lib/axios";
@@ -19,8 +19,19 @@ export function Navbar() {
   const { t, i18n } = useTranslation();
   const { user, avatarUrl, clearAuth } = useAuthStore();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [unreadTotal, setUnreadTotal] = useState(0);
+
+  // Keeps the visible URL's ?lang= param in sync with the active language,
+  // so switching language produces a real, shareable, indexable URL.
+  const toggleLanguage = () => {
+    const newLang = i18n.language === "en" ? "fa-AF" : "en";
+    i18n.changeLanguage(newLang);
+    const params = new URLSearchParams(searchParams);
+    params.set("lang", newLang === "fa-AF" ? "fa" : "en");
+    setSearchParams(params);
+  };
 
   useEffect(() => {
     if (!user || user.accountStatus !== "APPROVED") {
@@ -108,9 +119,7 @@ export function Navbar() {
 
           {/* Language switcher */}
           <button
-            onClick={() =>
-              i18n.changeLanguage(i18n.language === "en" ? "fa-AF" : "en")
-            }
+            onClick={toggleLanguage}
             className="flex items-center gap-1 rounded-full border border-white/20 px-3 py-1 text-xs text-white/80 transition hover:border-brand-accent hover:text-brand-accent"
           >
             <Globe className="h-3 w-3" />
@@ -280,9 +289,7 @@ export function Navbar() {
               </>
             )}
             <button
-              onClick={() =>
-                i18n.changeLanguage(i18n.language === "en" ? "fa-AF" : "en")
-              }
+              onClick={toggleLanguage}
               className="text-start text-sm text-white/60"
             >
               {i18n.language === "en" ? "دری" : "EN"}

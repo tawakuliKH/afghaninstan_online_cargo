@@ -12,10 +12,13 @@ i18n
       en: { translation: en },
       'fa-AF': { translation: faAF },
     },
-    fallbackLng: 'en', // Dari is the platform default
+    fallbackLng: 'en', // No ?lang= param and nothing cached yet -> English
     detection: {
-      order: ['localStorage'],
+      order: ['querystring', 'localStorage'],
+      lookupQuerystring: 'lang',
       caches: ['localStorage'],
+      // ?lang=fa maps to the fa-AF resource bundle (our only Dari variant)
+      convertDetectedLanguage: (lng: string) => (lng === 'fa' ? 'fa-AF' : lng),
     },
     interpolation: {
       escapeValue: false,
