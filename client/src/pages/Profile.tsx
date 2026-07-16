@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { useAuthStore } from "../store/authStore";
 import api from "../lib/axios";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
-import { useTranslation, type TFunction } from "react-i18next";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import toast from "react-hot-toast";
 import {
   Clock,
