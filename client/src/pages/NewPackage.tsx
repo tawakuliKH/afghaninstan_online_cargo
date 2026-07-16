@@ -3,6 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 import { Loader2, ArrowLeft, Upload, CheckCircle, AlertTriangle } from "lucide-react";
@@ -75,6 +76,7 @@ function Select({
 }
 
 function NewPackage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const isNotApproved = user?.accountStatus !== "APPROVED";
@@ -100,10 +102,10 @@ function NewPackage() {
       await api.post("/packages", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      toast.success("Package posted successfully!");
+      toast.success(t("newPackage.toastSuccess"));
       navigate("/packages");
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "Failed to post package");
+      toast.error(err.response?.data?.error || t("newPackage.toastFailed"));
     }
   };
 
@@ -121,25 +123,24 @@ function NewPackage() {
         to="/packages"
         className="mb-6 flex items-center gap-2 text-sm text-brand-muted hover:text-brand-primary"
       >
-        <ArrowLeft className="h-4 w-4" /> Back to packages
+        <ArrowLeft className="h-4 w-4" /> {t("newPackage.backToPackages")}
       </Link>
 
       <div className="rounded-2xl bg-white p-8 shadow-lg">
         <h1 className="mb-6 text-2xl font-bold text-brand-primary">
-          Post a Package
+          {t("newPackage.pageTitle")}
         </h1>
 
         {isNotApproved && (
           <div className="mb-6 rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-700">
-            Your account is awaiting admin approval. You cannot post yet. You'll be
-            notified by email as soon as your account is approved.
+            {t("newPackage.notApprovedBanner")}
           </div>
         )}
 
         {!isNotApproved && hasUnpaidCommission && (
           <div className="mb-6 flex items-center gap-2 rounded-lg border border-brand-danger/30 bg-brand-danger/5 px-4 py-3 text-sm text-brand-danger">
             <AlertTriangle className="h-4 w-4 shrink-0" />
-            You have unpaid commission. Please settle it before posting new packages.
+            {t("newPackage.unpaidCommissionBanner")}
           </div>
         )}
 
@@ -147,32 +148,32 @@ function NewPackage() {
           {/* Package details */}
           <div>
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-brand-muted">
-              Package Details
+              {t("newPackage.packageDetailsHeading")}
             </h2>
             <div className="space-y-4">
               <Field
-                label="Package title / description"
+                label={t("newPackage.titleLabel")}
                 required
                 error={errors.title?.message}
               >
                 <Input
                   {...register("title")}
-                  placeholder="e.g. Box of clothes"
+                  placeholder={t("newPackage.titlePlaceholder")}
                 />
               </Field>
-              <Field label="Weight (kg)" required error={errors.weight?.message}>
+              <Field label={t("newPackage.weightLabel")} required error={errors.weight?.message}>
                 <Input
                   {...register("weight")}
                   type="number"
                   step="0.1"
-                  placeholder="e.g. 3.5"
+                  placeholder={t("newPackage.weightPlaceholder")}
                 />
               </Field>
 
               {/* Goods photo */}
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-brand-primary">
-                  Photo of goods — optional
+                  {t("newPackage.photoLabel")}
                 </label>
                 <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-dashed border-brand-muted/40 bg-brand-bg px-4 py-3 transition hover:border-brand-primary">
                   {goodsPhoto ? (
@@ -181,8 +182,7 @@ function NewPackage() {
                     <Upload className="h-5 w-5 shrink-0 text-brand-muted" />
                   )}
                   <span className="text-sm text-brand-muted">
-                    {goodsPhoto?.name ||
-                      "Click to upload (JPEG, PNG — max 5MB)"}
+                    {goodsPhoto?.name || t("newPackage.photoHint")}
                   </span>
                   <input
                     type="file"
@@ -200,12 +200,12 @@ function NewPackage() {
           {/* Route */}
           <div>
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-brand-muted">
-              Route
+              {t("newPackage.routeHeading")}
             </h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="From country" required error={errors.originCountry?.message}>
+              <Field label={t("newPackage.fromCountry")} required error={errors.originCountry?.message}>
                 <Select {...register("originCountry")}>
-                  <option value="">Select country</option>
+                  <option value="">{t("newPackage.selectCountry")}</option>
                   {countries.map((c) => (
                     <option key={c.code} value={c.name}>
                       {c.name}
@@ -213,12 +213,12 @@ function NewPackage() {
                   ))}
                 </Select>
               </Field>
-              <Field label="From city" required error={errors.originCity?.message}>
-                <Input {...register("originCity")} placeholder="City" />
+              <Field label={t("newPackage.fromCity")} required error={errors.originCity?.message}>
+                <Input {...register("originCity")} placeholder={t("newPackage.cityPlaceholder")} />
               </Field>
-              <Field label="To country" required error={errors.destCountry?.message}>
+              <Field label={t("newPackage.toCountry")} required error={errors.destCountry?.message}>
                 <Select {...register("destCountry")}>
-                  <option value="">Select country</option>
+                  <option value="">{t("newPackage.selectCountry")}</option>
                   {countries.map((c) => (
                     <option key={c.code} value={c.name}>
                       {c.name}
@@ -226,8 +226,8 @@ function NewPackage() {
                   ))}
                 </Select>
               </Field>
-              <Field label="To city" required error={errors.destCity?.message}>
-                <Input {...register("destCity")} placeholder="City" />
+              <Field label={t("newPackage.toCity")} required error={errors.destCity?.message}>
+                <Input {...register("destCity")} placeholder={t("newPackage.cityPlaceholder")} />
               </Field>
             </div>
           </div>
@@ -235,22 +235,22 @@ function NewPackage() {
           {/* Recipient */}
           <div>
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-brand-muted">
-              Recipient Details
+              {t("newPackage.recipientHeading")}
             </h2>
             <div className="space-y-4">
               <Field
-                label="Recipient full name"
+                label={t("newPackage.recipientNameLabel")}
                 required
                 error={errors.recipientName?.message}
               >
                 <Input
                   {...register("recipientName")}
-                  placeholder="Person who will receive the package"
+                  placeholder={t("newPackage.recipientNamePlaceholder")}
                 />
               </Field>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Field
-                  label="Recipient WhatsApp"
+                  label={t("newPackage.recipientWhatsappLabel")}
                   required
                   error={errors.recipientWhatsapp?.message}
                 >
@@ -260,14 +260,14 @@ function NewPackage() {
                   />
                 </Field>
                 <Field
-                  label="Recipient email"
+                  label={t("newPackage.recipientEmailLabel")}
                   required
                   error={errors.recipientEmail?.message}
                 >
                   <Input
                     {...register("recipientEmail")}
                     type="email"
-                    placeholder="recipient@example.com"
+                    placeholder={t("newPackage.recipientEmailPlaceholder")}
                   />
                 </Field>
               </div>
@@ -276,13 +276,13 @@ function NewPackage() {
 
           {/* Notes */}
           <Field
-            label="Additional notes — optional"
+            label={t("newPackage.notesLabel")}
             error={errors.notes?.message}
           >
             <textarea
               {...register("notes")}
               rows={3}
-              placeholder="Fragile? Special handling? Any other details..."
+              placeholder={t("newPackage.notesPlaceholder")}
               className="w-full rounded-lg border border-brand-muted/30 bg-brand-bg px-4 py-2.5 text-sm text-brand-primary outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
             />
           </Field>
@@ -293,7 +293,7 @@ function NewPackage() {
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
           >
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            Post package
+            {t("newPackage.submitButton")}
           </button>
         </form>
       </div>

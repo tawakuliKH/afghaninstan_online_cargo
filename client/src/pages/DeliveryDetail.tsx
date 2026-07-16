@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../store/authStore";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
@@ -77,6 +78,7 @@ function ReadOnlyStars({ rating }: { rating: number }) {
 }
 
 function DeliveryDetail() {
+  const { t } = useTranslation();
   const { deliveryId } = useParams<{ deliveryId: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -95,7 +97,7 @@ function DeliveryDetail() {
     api
       .get(`/deliveries/${deliveryId}`)
       .then((res) => setDelivery(res.data.delivery))
-      .catch(() => toast.error("Failed to load delivery"))
+      .catch(() => toast.error(t("deliveryDetail.toastLoadFailed")))
       .finally(() => setLoading(false));
   };
 
@@ -113,7 +115,7 @@ function DeliveryDetail() {
   if (!delivery)
     return (
       <div className="py-16 text-center">
-        <p className="text-brand-muted">Delivery not found.</p>
+        <p className="text-brand-muted">{t("deliveryDetail.notFound")}</p>
       </div>
     );
 
@@ -135,10 +137,10 @@ function DeliveryDetail() {
           await api.post(`/deliveries/${deliveryId}/accept`, {
             estimatedDeliveryDate: estDate.toISOString(),
           });
-          toast.success("Delivery accepted");
+          toast.success(t("deliveryDetail.toastAcceptSuccess"));
           fetchDelivery();
         } catch {
-          toast.error("Failed to accept delivery");
+          toast.error(t("deliveryDetail.toastAcceptFailed"));
         } finally {
           setActionLoading(false);
         }
@@ -147,28 +149,28 @@ function DeliveryDetail() {
   };
 
   const handleFinalize = async () => {
-    if (!confirm("Confirm final delivery to recipient?")) return;
+    if (!confirm(t("deliveryDetail.confirmFinalize"))) return;
     setActionLoading(true);
     try {
       await api.post(`/deliveries/${deliveryId}/finalize`);
-      toast.success("Delivery finalized — commission recorded");
+      toast.success(t("deliveryDetail.toastFinalizeSuccess"));
       fetchDelivery();
     } catch {
-      toast.error("Failed to finalize delivery");
+      toast.error(t("deliveryDetail.toastFinalizeFailed"));
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleCancel = async () => {
-    if (!confirm("Cancel this delivery?")) return;
+    if (!confirm(t("deliveryDetail.confirmCancel"))) return;
     setActionLoading(true);
     try {
       await api.post(`/deliveries/${deliveryId}/cancel`);
-      toast.success("Delivery cancelled");
+      toast.success(t("deliveryDetail.toastCancelSuccess"));
       fetchDelivery();
     } catch {
-      toast.error("Failed to cancel delivery");
+      toast.error(t("deliveryDetail.toastCancelFailed"));
     } finally {
       setActionLoading(false);
     }
@@ -199,7 +201,7 @@ function DeliveryDetail() {
         onClick={() => navigate(-1)}
         className="mb-6 flex items-center gap-2 text-sm text-brand-muted hover:text-brand-primary"
       >
-        <ArrowLeft className="h-4 w-4" /> Back
+        <ArrowLeft className="h-4 w-4" /> {t("deliveryDetail.back")}
       </button>
 
       {/* Workflow progress */}
@@ -210,7 +212,7 @@ function DeliveryDetail() {
       {/* Package details */}
       <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-brand-muted">
-          Package
+          {t("deliveryDetail.packageHeading")}
         </h2>
         <div className="flex gap-4">
           {delivery.package.goodsPhotoUrl ? (
@@ -252,12 +254,12 @@ function DeliveryDetail() {
       {/* Parties */}
       <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-brand-muted">
-          Parties
+          {t("deliveryDetail.partiesHeading")}
         </h2>
         <div className="flex items-center justify-between gap-4">
           <div className="flex flex-1 flex-col items-center text-center">
             <Avatar userId={delivery.sender.id} nickname={delivery.sender.nickname} />
-            <p className="mt-2 text-xs text-brand-muted">Sender</p>
+            <p className="mt-2 text-xs text-brand-muted">{t("deliveryDetail.sender")}</p>
             <Link
               to={`/users/${delivery.sender.id}`}
               className="font-medium text-brand-primary hover:text-brand-accent"
@@ -268,7 +270,7 @@ function DeliveryDetail() {
           <ArrowRightLeft className="h-5 w-5 shrink-0 text-brand-accent" />
           <div className="flex flex-1 flex-col items-center text-center">
             <Avatar userId={delivery.traveler.id} nickname={delivery.traveler.nickname} />
-            <p className="mt-2 text-xs text-brand-muted">Traveler</p>
+            <p className="mt-2 text-xs text-brand-muted">{t("deliveryDetail.traveler")}</p>
             <Link
               to={`/users/${delivery.traveler.id}`}
               className="font-medium text-brand-primary hover:text-brand-accent"
@@ -278,7 +280,7 @@ function DeliveryDetail() {
             {delivery.traveler.rating !== undefined && (
               <p className="mt-0.5 text-xs text-brand-muted">
                 ⭐ {delivery.traveler.rating > 0 ? delivery.traveler.rating.toFixed(1) : "—"} ·{" "}
-                {delivery.traveler.packagesDeliveredCount ?? 0} delivered
+                {t("deliveryDetail.deliveredCount", { count: delivery.traveler.packagesDeliveredCount ?? 0 })}
               </p>
             )}
           </div>
@@ -288,21 +290,21 @@ function DeliveryDetail() {
       {/* Terms */}
       <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-brand-muted">
-          Terms
+          {t("deliveryDetail.termsHeading")}
         </h2>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <p className="text-xs text-brand-muted">Agreed amount</p>
+            <p className="text-xs text-brand-muted">{t("deliveryDetail.agreedAmount")}</p>
             <p className="font-semibold text-brand-primary">
               {delivery.agreedAmount} {delivery.currency}
             </p>
           </div>
           <div>
-            <p className="text-xs text-brand-muted">Payment location</p>
+            <p className="text-xs text-brand-muted">{t("deliveryDetail.paymentLocation")}</p>
             <p className="font-semibold text-brand-primary">{delivery.paymentLocation}</p>
           </div>
           <div>
-            <p className="text-xs text-brand-muted">Estimated delivery</p>
+            <p className="text-xs text-brand-muted">{t("deliveryDetail.estimatedDelivery")}</p>
             <p className="font-semibold text-brand-primary">
               {delivery.estimatedDeliveryDate
                 ? new Date(delivery.estimatedDeliveryDate).toLocaleDateString()
@@ -310,7 +312,7 @@ function DeliveryDetail() {
             </p>
           </div>
           <div>
-            <p className="text-xs text-brand-muted">Finalized</p>
+            <p className="text-xs text-brand-muted">{t("deliveryDetail.finalized")}</p>
             <p className="font-semibold text-brand-primary">
               {delivery.finalizedAt ? new Date(delivery.finalizedAt).toLocaleDateString() : "—"}
             </p>
@@ -322,7 +324,7 @@ function DeliveryDetail() {
       {canSeeCommission && delivery.commissionAmount != null && (
         <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
           <h2 className="mb-4 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-brand-muted">
-            <DollarSign className="h-3.5 w-3.5" /> Commission
+            <DollarSign className="h-3.5 w-3.5" /> {t("deliveryDetail.commissionHeading")}
           </h2>
           <div className="flex items-center justify-between">
             <p className="text-lg font-bold text-brand-primary">
@@ -333,7 +335,7 @@ function DeliveryDetail() {
                 delivery.commissionPaid ? "bg-green-100 text-green-700" : "bg-red-100 text-brand-danger"
               }`}
             >
-              {delivery.commissionPaid ? "Paid" : "Unpaid"}
+              {delivery.commissionPaid ? t("deliveryDetail.paid") : t("deliveryDetail.unpaid")}
             </span>
           </div>
         </div>
@@ -342,7 +344,7 @@ function DeliveryDetail() {
       {/* Review */}
       <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-xs font-semibold uppercase tracking-wide text-brand-muted">
-          Review
+          {t("deliveryDetail.reviewHeading")}
         </h2>
         {delivery.review ? (
           <div>
@@ -359,10 +361,10 @@ function DeliveryDetail() {
             to={`/deliveries/${delivery.id}/review`}
             className="inline-flex items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
           >
-            <Star className="h-4 w-4" /> Leave a Review
+            <Star className="h-4 w-4" /> {t("deliveryDetail.leaveReview")}
           </Link>
         ) : (
-          <p className="text-sm text-brand-muted">No review yet.</p>
+          <p className="text-sm text-brand-muted">{t("deliveryDetail.noReviewYet")}</p>
         )}
       </div>
 
@@ -375,7 +377,7 @@ function DeliveryDetail() {
             className="flex items-center gap-2 rounded-lg bg-brand-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
           >
             {actionLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-            Accept Delivery
+            {t("deliveryDetail.acceptDelivery")}
           </button>
         )}
         {isTraveler && delivery.status === "ACCEPTED" && (
@@ -385,7 +387,7 @@ function DeliveryDetail() {
             className="flex items-center gap-2 rounded-lg bg-green-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
           >
             {actionLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-            Finalize Delivery
+            {t("deliveryDetail.finalizeDelivery")}
           </button>
         )}
         {(isSender || isTraveler) && delivery.status === "PROPOSED" && (
@@ -395,7 +397,7 @@ function DeliveryDetail() {
             className="flex items-center gap-2 rounded-lg bg-brand-danger px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
           >
             {actionLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-            Cancel
+            {t("deliveryDetail.cancel")}
           </button>
         )}
       </div>

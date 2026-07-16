@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../store/authStore";
 import api from "../lib/axios";
 import {
@@ -44,14 +45,6 @@ interface PackageItem {
   };
 }
 
-const DELIVERY_STATUS_BADGES: Record<string, { label: string; className: string }> = {
-  NONE: { label: "Active", className: "bg-green-100 text-green-700" },
-  PROPOSED: { label: "Proposed", className: "bg-yellow-100 text-yellow-700" },
-  ACCEPTED: { label: "In Transit", className: "bg-blue-100 text-blue-700" },
-  FINALIZED: { label: "Delivered", className: "bg-green-100 text-green-700" },
-  CANCELLED: { label: "Cancelled", className: "bg-red-100 text-red-700" },
-};
-
 // ── Structured Data ─────────────────────────────────────────
 
 const PACKAGES_STRUCTURED_DATA = {
@@ -81,7 +74,15 @@ function PackageStatusBadge({
 }: {
   status?: PackageItem["deliveryStatus"];
 }) {
-  const badge = DELIVERY_STATUS_BADGES[status ?? "NONE"];
+  const { t } = useTranslation();
+  const badges: Record<string, { label: string; className: string }> = {
+    NONE: { label: t("packages.statusActive"), className: "bg-green-100 text-green-700" },
+    PROPOSED: { label: t("packages.statusProposed"), className: "bg-yellow-100 text-yellow-700" },
+    ACCEPTED: { label: t("packages.statusInTransit"), className: "bg-blue-100 text-blue-700" },
+    FINALIZED: { label: t("packages.statusDelivered"), className: "bg-green-100 text-green-700" },
+    CANCELLED: { label: t("packages.statusCancelled"), className: "bg-red-100 text-red-700" },
+  };
+  const badge = badges[status ?? "NONE"];
   return (
     <span
       className={`rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}
@@ -103,6 +104,7 @@ function ContactInfo({
   pkg: PackageItem;
   canSeeContact: boolean;
 }) {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
 
   if (canSeeContact && (pkg.sender.whatsappNumber || pkg.sender.email)) {
@@ -110,7 +112,7 @@ function ContactInfo({
       <div className="mt-3 space-y-1 border-t border-brand-muted/10 pt-3">
         {pkg.sender.whatsappNumber && (
           <p className="text-xs text-brand-muted">
-            WhatsApp:{" "}
+            {t("contactInfo.whatsappLabel")}
             <a
               href={`https://wa.me/${pkg.sender.whatsappNumber.replace(/\D/g, "")}`}
               target="_blank"
@@ -124,7 +126,7 @@ function ContactInfo({
         )}
         {pkg.sender.email && (
           <p className="text-xs text-brand-muted">
-            Email:{" "}
+            {t("contactInfo.emailLabel")}
             <a
               href={`mailto:${pkg.sender.email}`}
               onClick={(e) => e.stopPropagation()}
@@ -148,9 +150,9 @@ function ContactInfo({
               onClick={(e) => e.stopPropagation()}
               className="text-brand-accent hover:underline"
             >
-              Create an account and post a trip or package
-            </Link>{" "}
-            to see contact details
+              {t("contactInfo.anonPrefix")}
+            </Link>
+            {t("contactInfo.anonSuffix")}
           </>
         ) : user.accountStatus === "APPROVED" ? (
           <>
@@ -159,12 +161,12 @@ function ContactInfo({
               onClick={(e) => e.stopPropagation()}
               className="text-brand-accent hover:underline"
             >
-              Post a trip or package
-            </Link>{" "}
-            to unlock contact details
+              {t("contactInfo.approvedPrefix")}
+            </Link>
+            {t("contactInfo.approvedSuffix")}
           </>
         ) : (
-          "Your account is pending approval. Contact details will be visible once approved and you've posted."
+          t("contactInfo.pendingMessage")
         )}
       </p>
     </div>
@@ -178,6 +180,7 @@ function PackageCard({
   pkg: PackageItem;
   viewerCanSeeContact: boolean;
 }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   return (
     <div
@@ -203,7 +206,7 @@ function PackageCard({
               <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
               <line x1="12" y1="22.08" x2="12" y2="12" />
             </svg>
-            <span className="text-xs font-medium">No photo uploaded</span>
+            <span className="text-xs font-medium">{t("packages.noPhotoUploaded")}</span>
           </div>
         </div>
       )}
@@ -226,7 +229,7 @@ function PackageCard({
       {/* Route */}
       <div className="mt-3 flex items-center gap-2">
         <div className="text-center">
-          <p className="text-xs text-brand-muted">From</p>
+          <p className="text-xs text-brand-muted">{t("packages.fromLabel")}</p>
           <p className="text-sm font-medium text-brand-primary">
             {pkg.originCity}
           </p>
@@ -235,7 +238,7 @@ function PackageCard({
         <div className="flex-1 border-t-2 border-dashed border-brand-secondary/40 mx-2" />
         <MapPin className="h-4 w-4 shrink-0 text-brand-accent" />
         <div className="text-center">
-          <p className="text-xs text-brand-muted">To</p>
+          <p className="text-xs text-brand-muted">{t("packages.toLabel")}</p>
           <p className="text-sm font-medium text-brand-primary">
             {pkg.destCity}
           </p>
@@ -257,7 +260,7 @@ function PackageCard({
             loading="lazy"
           />
           <div>
-            <p className="text-xs text-brand-muted">Sender</p>
+            <p className="text-xs text-brand-muted">{t("packages.senderLabel")}</p>
             <Link
               to={`/users/${pkg.sender.id}`}
               onClick={(e) => e.stopPropagation()}
@@ -271,7 +274,7 @@ function PackageCard({
                 ? pkg.sender.rating.toFixed(1)
                 : "—"}
               {" · "}
-              <strong>{pkg.sender.packagesDeliveredCount}</strong> delivered
+              {t("packages.deliveredCount", { count: pkg.sender.packagesDeliveredCount })}
             </p>
           </div>
         </div>
@@ -288,6 +291,7 @@ function PackageCard({
 // ── Main Packages page ────────────────────────────────────────
 
 function Packages() {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const [packages, setPackages] = useState<PackageItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -359,13 +363,10 @@ function Packages() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-brand-primary">
-            Packages to Send
+            {t("packages.pageTitle")}
           </h1>
           <p className="text-sm text-brand-muted">
-            Browse packages that need a traveler to carry them —{" "}
-            <span className="text-brand-muted/70">
-              بسته‌هایی که نیاز به مسافر دارند
-            </span>
+            {t("packages.pageSubtitle")}
           </p>
         </div>
         {user && (
@@ -373,15 +374,15 @@ function Packages() {
             {user.accountStatus !== "APPROVED" ? (
               <span className="flex cursor-not-allowed items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white opacity-50">
                 <Plus className="h-4 w-4" />
-                Post a package
+                {t("packages.postPackage")}
               </span>
             ) : user.hasUnpaidCommission ? (
               <span
-                title="You have unpaid commission. Please settle it before posting new packages."
+                title={t("packages.unpaidCommissionTooltip")}
                 className="flex cursor-not-allowed items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white opacity-50"
               >
                 <Plus className="h-4 w-4" />
-                Post a package
+                {t("packages.postPackage")}
               </span>
             ) : (
               <Link
@@ -389,13 +390,12 @@ function Packages() {
                 className="flex items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
               >
                 <Plus className="h-4 w-4" />
-                Post a package
+                {t("packages.postPackage")}
               </Link>
             )}
             {user.accountStatus !== "APPROVED" && (
               <p className="mt-1 text-xs text-brand-muted">
-                Your account is pending admin approval. You'll be able to post
-                once approved.
+                {t("packages.pendingApprovalNote")}
               </p>
             )}
           </div>
@@ -405,8 +405,7 @@ function Packages() {
       {user?.accountStatus === "APPROVED" && user.hasUnpaidCommission && (
         <div className="mb-6 flex items-center gap-2 rounded-lg border border-brand-danger/30 bg-brand-danger/5 px-4 py-3 text-sm text-brand-danger">
           <AlertTriangle className="h-4 w-4 shrink-0" />
-          You have unpaid commission. Please settle it before posting new
-          packages.
+          {t("packages.unpaidCommissionBanner")}
         </div>
       )}
 
@@ -418,13 +417,13 @@ function Packages() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <label className="mb-1.5 block text-xs font-medium text-brand-muted">
-              From country
+              {t("packages.fromCountry")}
             </label>
             <select
               {...register("originCountry")}
               className="w-full rounded-lg border border-brand-muted/30 bg-brand-bg px-3 py-2 text-sm text-brand-primary outline-none focus:border-brand-primary"
             >
-              <option value="">Any country</option>
+              <option value="">{t("packages.anyCountry")}</option>
               {countries.map((c) => (
                 <option key={c.code} value={c.name}>
                   {c.name}
@@ -435,13 +434,13 @@ function Packages() {
 
           <div>
             <label className="mb-1.5 block text-xs font-medium text-brand-muted">
-              To country
+              {t("packages.toCountry")}
             </label>
             <select
               {...register("destCountry")}
               className="w-full rounded-lg border border-brand-muted/30 bg-brand-bg px-3 py-2 text-sm text-brand-primary outline-none focus:border-brand-primary"
             >
-              <option value="">Any country</option>
+              <option value="">{t("packages.anyCountry")}</option>
               {countries.map((c) => (
                 <option key={c.code} value={c.name}>
                   {c.name}
@@ -452,12 +451,12 @@ function Packages() {
 
           <div>
             <label className="mb-1.5 block text-xs font-medium text-brand-muted">
-              Posted from
+              {t("packages.postedFrom")}
             </label>
             <DatePicker
               selected={startDate}
               onChange={setStartDate}
-              placeholderText="Start date"
+              placeholderText={t("packages.startDatePlaceholder")}
               className="w-full rounded-lg border border-brand-muted/30 bg-brand-bg px-3 py-2 text-sm text-brand-primary outline-none focus:border-brand-primary"
               dateFormat="yyyy-MM-dd"
             />
@@ -465,12 +464,12 @@ function Packages() {
 
           <div>
             <label className="mb-1.5 block text-xs font-medium text-brand-muted">
-              Posted to
+              {t("packages.postedTo")}
             </label>
             <DatePicker
               selected={endDate}
               onChange={setEndDate}
-              placeholderText="End date"
+              placeholderText={t("packages.endDatePlaceholder")}
               className="w-full rounded-lg border border-brand-muted/30 bg-brand-bg px-3 py-2 text-sm text-brand-primary outline-none focus:border-brand-primary"
               dateFormat="yyyy-MM-dd"
             />
@@ -483,7 +482,7 @@ function Packages() {
             className="flex items-center gap-2 rounded-lg bg-brand-primary px-5 py-2 text-sm font-semibold text-white transition hover:opacity-90"
           >
             <Search className="h-4 w-4" />
-            Search packages
+            {t("packages.searchPackages")}
           </button>
         </div>
       </form>
@@ -496,10 +495,7 @@ function Packages() {
       ) : packages.length === 0 ? (
         <div className="py-16 text-center">
           <p className="text-brand-muted">
-            No packages found matching your search.
-          </p>
-          <p className="mt-1 text-xs text-brand-muted">
-            هیچ بسته‌ای مطابق جستجوی شما یافت نشد
+            {t("packages.noResults")}
           </p>
         </div>
       ) : (
@@ -525,7 +521,7 @@ function Packages() {
             <ChevronLeft className="h-4 w-4" />
           </button>
           <span className="text-sm text-brand-muted">
-            Page {page} of {totalPages}
+            {t("packages.page", { page, totalPages })}
           </span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
@@ -540,22 +536,10 @@ function Packages() {
       {/* Bottom SEO text block */}
       <div className="mt-12 rounded-xl bg-white p-6 text-center shadow-sm">
         <h2 className="mb-2 text-sm font-semibold text-brand-primary">
-          Earn Money Carrying Packages on Your Next Trip to Afghanistan
+          {t("packages.seoBottomHeading")}
         </h2>
         <p className="text-xs text-brand-muted leading-relaxed">
-          Are you traveling to Kabul, Herat, Mazar-i-Sharif, Kandahar or
-          anywhere in Afghanistan? Browse packages posted by verified Afghan
-          senders in Germany, USA, UAE, Iran, Turkey, UK, Sweden, Norway,
-          Netherlands, Canada and Australia. Agree on a fee, carry the package,
-          and earn — all legally recorded through Afghanistan Online Cargo.
-        </p>
-        <p className="mt-2 text-xs text-brand-muted/70 leading-relaxed">
-          آیا به کابل، هرات، مزار شریف، قندهار یا هر جای دیگری در افغانستان
-          سفر می‌کنید؟ بسته‌های ارسال شده توسط فرستندگان افغانی تأیید شده در
-          آلمان، امریکا، امارات، ایران، ترکیه، انگلیس، سوئد، نروژ، هلند،
-          کانادا و استرالیا را مرور کنید. روی هزینه توافق کنید، بسته را حمل
-          کنید و درآمد کسب کنید — همه به صورت قانونی از طریق کارگو آنلاین
-          افغانستان ثبت می‌شود.
+          {t("packages.seoBottomBody")}
         </p>
       </div>
     </div>

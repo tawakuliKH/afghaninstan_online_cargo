@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { SEO } from "../components/SEO";
 import { Package } from "lucide-react";
 
@@ -6,6 +7,8 @@ const APP_STORE_URL = "https://apps.apple.com/app/afghanistan-online-cargo/id000
 // const APK_DIRECT_URL = "https://afghancargo.online/downloads/afghancargo.apk";
 
 function GetApp() {
+  const { t, i18n } = useTranslation();
+  const isDari = i18n.language === "fa-AF";
   return (
     <div className="min-h-screen bg-brand-bg">
       <SEO
@@ -27,15 +30,13 @@ function GetApp() {
           <h1 className="mb-2 text-3xl font-bold text-white sm:text-4xl">
             Afghanistan Online Cargo
           </h1>
-          <p className="mb-1 text-sm font-medium text-brand-accent">
-            کارگو آنلاین افغانستان
-          </p>
+          {isDari && (
+            <p className="mb-1 text-sm font-medium text-brand-accent">
+              کارگو آنلاین افغانستان
+            </p>
+          )}
           <p className="mb-8 text-white/70">
-            Send and receive packages between Afghanistan and the world —
-            right from your phone.
-          </p>
-          <p className="text-xs text-white/50">
-            بسته‌ها را بین افغانستان و جهان از گوشی خود ارسال و دریافت کنید.
+            {t("getApp.heroTagline")}
           </p>
         </div>
       </div>
@@ -62,11 +63,11 @@ function GetApp() {
               </svg>
             </div>
             <div>
-              <p className="text-xs text-brand-muted">Download on</p>
+              <p className="text-xs text-brand-muted">{t("getApp.downloadOn")}</p>
               <p className="text-lg font-bold text-brand-primary group-hover:text-brand-accent transition">
-                Google Play
+                {t("getApp.googlePlay")}
               </p>
-              <p className="text-xs text-brand-muted">Android</p>
+              <p className="text-xs text-brand-muted">{t("getApp.android")}</p>
             </div>
           </a>
 
@@ -83,77 +84,22 @@ function GetApp() {
               </svg>
             </div>
             <div>
-              <p className="text-xs text-brand-muted">Download on the</p>
+              <p className="text-xs text-brand-muted">{t("getApp.downloadOnThe")}</p>
               <p className="text-lg font-bold text-brand-primary group-hover:text-brand-accent transition">
-                App Store
+                {t("getApp.appStore")}
               </p>
-              <p className="text-xs text-brand-muted">iPhone & iPad</p>
+              <p className="text-xs text-brand-muted">{t("getApp.iphoneIpad")}</p>
             </div>
           </a>
         </div>
 
-        {/* Direct APK download */}
-        {/* <div className="mb-12 rounded-2xl border border-brand-muted/20 bg-white p-6 shadow-sm">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h3 className="font-semibold text-brand-primary">
-                Direct APK Download
-              </h3>
-              <p className="mt-1 text-xs text-brand-muted">
-                For Android users who prefer to install directly without Google Play.
-                Enable "Install from unknown sources" in your Android settings.
-              </p>
-              <p className="mt-1 text-xs text-brand-muted/70">
-                برای کاربران اندروید که ترجیح می‌دهند بدون Google Play نصب کنند.
-              </p>
-            </div>
-            <a
-              href={APK_DIRECT_URL}
-              className="shrink-0 rounded-lg bg-brand-primary px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
-            >
-              Download APK
-            </a>
-          </div>
-        </div> */}
-
-        {/* Features */}
-        {/* <div className="mb-12">
-          <h2 className="mb-6 text-center text-xl font-bold text-brand-primary">
-            Everything in your pocket
-          </h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {[
-              { icon: "📦", title: "Post packages", titleFa: "ارسال بسته", desc: "Post your package and find a verified traveler to carry it." },
-              { icon: "✈️", title: "Post trips", titleFa: "ارسال سفر", desc: "Traveling? Post your trip and earn by carrying packages." },
-              { icon: "🛡️", title: "KYC verified", titleFa: "تأیید هویت", desc: "All users are manually verified with identity documents." },
-              { icon: "⚖️", title: "Legal records", titleFa: "ثبت قانونی", desc: "Every handover is timestamped as legal evidence." },
-              { icon: "💬", title: "Direct messaging", titleFa: "پیام مستقیم", desc: "Chat directly with senders and travelers." },
-              { icon: "🔔", title: "Push notifications", titleFa: "اعلان‌های فوری", desc: "Get notified instantly for every step of your delivery." },
-              { icon: "💰", title: "Wallet & earnings", titleFa: "کیف پول و درآمد", desc: "Track your earnings and commission as a traveler." },
-              { icon: "🌐", title: "English & Dari", titleFa: "انگلیسی و دری", desc: "Full bilingual support with RTL Dari interface." },
-            ].map((f, i) => (
-              <div key={i} className="flex items-start gap-3 rounded-xl bg-white p-4 shadow-sm">
-                <span className="text-2xl">{f.icon}</span>
-                <div>
-                  <p className="font-semibold text-brand-primary">{f.title}</p>
-                  <p className="text-xs text-brand-muted/70">{f.titleFa}</p>
-                  <p className="mt-1 text-xs text-brand-muted">{f.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div> */}
-
         {/* Coming soon notice */}
         <div className="rounded-2xl bg-brand-primary/5 border border-brand-primary/10 p-6 text-center">
           <p className="text-sm font-medium text-brand-primary">
-            🚀 App coming soon — currently in development
-          </p>
-          <p className="mt-1 text-xs text-brand-muted">
-            اپلیکیشن به زودی منتشر می‌شود — در حال توسعه است
+            {t("getApp.comingSoon")}
           </p>
           <p className="mt-3 text-xs text-brand-muted">
-            In the meantime, use the web version at{" "}
+            {t("getApp.inMeantime")}{" "}
             <a href="https://afghancargo.online" className="font-medium text-brand-accent hover:underline">
               afghancargo.online
             </a>

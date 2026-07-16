@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import api from "../lib/axios";
 import { Search, MapPin, Package, Star } from "lucide-react";
 import { SEO } from "../components/SEO";
@@ -30,6 +31,7 @@ function SkeletonCard() {
 }
 
 function UserCard({ user }: { user: SearchResult }) {
+  const { t } = useTranslation();
   return (
     <Link
       to={`/users/${user.id}`}
@@ -58,7 +60,7 @@ function UserCard({ user }: { user: SearchResult }) {
           </span>
           <span className="flex items-center gap-1">
             <Package className="h-3 w-3 shrink-0 text-brand-accent" />
-            {user.packagesDeliveredCount} delivered
+            {t("userSearch.deliveredCount", { count: user.packagesDeliveredCount })}
           </span>
         </div>
       </div>
@@ -67,6 +69,7 @@ function UserCard({ user }: { user: SearchResult }) {
 }
 
 function UserSearch() {
+  const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -103,9 +106,9 @@ function UserSearch() {
         descriptionFa="فرستنده‌ها و مسافران تایید شده را با نام در کارگو آنلاین افغانستان جستجو کنید."
         path="/search"
       />
-      <h1 className="mb-2 text-2xl font-bold text-brand-primary">Search Users</h1>
+      <h1 className="mb-2 text-2xl font-bold text-brand-primary">{t("userSearch.pageTitle")}</h1>
       <p className="mb-6 text-sm text-brand-muted">
-        Find verified senders and travelers by name.
+        {t("userSearch.pageSubtitle")}
       </p>
 
       <div className="relative mb-8">
@@ -113,7 +116,7 @@ function UserSearch() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search by nickname or name... (min. 2 characters)"
+          placeholder={t("userSearch.searchPlaceholder")}
           className="w-full rounded-lg border border-brand-muted/30 bg-white py-3 pl-11 pr-4 text-sm text-brand-primary outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
         />
       </div>
@@ -127,7 +130,7 @@ function UserSearch() {
       ) : searched && results.length === 0 ? (
         <div className="py-16 text-center">
           <p className="text-brand-muted">
-            No users found matching '{debouncedQuery}'.
+            {t("userSearch.noResults", { query: debouncedQuery })}
           </p>
         </div>
       ) : results.length > 0 ? (
@@ -139,7 +142,7 @@ function UserSearch() {
       ) : (
         <div className="py-16 text-center">
           <p className="text-brand-muted">
-            Start typing at least 2 characters to search.
+            {t("userSearch.startTyping")}
           </p>
         </div>
       )}

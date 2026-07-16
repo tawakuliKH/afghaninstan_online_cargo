@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../store/authStore";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
@@ -43,19 +44,20 @@ interface TripData {
   }[];
 }
 
-const STATUS_LABELS: Record<string, { label: string; className: string }> = {
-  PROPOSED: { label: "Proposed", className: "bg-yellow-100 text-yellow-700" },
-  ACCEPTED: { label: "In Transit", className: "bg-blue-100 text-blue-700" },
-  FINALIZED: { label: "Delivered", className: "bg-green-100 text-green-700" },
-};
-
 function TripDetail() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [trip, setTrip] = useState<TripData | null>(null);
   const [viewerCanSeeContact, setViewerCanSeeContact] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const STATUS_LABELS: Record<string, { label: string; className: string }> = {
+    PROPOSED: { label: t("tripDetail.statusProposed"), className: "bg-yellow-100 text-yellow-700" },
+    ACCEPTED: { label: t("tripDetail.statusInTransit"), className: "bg-blue-100 text-blue-700" },
+    FINALIZED: { label: t("tripDetail.statusDelivered"), className: "bg-green-100 text-green-700" },
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -65,7 +67,7 @@ function TripDetail() {
         setTrip(res.data.trip);
         setViewerCanSeeContact(res.data.viewerCanSeeContact);
       })
-      .catch(() => toast.error("Trip not found"))
+      .catch(() => toast.error(t("tripDetail.toastNotFound")))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -79,7 +81,7 @@ function TripDetail() {
   if (!trip)
     return (
       <div className="py-16 text-center">
-        <p className="text-brand-muted">Trip not found.</p>
+        <p className="text-brand-muted">{t("tripDetail.notFound")}</p>
       </div>
     );
 
@@ -98,7 +100,7 @@ function TripDetail() {
         onClick={() => navigate(-1)}
         className="mb-6 flex items-center gap-2 text-sm text-brand-muted hover:text-brand-primary"
       >
-        <ArrowLeft className="h-4 w-4" /> Back
+        <ArrowLeft className="h-4 w-4" /> {t("tripDetail.back")}
       </button>
 
       <div className="rounded-2xl bg-white p-8 shadow-sm">
@@ -113,19 +115,19 @@ function TripDetail() {
                 : "bg-green-100 text-green-700"
             }`}
           >
-            {isClosed ? "Trip Closed" : "Active"}
+            {isClosed ? t("tripDetail.tripClosedBadge") : t("tripDetail.activeBadge")}
           </span>
         </div>
 
         <div className="mt-6 flex items-center gap-3 rounded-xl border border-brand-muted/10 bg-brand-bg p-4">
           <div className="flex-1 text-center">
-            <p className="text-xs text-brand-muted">From</p>
+            <p className="text-xs text-brand-muted">{t("tripDetail.fromLabel")}</p>
             <p className="font-semibold text-brand-primary">{trip.originCity}</p>
             <p className="text-xs text-brand-muted">{trip.originCountry}</p>
           </div>
           <MapPin className="h-4 w-4 shrink-0 text-brand-accent" />
           <div className="flex-1 text-center">
-            <p className="text-xs text-brand-muted">To</p>
+            <p className="text-xs text-brand-muted">{t("tripDetail.toLabel")}</p>
             <p className="font-semibold text-brand-primary">{trip.destCity}</p>
             <p className="text-xs text-brand-muted">{trip.destCountry}</p>
           </div>
@@ -134,12 +136,12 @@ function TripDetail() {
         <div className="mt-4 flex flex-wrap gap-3">
           <span className="flex items-center gap-1 rounded-full bg-brand-primary/5 px-3 py-1 text-xs text-brand-primary">
             <Calendar className="h-3 w-3" />
-            Departs {new Date(trip.departureDate).toLocaleDateString()}
+            {t("tripDetail.departsOn", { date: new Date(trip.departureDate).toLocaleDateString() })}
           </span>
           {trip.capacityWeight && (
             <span className="flex items-center gap-1 rounded-full bg-brand-secondary/10 px-3 py-1 text-xs text-brand-secondary">
               <Weight className="h-3 w-3" />
-              {trip.capacityWeight} kg capacity
+              {t("tripDetail.capacityKg", { weight: trip.capacityWeight })}
             </span>
           )}
           {trip.capacityNote && (
@@ -156,7 +158,7 @@ function TripDetail() {
         {/* Traveler */}
         <div className="mt-6 border-t border-brand-muted/10 pt-6">
           <p className="mb-2 text-xs font-semibold uppercase text-brand-muted">
-            Traveler
+            {t("tripDetail.travelerLabel")}
           </p>
           <div className="flex items-center gap-3">
             <img
@@ -173,13 +175,13 @@ function TripDetail() {
           </div>
           {isClosed ? (
             <p className="mt-3 text-xs italic text-brand-muted">
-              This trip has already departed. Contact details are no longer available.
+              {t("tripDetail.tripClosedMessage")}
             </p>
           ) : viewerCanSeeContact ? (
             <div className="mt-3 space-y-1 text-sm">
               {trip.traveler.whatsappNumber && (
                 <p className="text-brand-muted">
-                  WhatsApp:{" "}
+                  {t("contactInfo.whatsappLabel")}
                   <span className="font-medium text-brand-primary">
                     {trip.traveler.whatsappNumber}
                   </span>
@@ -187,7 +189,7 @@ function TripDetail() {
               )}
               {trip.traveler.email && (
                 <p className="text-brand-muted">
-                  Email:{" "}
+                  {t("contactInfo.emailLabel")}
                   <span className="font-medium text-brand-primary">
                     {trip.traveler.email}
                   </span>
@@ -199,12 +201,12 @@ function TripDetail() {
               {!user ? (
                 <>
                   <Link to="/register" className="text-brand-accent hover:underline">
-                    Create an account and post a trip or package
-                  </Link>{" "}
-                  to see contact details
+                    {t("contactInfo.anonPrefix")}
+                  </Link>
+                  {t("contactInfo.anonSuffix")}
                 </>
               ) : (
-                "Post a trip or package to see contact details"
+                t("tripDetail.postToSeeContact")
               )}
             </p>
           )}
@@ -213,7 +215,7 @@ function TripDetail() {
         {trip.activeDeliveries.length > 0 && (
           <div className="mt-6 border-t border-brand-muted/10 pt-6">
             <p className="mb-2 text-xs font-semibold uppercase text-brand-muted">
-              Packages on this trip
+              {t("tripDetail.packagesOnTrip")}
             </p>
             <div className="space-y-2">
               {trip.activeDeliveries.map((d) => (

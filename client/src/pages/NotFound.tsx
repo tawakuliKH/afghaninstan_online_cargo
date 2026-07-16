@@ -1,6 +1,8 @@
+import { useTranslation } from 'react-i18next'
 import { SEO } from '../components/SEO'
 
 function NotFound() {
+  const { t } = useTranslation()
   return (
     <div className="p-8 text-2xl">
       <SEO
@@ -11,7 +13,7 @@ function NotFound() {
         path="/404"
         noIndex
       />
-      404 — Page not found
+      {t('notFound.title')}
     </div>
   )
 }

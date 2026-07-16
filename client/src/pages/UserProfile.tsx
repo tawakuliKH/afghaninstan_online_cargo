@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../store/authStore";
 import api from "../lib/axios";
 import {
@@ -81,6 +82,7 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 function UserProfile() {
+  const { t } = useTranslation();
   const { userId } = useParams<{ userId: string }>();
   const { user: currentUser } = useAuthStore();
   const navigate = useNavigate();
@@ -98,7 +100,7 @@ function UserProfile() {
         setReviews(res.data.reviews);
         setViewerCanSeeContact(res.data.viewerCanSeeContact);
       })
-      .catch(() => toast.error("User not found"))
+      .catch(() => toast.error(t("userProfile.toastNotFound")))
       .finally(() => setLoading(false));
   }, [userId]);
 
@@ -111,11 +113,11 @@ function UserProfile() {
     try {
       await api.post("/messages", {
         receiverId: userId,
-        content: "Hello! I found your profile on Afghanistan Online Cargo.",
+        content: t("userProfile.defaultMessageText"),
       });
       navigate(`/messages/${userId}`);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "Failed to send message");
+      toast.error(err.response?.data?.error || t("userProfile.toastMessageFailed"));
     } finally {
       setSending(false);
     }
@@ -131,7 +133,7 @@ function UserProfile() {
   if (!profileUser)
     return (
       <div className="py-16 text-center">
-        <p className="text-brand-muted">User not found.</p>
+        <p className="text-brand-muted">{t("userProfile.notFound")}</p>
       </div>
     );
 
@@ -151,7 +153,7 @@ function UserProfile() {
         onClick={() => navigate(-1)}
         className="mb-6 flex items-center gap-2 text-sm text-brand-muted hover:text-brand-primary"
       >
-        <ArrowLeft className="h-4 w-4" /> Back
+        <ArrowLeft className="h-4 w-4" /> {t("userProfile.back")}
       </button>
 
       {/* Profile card */}
@@ -177,8 +179,7 @@ function UserProfile() {
                 </p>
               )}
               <p className="mt-1 text-xs text-brand-muted">
-                Member since{" "}
-                {new Date(profileUser.createdAt).toLocaleDateString()}
+                {t("userProfile.memberSince", { date: new Date(profileUser.createdAt).toLocaleDateString() })}
               </p>
             </div>
           </div>
@@ -195,7 +196,7 @@ function UserProfile() {
               ) : (
                 <MessageSquare className="h-4 w-4" />
               )}
-              Send Message
+              {t("userProfile.sendMessage")}
             </button>
           )}
         </div>
@@ -209,13 +210,13 @@ function UserProfile() {
             <p className="mt-1 text-3xl font-bold text-brand-primary">
               {profileUser.rating > 0 ? profileUser.rating.toFixed(1) : "—"}
             </p>
-            <p className="text-xs text-brand-muted">Rating</p>
+            <p className="text-xs text-brand-muted">{t("userProfile.ratingLabel")}</p>
           </div>
           <div className="text-center">
             <p className="text-3xl font-bold text-brand-primary">
               {profileUser.reviewCount}
             </p>
-            <p className="text-xs text-brand-muted">Reviews</p>
+            <p className="text-xs text-brand-muted">{t("userProfile.reviewsLabel")}</p>
           </div>
           <div className="text-center">
             <div className="flex justify-center">
@@ -224,7 +225,7 @@ function UserProfile() {
             <p className="text-3xl font-bold text-brand-primary">
               {profileUser.packagesDeliveredCount}
             </p>
-            <p className="text-xs text-brand-muted">Packages Delivered</p>
+            <p className="text-xs text-brand-muted">{t("userProfile.packagesDeliveredLabel")}</p>
           </div>
         </div>
 
@@ -233,11 +234,11 @@ function UserProfile() {
           (profileUser.whatsappNumber || profileUser.email) && (
             <div className="mt-6 rounded-xl border border-brand-muted/20 bg-brand-bg p-4">
               <p className="mb-2 text-xs font-semibold uppercase text-brand-muted">
-                Contact
+                {t("userProfile.contactHeading")}
               </p>
               {profileUser.whatsappNumber && (
                 <p className="text-sm text-brand-primary">
-                  WhatsApp:{" "}
+                  {t("contactInfo.whatsappLabel")}
                   <span className="font-medium">
                     {profileUser.whatsappNumber}
                   </span>
@@ -245,7 +246,7 @@ function UserProfile() {
               )}
               {profileUser.email && (
                 <p className="text-sm text-brand-primary">
-                  Email:{" "}
+                  {t("contactInfo.emailLabel")}
                   <span className="font-medium">{profileUser.email}</span>
                 </p>
               )}
@@ -261,12 +262,12 @@ function UserProfile() {
                     to="/register"
                     className="text-brand-accent hover:underline"
                   >
-                    Create an account and post a trip or package
-                  </Link>{" "}
-                  to see contact details
+                    {t("contactInfo.anonPrefix")}
+                  </Link>
+                  {t("contactInfo.anonSuffix")}
                 </>
               ) : (
-                "Post a trip or package to see contact details"
+                t("userProfile.postToSeeContact")
               )}
             </p>
           </div>
@@ -277,7 +278,7 @@ function UserProfile() {
       {reviews.length > 0 && (
         <div className="mt-6">
           <h2 className="mb-4 text-lg font-bold text-brand-primary">
-            Reviews ({profileUser.reviewCount})
+            {t("userProfile.reviewsHeading", { count: profileUser.reviewCount })}
           </h2>
           <div className="space-y-3">
             {reviews.map((review) => (

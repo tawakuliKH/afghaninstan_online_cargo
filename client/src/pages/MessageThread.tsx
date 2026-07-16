@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '../store/authStore'
 import api from '../lib/axios'
 import { ArrowLeft, Send, Loader2 } from 'lucide-react'
@@ -16,6 +17,7 @@ interface Message {
 }
 
 function MessageThread() {
+  const { t } = useTranslation()
   const { userId } = useParams<{ userId: string }>()
   const { user } = useAuthStore()
   const [messages, setMessages] = useState<Message[]>([])
@@ -37,7 +39,7 @@ function MessageThread() {
       )
       if (conv) setPartnerNickname(conv.partner.nickname)
     } catch {
-      toast.error('Failed to load messages')
+      toast.error(t('messageThread.toastLoadFailed'))
     } finally {
       setLoading(false)
     }
@@ -63,7 +65,7 @@ function MessageThread() {
       setContent('')
       await fetchThread()
     } catch {
-      toast.error('Failed to send message')
+      toast.error(t('messageThread.toastSendFailed'))
     } finally {
       setSending(false)
     }
@@ -117,7 +119,7 @@ function MessageThread() {
         {messages.length === 0 ? (
           <div className="flex h-full items-center justify-center">
             <p className="text-sm text-brand-muted">
-              No messages yet. Say hello!
+              {t('messageThread.noMessagesYet')}
             </p>
           </div>
         ) : (
@@ -158,7 +160,7 @@ function MessageThread() {
           value={content}
           onChange={(e) => setContent(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Type a message... (Enter to send)"
+          placeholder={t('messageThread.inputPlaceholder')}
           rows={1}
           className="flex-1 resize-none rounded-xl border border-brand-muted/30 bg-white px-4 py-3 text-sm text-brand-primary outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
         />

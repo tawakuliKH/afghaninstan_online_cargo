@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { AlertTriangle, CheckCircle, Info, X, Loader2 } from 'lucide-react'
 
 interface Props {
@@ -40,13 +41,16 @@ export function ConfirmModal({
   title,
   message,
   variant = 'warning',
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   loading = false,
 }: Props) {
+  const { t } = useTranslation()
   if (!isOpen) return null
 
   const style = VARIANT_STYLES[variant] ?? VARIANT_STYLES.warning
+  const resolvedConfirmLabel = confirmLabel ?? t('confirmModal.defaultConfirm')
+  const resolvedCancelLabel = cancelLabel ?? t('confirmModal.defaultCancel')
   const Icon = style.icon ?? Info
 
   return (
@@ -77,7 +81,7 @@ export function ConfirmModal({
             disabled={loading}
             className="rounded-lg border border-brand-muted/30 px-4 py-2 text-sm font-medium text-brand-primary transition hover:bg-brand-bg disabled:opacity-60"
           >
-            {cancelLabel}
+            {resolvedCancelLabel}
           </button>
           <button
             onClick={onConfirm}
@@ -85,7 +89,7 @@ export function ConfirmModal({
             className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition disabled:opacity-60 ${style.confirmBtn}`}
           >
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            {confirmLabel}
+            {resolvedConfirmLabel}
           </button>
         </div>
       </div>

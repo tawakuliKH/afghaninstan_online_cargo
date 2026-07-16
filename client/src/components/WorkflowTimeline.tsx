@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Check, Package, Truck, PackageCheck, Star } from "lucide-react";
 
 export interface WorkflowDelivery {
@@ -73,6 +74,7 @@ function StepCircle({
 }
 
 export function WorkflowTimeline({ delivery, viewerId, onAccept, onFinalize }: WorkflowTimelineProps) {
+  const { t } = useTranslation();
   const isSender = viewerId === delivery.senderId;
   const isTraveler = viewerId === delivery.travelerId;
   const isCancelled = delivery.status === "CANCELLED";
@@ -83,40 +85,43 @@ export function WorkflowTimeline({ delivery, viewerId, onAccept, onFinalize }: W
 
   const steps: Step[] = [
     {
-      title: "Package Posted",
-      description: `${delivery.package.title} was posted`,
+      title: t("workflowTimeline.packagePostedTitle"),
+      description: t("workflowTimeline.packagePostedDesc", { title: delivery.package.title }),
       timestamp: delivery.package.createdAt,
       complete: true,
       icon: Package,
     },
     {
-      title: "Delivery Proposed",
-      description: `${delivery.sender.nickname} proposed this delivery to ${delivery.traveler.nickname}`,
+      title: t("workflowTimeline.deliveryProposedTitle"),
+      description: t("workflowTimeline.deliveryProposedDesc", {
+        sender: delivery.sender.nickname,
+        traveler: delivery.traveler.nickname,
+      }),
       timestamp: delivery.createdAt,
       complete: true,
       icon: Truck,
     },
     {
-      title: "Traveler Accepted",
+      title: t("workflowTimeline.travelerAcceptedTitle"),
       description: isCancelled
-        ? "Delivery was cancelled before being accepted"
-        : `${delivery.traveler.nickname} accepts the delivery`,
+        ? t("workflowTimeline.travelerAcceptedCancelledDesc")
+        : t("workflowTimeline.travelerAcceptedDesc", { traveler: delivery.traveler.nickname }),
       timestamp: delivery.acceptedAt,
       complete: step3Complete,
       icon: Check,
     },
     {
-      title: "Package Delivered",
-      description: `${delivery.traveler.nickname} confirms the package reached the recipient`,
+      title: t("workflowTimeline.packageDeliveredTitle"),
+      description: t("workflowTimeline.packageDeliveredDesc", { traveler: delivery.traveler.nickname }),
       timestamp: delivery.finalizedAt,
       complete: step4Complete,
       icon: PackageCheck,
     },
     {
-      title: "Review Submitted",
+      title: t("workflowTimeline.reviewSubmittedTitle"),
       description: delivery.review
-        ? `${delivery.sender.nickname} left a ${delivery.review.rating}-star review`
-        : `${delivery.sender.nickname} reviews the delivery`,
+        ? t("workflowTimeline.reviewSubmittedDoneDesc", { sender: delivery.sender.nickname, rating: delivery.review.rating })
+        : t("workflowTimeline.reviewSubmittedPendingDesc", { sender: delivery.sender.nickname }),
       timestamp: delivery.review?.createdAt ?? null,
       complete: step5Complete,
       icon: Star,
@@ -153,7 +158,7 @@ export function WorkflowTimeline({ delivery, viewerId, onAccept, onFinalize }: W
                   onClick={onAccept}
                   className="mt-2 rounded-lg bg-brand-accent px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
                 >
-                  Accept Delivery
+                  {t("workflowTimeline.acceptDeliveryButton")}
                 </button>
               )}
               {isActive && i === 3 && isTraveler && onFinalize && (
@@ -161,7 +166,7 @@ export function WorkflowTimeline({ delivery, viewerId, onAccept, onFinalize }: W
                   onClick={onFinalize}
                   className="mt-2 rounded-lg bg-green-500 px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
                 >
-                  Finalize Delivery
+                  {t("workflowTimeline.finalizeDeliveryButton")}
                 </button>
               )}
               {isActive && i === 4 && isSender && (
@@ -169,7 +174,7 @@ export function WorkflowTimeline({ delivery, viewerId, onAccept, onFinalize }: W
                   to={`/deliveries/${delivery.id}/review`}
                   className="mt-2 inline-block rounded-lg bg-brand-accent px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
                 >
-                  Complete & Review →
+                  {t("workflowTimeline.completeReviewButton")}
                 </Link>
               )}
             </div>
@@ -179,7 +184,7 @@ export function WorkflowTimeline({ delivery, viewerId, onAccept, onFinalize }: W
 
       {isCancelled && (
         <div className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-brand-danger">
-          This delivery was cancelled.
+          {t("workflowTimeline.cancelledNotice")}
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../store/authStore";
 import api from "../lib/axios";
 import {
@@ -81,13 +82,14 @@ function ContactInfo({
   canSeeContact: boolean;
   isClosed?: boolean;
 }) {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
 
   if (isClosed) {
     return (
       <div className="mt-3 border-t border-brand-muted/10 pt-3">
         <p className="text-xs italic text-brand-muted">
-          This trip has already departed. Contact details are no longer available.
+          {t("trips.tripClosedFull")}
         </p>
       </div>
     );
@@ -98,7 +100,7 @@ function ContactInfo({
       <div className="mt-3 space-y-1 border-t border-brand-muted/10 pt-3">
         {trip.traveler.whatsappNumber && (
           <p className="text-xs text-brand-muted">
-            WhatsApp:{" "}
+            {t("contactInfo.whatsappLabel")}
             <a
               href={`https://wa.me/${trip.traveler.whatsappNumber.replace(/\D/g, "")}`}
               target="_blank"
@@ -112,7 +114,7 @@ function ContactInfo({
         )}
         {trip.traveler.email && (
           <p className="text-xs text-brand-muted">
-            Email:{" "}
+            {t("contactInfo.emailLabel")}
             <a
               href={`mailto:${trip.traveler.email}`}
               onClick={(e) => e.stopPropagation()}
@@ -136,9 +138,9 @@ function ContactInfo({
               onClick={(e) => e.stopPropagation()}
               className="text-brand-accent hover:underline"
             >
-              Create an account and post a trip or package
-            </Link>{" "}
-            to see contact details
+              {t("contactInfo.anonPrefix")}
+            </Link>
+            {t("contactInfo.anonSuffix")}
           </>
         ) : user.accountStatus === "APPROVED" ? (
           <>
@@ -147,12 +149,12 @@ function ContactInfo({
               onClick={(e) => e.stopPropagation()}
               className="text-brand-accent hover:underline"
             >
-              Post a trip or package
-            </Link>{" "}
-            to unlock contact details
+              {t("contactInfo.approvedPrefix")}
+            </Link>
+            {t("contactInfo.approvedSuffix")}
           </>
         ) : (
-          "Your account is pending approval. Contact details will be visible once approved and you've posted."
+          t("contactInfo.pendingMessage")
         )}
       </p>
     </div>
@@ -168,6 +170,7 @@ function TripCard({
   trip: Trip;
   viewerCanSeeContact: boolean;
 }) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const isClosed = new Date(trip.departureDate) < new Date();
 
@@ -182,14 +185,14 @@ function TripCard({
       <div className="flex items-center justify-between gap-2">
         <div className="flex flex-1 items-center gap-2">
           <div className="text-center">
-            <p className="text-xs text-brand-muted">From</p>
+            <p className="text-xs text-brand-muted">{t("trips.fromLabel")}</p>
             <p className="font-semibold text-brand-primary">{trip.originCity}</p>
             <p className="text-xs text-brand-muted">{trip.originCountry}</p>
           </div>
           <div className="flex-1 border-t-2 border-dashed border-brand-secondary/40 mx-2" />
           <MapPin className="h-4 w-4 shrink-0 text-brand-accent" />
           <div className="text-center">
-            <p className="text-xs text-brand-muted">To</p>
+            <p className="text-xs text-brand-muted">{t("trips.toLabel")}</p>
             <p className="font-semibold text-brand-primary">{trip.destCity}</p>
             <p className="text-xs text-brand-muted">{trip.destCountry}</p>
           </div>
@@ -201,7 +204,7 @@ function TripCard({
               : "bg-green-100 text-green-700"
           }`}
         >
-          {isClosed ? "Trip Closed" : "Active"}
+          {isClosed ? t("trips.tripClosedBadge") : t("trips.activeBadge")}
         </span>
       </div>
 
@@ -238,7 +241,7 @@ function TripCard({
             loading="lazy"
           />
           <div>
-            <p className="text-xs text-brand-muted">Traveler</p>
+            <p className="text-xs text-brand-muted">{t("trips.travelerLabel")}</p>
             <Link
               to={`/users/${trip.traveler.id}`}
               onClick={(e) => e.stopPropagation()}
@@ -252,7 +255,7 @@ function TripCard({
                 ? trip.traveler.rating.toFixed(1)
                 : "—"}
               {" · "}
-              <strong>{trip.traveler.packagesDeliveredCount}</strong> delivered
+              {t("trips.deliveredCount", { count: trip.traveler.packagesDeliveredCount })}
             </p>
           </div>
         </div>
@@ -270,6 +273,7 @@ function TripCard({
 // ── Main Trips page ───────────────────────────────────────────
 
 function Trips() {
+  const { t } = useTranslation();
   const { user } = useAuthStore();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
@@ -341,13 +345,10 @@ function Trips() {
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-brand-primary">
-            Available Trips
+            {t("trips.pageTitle")}
           </h1>
           <p className="text-sm text-brand-muted">
-            Find verified travelers who can carry your package —{" "}
-            <span className="text-brand-muted/70">
-              مسافران تأیید شده برای حمل بسته شما
-            </span>
+            {t("trips.pageSubtitle")}
           </p>
         </div>
         {user && (
@@ -355,15 +356,15 @@ function Trips() {
             {user.accountStatus !== "APPROVED" ? (
               <span className="flex cursor-not-allowed items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white opacity-50">
                 <Plus className="h-4 w-4" />
-                Post a trip
+                {t("trips.postTrip")}
               </span>
             ) : user.hasUnpaidCommission ? (
               <span
-                title="You have unpaid commission. Please settle it before posting new trips."
+                title={t("trips.unpaidCommissionTooltip")}
                 className="flex cursor-not-allowed items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white opacity-50"
               >
                 <Plus className="h-4 w-4" />
-                Post a trip
+                {t("trips.postTrip")}
               </span>
             ) : (
               <Link
@@ -371,13 +372,12 @@ function Trips() {
                 className="flex items-center gap-2 rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
               >
                 <Plus className="h-4 w-4" />
-                Post a trip
+                {t("trips.postTrip")}
               </Link>
             )}
             {user.accountStatus !== "APPROVED" && (
               <p className="mt-1 text-xs text-brand-muted">
-                Your account is pending admin approval. You'll be able to post
-                once approved.
+                {t("trips.pendingApprovalNote")}
               </p>
             )}
           </div>
@@ -387,7 +387,7 @@ function Trips() {
       {user?.accountStatus === "APPROVED" && user.hasUnpaidCommission && (
         <div className="mb-6 flex items-center gap-2 rounded-lg border border-brand-danger/30 bg-brand-danger/5 px-4 py-3 text-sm text-brand-danger">
           <AlertTriangle className="h-4 w-4 shrink-0" />
-          You have unpaid commission. Please settle it before posting new trips.
+          {t("trips.unpaidCommissionBanner")}
         </div>
       )}
 
@@ -399,13 +399,13 @@ function Trips() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <label className="mb-1.5 block text-xs font-medium text-brand-muted">
-              From country
+              {t("trips.fromCountry")}
             </label>
             <select
               {...register("originCountry")}
               className="w-full rounded-lg border border-brand-muted/30 bg-brand-bg px-3 py-2 text-sm text-brand-primary outline-none focus:border-brand-primary"
             >
-              <option value="">Any country</option>
+              <option value="">{t("trips.anyCountry")}</option>
               {countries.map((c) => (
                 <option key={c.code} value={c.name}>
                   {c.name}
@@ -416,13 +416,13 @@ function Trips() {
 
           <div>
             <label className="mb-1.5 block text-xs font-medium text-brand-muted">
-              To country
+              {t("trips.toCountry")}
             </label>
             <select
               {...register("destCountry")}
               className="w-full rounded-lg border border-brand-muted/30 bg-brand-bg px-3 py-2 text-sm text-brand-primary outline-none focus:border-brand-primary"
             >
-              <option value="">Any country</option>
+              <option value="">{t("trips.anyCountry")}</option>
               {countries.map((c) => (
                 <option key={c.code} value={c.name}>
                   {c.name}
@@ -433,12 +433,12 @@ function Trips() {
 
           <div>
             <label className="mb-1.5 block text-xs font-medium text-brand-muted">
-              Departure from
+              {t("trips.departureFrom")}
             </label>
             <DatePicker
               selected={startDate}
               onChange={setStartDate}
-              placeholderText="Start date"
+              placeholderText={t("trips.startDatePlaceholder")}
               className="w-full rounded-lg border border-brand-muted/30 bg-brand-bg px-3 py-2 text-sm text-brand-primary outline-none focus:border-brand-primary"
               dateFormat="yyyy-MM-dd"
             />
@@ -446,12 +446,12 @@ function Trips() {
 
           <div>
             <label className="mb-1.5 block text-xs font-medium text-brand-muted">
-              Departure to
+              {t("trips.departureTo")}
             </label>
             <DatePicker
               selected={endDate}
               onChange={setEndDate}
-              placeholderText="End date"
+              placeholderText={t("trips.endDatePlaceholder")}
               className="w-full rounded-lg border border-brand-muted/30 bg-brand-bg px-3 py-2 text-sm text-brand-primary outline-none focus:border-brand-primary"
               dateFormat="yyyy-MM-dd"
             />
@@ -464,7 +464,7 @@ function Trips() {
             className="flex items-center gap-2 rounded-lg bg-brand-primary px-5 py-2 text-sm font-semibold text-white transition hover:opacity-90"
           >
             <Search className="h-4 w-4" />
-            Search trips
+            {t("trips.searchTrips")}
           </button>
         </div>
       </form>
@@ -477,10 +477,7 @@ function Trips() {
       ) : trips.length === 0 ? (
         <div className="py-16 text-center">
           <p className="text-brand-muted">
-            No trips found matching your search.
-          </p>
-          <p className="mt-1 text-xs text-brand-muted">
-            هیچ سفری مطابق جستجوی شما یافت نشد
+            {t("trips.noResults")}
           </p>
         </div>
       ) : (
@@ -506,7 +503,7 @@ function Trips() {
             <ChevronLeft className="h-4 w-4" />
           </button>
           <span className="text-sm text-brand-muted">
-            Page {page} of {totalPages}
+            {t("trips.page", { page, totalPages })}
           </span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
@@ -521,20 +518,10 @@ function Trips() {
       {/* Bottom SEO text — keyword rich, helps Google understand the page */}
       <div className="mt-12 rounded-xl bg-white p-6 text-center shadow-sm">
         <h2 className="mb-2 text-sm font-semibold text-brand-primary">
-          Finding a Traveler to Carry Your Package to Afghanistan
+          {t("trips.seoBottomHeading")}
         </h2>
         <p className="text-xs text-brand-muted leading-relaxed">
-          Afghanistan Online Cargo connects verified Afghan senders with trusted
-          travelers heading to Kabul, Herat, Mazar-i-Sharif, Kandahar and all
-          provinces of Afghanistan — from Germany, USA, UAE, Iran, Turkey, UK,
-          Sweden, Norway, Netherlands, Canada, Australia and beyond.
-          All users are KYC-verified. All handovers are legally recorded.
-        </p>
-        <p className="mt-2 text-xs text-brand-muted/70 leading-relaxed">
-          کارگو آنلاین افغانستان فرستندگان افغانی تأیید شده را با مسافران
-          مورد اعتماد که به کابل، هرات، مزار شریف، قندهار و تمام ولایات
-          افغانستان می‌روند — از آلمان، امریکا، امارات، ایران، ترکیه، انگلیس،
-          سوئد، نروژ، هلند، کانادا، استرالیا و بیشتر — متصل می‌کند.
+          {t("trips.seoBottomBody")}
         </p>
       </div>
     </div>

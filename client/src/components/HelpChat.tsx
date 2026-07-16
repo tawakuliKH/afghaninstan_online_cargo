@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { HelpCircle, X, Package, Mail, Phone } from "lucide-react";
 
 interface FaqItem {
@@ -6,65 +7,16 @@ interface FaqItem {
   answer: string;
 }
 
-const FAQS: FaqItem[] = [
-  {
-    question: "How do I register?",
-    answer:
-      "Click 'Register' in the navbar. You'll need a valid passport or Afghan Tazkira, a face photo, and if you live outside Afghanistan, a visa or residency permit. After submitting, an admin will review and approve your account — this usually takes 1-2 business days.",
-  },
-  {
-    question: "How do I post a trip?",
-    answer:
-      "Once your account is approved, go to the Trips page and click 'Post a Trip'. Fill in your route, departure date, and available capacity. Senders will be able to contact you directly.",
-  },
-  {
-    question: "How do I send a package?",
-    answer:
-      "Post your package on the Packages page with full details. Browse available trips or wait for a traveler to contact you. Once you agree on terms, use the 'Propose Delivery' button to start the official delivery process.",
-  },
-  {
-    question: "Is my identity document safe?",
-    answer:
-      "Yes. Your passport and ID photos are stored in private, encrypted storage. Only our administrators can view them — they are never shared with other users or accessible via public links.",
-  },
-  {
-    question: "How does payment work?",
-    answer:
-      "All payments are agreed directly between you and the traveler — in person, by phone, or via WhatsApp. The platform records the agreed amount but does not process any payments.",
-  },
-  {
-    question: "What is the 5% commission?",
-    answer:
-      "Travelers pay a 5% platform commission on the agreed delivery amount when a delivery is finalized. This is tracked in your wallet on your profile.",
-  },
-  {
-    question: "What if my package is lost or damaged?",
-    answer:
-      "The platform provides a timestamped record of everything agreed and handed over. If a dispute arises, you can pursue the matter through legal channels using this delivery record as evidence. The platform is not liable for lost or damaged packages.",
-  },
-  {
-    question: "How long does approval take?",
-    answer:
-      "Account applications are typically reviewed within 1-2 business days. You'll receive an email and in-app notification once a decision is made.",
-  },
-  {
-    question: "Can I use the platform in Dari?",
-    answer:
-      "Yes! Click the language switcher in the top navigation bar to switch between English and Dari (دری).",
-  },
-];
-
-const CONTACT_QUESTION = "How do I contact support?";
-
 type ChatEntry =
   | { kind: "question"; text: string }
   | { kind: "answer"; text: string }
   | { kind: "contact" };
 
 function ContactCard() {
+  const { t } = useTranslation();
   return (
     <div className="max-w-[85%] rounded-2xl rounded-bl-sm border border-brand-muted/20 bg-brand-bg p-3 text-xs text-brand-primary">
-      <p className="mb-2 font-medium">Need help? Contact us directly:</p>
+      <p className="mb-2 font-medium">{t("helpChat.contactNeedHelp")}</p>
       <a
         href="mailto:tawakuli456@gmail.com"
         className="mb-1 flex items-center gap-1.5 text-brand-accent hover:underline"
@@ -79,17 +31,31 @@ function ContactCard() {
       >
         <Phone className="h-3 w-3 shrink-0" /> +93 765 074 686
       </a>
-      <p className="mt-2 text-brand-muted">We typically respond within 24 hours.</p>
+      <p className="mt-2 text-brand-muted">{t("helpChat.contactRespondTime")}</p>
     </div>
   );
 }
 
 export function HelpChat() {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [entries, setEntries] = useState<ChatEntry[]>([]);
   const [busy, setBusy] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const chatRef = useRef<HTMLDivElement>(null);
+
+  const CONTACT_QUESTION = t("helpChat.contactQuestion");
+  const FAQS: FaqItem[] = [
+    { question: t("helpChat.faq1Q"), answer: t("helpChat.faq1A") },
+    { question: t("helpChat.faq2Q"), answer: t("helpChat.faq2A") },
+    { question: t("helpChat.faq3Q"), answer: t("helpChat.faq3A") },
+    { question: t("helpChat.faq4Q"), answer: t("helpChat.faq4A") },
+    { question: t("helpChat.faq5Q"), answer: t("helpChat.faq5A") },
+    { question: t("helpChat.faq6Q"), answer: t("helpChat.faq6A") },
+    { question: t("helpChat.faq7Q"), answer: t("helpChat.faq7A") },
+    { question: t("helpChat.faq8Q"), answer: t("helpChat.faq8A") },
+    { question: t("helpChat.faq9Q"), answer: t("helpChat.faq9A") },
+  ];
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -133,12 +99,12 @@ export function HelpChat() {
           {/* Header */}
           <div className="flex items-center justify-between rounded-t-2xl bg-brand-primary px-4 py-3">
             <p className="text-sm font-semibold text-white">
-              Help Center — Afghanistan Online Cargo
+              {t("helpChat.headerTitle")}
             </p>
             <button
               onClick={() => setOpen(false)}
               className="shrink-0 text-white/80 transition hover:text-white"
-              aria-label="Close help chat"
+              aria-label={t("helpChat.closeAriaLabel")}
             >
               <X className="h-4 w-4" />
             </button>
@@ -148,7 +114,7 @@ export function HelpChat() {
           <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto p-4">
             {entries.length === 0 && (
               <p className="text-xs text-brand-muted">
-                Hi! Choose a question below to get started.
+                {t("helpChat.greeting")}
               </p>
             )}
             {entries.map((entry, i) => {
@@ -171,7 +137,7 @@ export function HelpChat() {
                   ) : (
                     <div className="max-w-[85%] rounded-2xl rounded-bl-sm border border-brand-muted/20 bg-white p-3 text-xs text-brand-primary shadow-sm">
                       <p className="mb-1 text-[10px] font-semibold uppercase text-brand-muted">
-                        AOC Support
+                        {t("helpChat.supportLabel")}
                       </p>
                       {entry.text}
                     </div>
@@ -188,7 +154,7 @@ export function HelpChat() {
                 onClick={() => setEntries([])}
                 className="mb-2 text-xs font-medium text-brand-accent hover:underline"
               >
-                ← Back to questions
+                {t("helpChat.backToQuestions")}
               </button>
             )}
             <div className="flex max-h-28 flex-wrap gap-1.5 overflow-y-auto">
@@ -218,7 +184,7 @@ export function HelpChat() {
       <button
         onClick={() => setOpen((v) => !v)}
         className="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-brand-primary text-white shadow-xl transition hover:opacity-90"
-        aria-label="Open help chat"
+        aria-label={t("helpChat.openAriaLabel")}
       >
         {!open && (
           <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-brand-danger text-[10px] font-bold text-white">

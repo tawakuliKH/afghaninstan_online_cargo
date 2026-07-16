@@ -1,11 +1,10 @@
+import { useTranslation } from "react-i18next";
 import { Check } from "lucide-react";
 
 export interface ProgressDelivery {
   status: "PROPOSED" | "ACCEPTED" | "FINALIZED" | "CANCELLED";
   hasReview: boolean;
 }
-
-const STEP_LABELS = ["Posted", "Proposed", "Accepted", "Delivered", "Reviewed"];
 
 function computeCompleteFlags(delivery: ProgressDelivery) {
   const step3Complete = delivery.status === "ACCEPTED" || delivery.status === "FINALIZED";
@@ -15,6 +14,14 @@ function computeCompleteFlags(delivery: ProgressDelivery) {
 }
 
 export function WorkflowProgressBar({ delivery }: { delivery: ProgressDelivery }) {
+  const { t } = useTranslation();
+  const STEP_LABELS = [
+    t("workflowProgressBar.posted"),
+    t("workflowProgressBar.proposed"),
+    t("workflowProgressBar.accepted"),
+    t("workflowProgressBar.delivered"),
+    t("workflowProgressBar.reviewed"),
+  ];
   const completeFlags = computeCompleteFlags(delivery);
   const isCancelled = delivery.status === "CANCELLED";
   const activeIndex = isCancelled ? -1 : completeFlags.findIndex((c) => !c);
@@ -70,7 +77,7 @@ export function WorkflowProgressBar({ delivery }: { delivery: ProgressDelivery }
 
       {isCancelled && (
         <span className="ml-2 shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold text-brand-danger">
-          Cancelled
+          {t("workflowProgressBar.cancelled")}
         </span>
       )}
     </div>

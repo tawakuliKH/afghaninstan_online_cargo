@@ -2,6 +2,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useNavigate, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
 import { Loader2, ArrowLeft, AlertTriangle } from "lucide-react";
@@ -74,6 +75,7 @@ function Select({
 }
 
 function NewTrip() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const isNotApproved = user?.accountStatus !== "APPROVED";
@@ -95,10 +97,10 @@ function NewTrip() {
         capacityWeight: data.capacityWeight || undefined,
         departureDate: data.departureDate.toISOString(),
       });
-      toast.success("Trip posted successfully!");
+      toast.success(t("newTrip.toastSuccess"));
       navigate("/trips");
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "Failed to post trip");
+      toast.error(err.response?.data?.error || t("newTrip.toastFailed"));
     }
   };
 
@@ -116,25 +118,24 @@ function NewTrip() {
         to="/trips"
         className="mb-6 flex items-center gap-2 text-sm text-brand-muted hover:text-brand-primary"
       >
-        <ArrowLeft className="h-4 w-4" /> Back to trips
+        <ArrowLeft className="h-4 w-4" /> {t("newTrip.backToTrips")}
       </Link>
 
       <div className="rounded-2xl bg-white p-8 shadow-lg">
         <h1 className="mb-6 text-2xl font-bold text-brand-primary">
-          Post a Trip
+          {t("newTrip.pageTitle")}
         </h1>
 
         {isNotApproved && (
           <div className="mb-6 rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-700">
-            Your account is awaiting admin approval. You cannot post yet. You'll be
-            notified by email as soon as your account is approved.
+            {t("newTrip.notApprovedBanner")}
           </div>
         )}
 
         {!isNotApproved && hasUnpaidCommission && (
           <div className="mb-6 flex items-center gap-2 rounded-lg border border-brand-danger/30 bg-brand-danger/5 px-4 py-3 text-sm text-brand-danger">
             <AlertTriangle className="h-4 w-4 shrink-0" />
-            You have unpaid commission. Please settle it before posting new trips.
+            {t("newTrip.unpaidCommissionBanner")}
           </div>
         )}
 
@@ -142,12 +143,12 @@ function NewTrip() {
           {/* Route */}
           <div>
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-brand-muted">
-              Route
+              {t("newTrip.routeHeading")}
             </h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="From country" required error={errors.originCountry?.message}>
+              <Field label={t("newTrip.fromCountry")} required error={errors.originCountry?.message}>
                 <Select {...register("originCountry")}>
-                  <option value="">Select country</option>
+                  <option value="">{t("newTrip.selectCountry")}</option>
                   {countries.map((c) => (
                     <option key={c.code} value={c.name}>
                       {c.name}
@@ -155,12 +156,12 @@ function NewTrip() {
                   ))}
                 </Select>
               </Field>
-              <Field label="From city" required error={errors.originCity?.message}>
-                <Input {...register("originCity")} placeholder="City" />
+              <Field label={t("newTrip.fromCity")} required error={errors.originCity?.message}>
+                <Input {...register("originCity")} placeholder={t("newTrip.cityPlaceholder")} />
               </Field>
-              <Field label="To country" required error={errors.destCountry?.message}>
+              <Field label={t("newTrip.toCountry")} required error={errors.destCountry?.message}>
                 <Select {...register("destCountry")}>
-                  <option value="">Select country</option>
+                  <option value="">{t("newTrip.selectCountry")}</option>
                   {countries.map((c) => (
                     <option key={c.code} value={c.name}>
                       {c.name}
@@ -168,8 +169,8 @@ function NewTrip() {
                   ))}
                 </Select>
               </Field>
-              <Field label="To city" required error={errors.destCity?.message}>
-                <Input {...register("destCity")} placeholder="City" />
+              <Field label={t("newTrip.toCity")} required error={errors.destCity?.message}>
+                <Input {...register("destCity")} placeholder={t("newTrip.cityPlaceholder")} />
               </Field>
             </div>
           </div>
@@ -177,11 +178,11 @@ function NewTrip() {
           {/* Departure */}
           <div>
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-brand-muted">
-              Travel Details
+              {t("newTrip.travelDetailsHeading")}
             </h2>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field
-                label="Departure date"
+                label={t("newTrip.departureDateLabel")}
                 required
                 error={errors.departureDate?.message}
               >
@@ -193,7 +194,7 @@ function NewTrip() {
                       selected={field.value}
                       onChange={field.onChange}
                       minDate={new Date()}
-                      placeholderText="Select date"
+                      placeholderText={t("newTrip.selectDatePlaceholder")}
                       dateFormat="yyyy-MM-dd"
                       className="w-full rounded-lg border border-brand-muted/30 bg-brand-bg px-4 py-2.5 text-sm text-brand-primary outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
                     />
@@ -201,25 +202,25 @@ function NewTrip() {
                 />
               </Field>
               <Field
-                label="Capacity (kg) — optional"
+                label={t("newTrip.capacityLabel")}
                 error={errors.capacityWeight?.message}
               >
                 <Input
                   {...register("capacityWeight")}
                   type="number"
                   step="0.1"
-                  placeholder="e.g. 5"
+                  placeholder={t("newTrip.capacityPlaceholder")}
                 />
               </Field>
             </div>
             <div className="mt-4">
               <Field
-                label="Capacity note — optional"
+                label={t("newTrip.capacityNoteLabel")}
                 error={errors.capacityNote?.message}
               >
                 <Input
                   {...register("capacityNote")}
-                  placeholder="e.g. One carry-on bag, no liquids"
+                  placeholder={t("newTrip.capacityNotePlaceholder")}
                 />
               </Field>
             </div>
@@ -227,13 +228,13 @@ function NewTrip() {
 
           {/* Notes */}
           <Field
-            label="Additional notes — optional"
+            label={t("newTrip.notesLabel")}
             error={errors.notes?.message}
           >
             <textarea
               {...register("notes")}
               rows={3}
-              placeholder="Any other details travelers or senders should know..."
+              placeholder={t("newTrip.notesPlaceholder")}
               className="w-full rounded-lg border border-brand-muted/30 bg-brand-bg px-4 py-2.5 text-sm text-brand-primary outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
             />
           </Field>
@@ -244,7 +245,7 @@ function NewTrip() {
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
           >
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            Post trip
+            {t("newTrip.submitButton")}
           </button>
         </form>
       </div>

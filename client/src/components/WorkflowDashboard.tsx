@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import api from "../lib/axios";
 import { WorkflowProgressBar } from "./WorkflowProgressBar";
 import {
@@ -170,6 +171,7 @@ const ACTION_ICONS: Record<string, { icon: React.ElementType; color: string }> =
 };
 
 function ActionCard({ action }: { action: PendingAction }) {
+  const { t } = useTranslation();
   const isUrgent = action.priority === "urgent";
   const { icon: Icon, color } = ACTION_ICONS[action.type] ?? { icon: Package, color: "text-brand-accent" };
 
@@ -188,7 +190,7 @@ function ActionCard({ action }: { action: PendingAction }) {
         {action.type === "PROPOSE_DELIVERY" && (
           <p className="mt-1.5 flex items-start gap-1.5 rounded-md border border-yellow-200 bg-yellow-50 px-2.5 py-1.5 text-xs text-yellow-700">
             <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
-            Only propose after meeting the traveler in person and handing over the package.
+            {t("workflowDashboard.proposeOnlyNotice")}
           </p>
         )}
         <Link
@@ -204,20 +206,25 @@ function ActionCard({ action }: { action: PendingAction }) {
   );
 }
 
-function workflowCTA(item: WorkflowItem) {
-  if (item.status === "PROPOSED" && item.viewerRole === "traveler") {
-    return { label: "Review & Accept", url: "/profile?tab=deliveries" };
-  }
-  if (item.status === "ACCEPTED" && item.viewerRole === "traveler") {
-    return { label: "Finalize Delivery", url: "/profile?tab=deliveries" };
-  }
-  if (item.status === "FINALIZED" && !item.hasReview && item.viewerRole === "sender") {
-    return { label: "Leave Review →", url: `/deliveries/${item.deliveryId}/review` };
-  }
-  return null;
+function useWorkflowCTA() {
+  const { t } = useTranslation();
+  return (item: WorkflowItem) => {
+    if (item.status === "PROPOSED" && item.viewerRole === "traveler") {
+      return { label: t("workflowDashboard.reviewAndAccept"), url: "/profile?tab=deliveries" };
+    }
+    if (item.status === "ACCEPTED" && item.viewerRole === "traveler") {
+      return { label: t("workflowDashboard.finalizeDelivery"), url: "/profile?tab=deliveries" };
+    }
+    if (item.status === "FINALIZED" && !item.hasReview && item.viewerRole === "sender") {
+      return { label: t("workflowDashboard.leaveReview"), url: `/deliveries/${item.deliveryId}/review` };
+    }
+    return null;
+  };
 }
 
 function ActiveWorkflowCard({ item }: { item: WorkflowItem }) {
+  const { t } = useTranslation();
+  const workflowCTA = useWorkflowCTA();
   const cta = workflowCTA(item);
 
   return (
@@ -232,7 +239,9 @@ function ActiveWorkflowCard({ item }: { item: WorkflowItem }) {
           >
             {item.packageTitle}
           </Link>
-          <p className="text-xs text-brand-muted">Destination: {item.destCity}, {item.destCountry}</p>
+          <p className="text-xs text-brand-muted">
+            {t("workflowDashboard.destination", { city: item.destCity, country: item.destCountry })}
+          </p>
           <div className="mt-2 flex items-center gap-2">
             <img
               src={`https://api.dicebear.com/9.x/personas/svg?seed=${item.counterpart.id}&backgroundColor=e8edf5`}
@@ -240,7 +249,7 @@ function ActiveWorkflowCard({ item }: { item: WorkflowItem }) {
               className="h-6 w-6 rounded-full object-cover"
             />
             <span className="text-xs text-brand-muted">
-              {item.viewerRole === "sender" ? "Traveler" : "Sender"}:{" "}
+              {item.viewerRole === "sender" ? t("workflowDashboard.travelerLabel") : t("workflowDashboard.senderLabel")}:{" "}
               <span className="font-medium text-brand-primary">{item.counterpart.nickname}</span>
             </span>
           </div>
@@ -255,7 +264,9 @@ function ActiveWorkflowCard({ item }: { item: WorkflowItem }) {
           </Link>
         ) : (
           <p className="text-xs italic text-brand-muted">
-            Waiting on {item.viewerRole === "sender" ? item.counterpart.nickname : "you"}...
+            {item.viewerRole === "sender"
+              ? t("workflowDashboard.waitingOnName", { name: item.counterpart.nickname })
+              : t("workflowDashboard.waitingOnYou")}
           </p>
         )}
       </div>
@@ -264,6 +275,7 @@ function ActiveWorkflowCard({ item }: { item: WorkflowItem }) {
 }
 
 function CompletedWorkflowCard({ item }: { item: WorkflowItem }) {
+  const { t } = useTranslation();
   return (
     <Link
       to={`/deliveries/${item.deliveryId}`}
@@ -275,7 +287,7 @@ function CompletedWorkflowCard({ item }: { item: WorkflowItem }) {
           <p className="font-semibold text-brand-primary">{item.packageTitle}</p>
           <p className="text-brand-muted">
             {item.destCity}, {item.destCountry} ·{" "}
-            {item.viewerRole === "sender" ? "Traveler" : "Sender"}: {item.counterpart.nickname}
+            {item.viewerRole === "sender" ? t("workflowDashboard.travelerLabel") : t("workflowDashboard.senderLabel")}: {item.counterpart.nickname}
           </p>
         </div>
         <div className="text-right text-brand-muted">
@@ -285,7 +297,11 @@ function CompletedWorkflowCard({ item }: { item: WorkflowItem }) {
           {item.finalizedAt && <p>{new Date(item.finalizedAt).toLocaleDateString()}</p>}
           {item.viewerRole === "traveler" && item.commissionAmount != null && (
             <p>
-              Commission: {item.commissionAmount} {item.currency} ({item.commissionPaid ? "paid" : "unpaid"})
+              {t("workflowDashboard.commissionLabel", {
+                amount: item.commissionAmount,
+                currency: item.currency,
+                status: item.commissionPaid ? t("workflowDashboard.paid") : t("workflowDashboard.unpaid"),
+              })}
             </p>
           )}
         </div>
@@ -295,6 +311,7 @@ function CompletedWorkflowCard({ item }: { item: WorkflowItem }) {
 }
 
 function PackageSummaryCard({ pkg }: { pkg: MyPackageItem }) {
+  const { t } = useTranslation();
   return (
     <div className="rounded-xl bg-white p-4 shadow-sm">
       <div className="flex gap-3">
@@ -319,10 +336,10 @@ function PackageSummaryCard({ pkg }: { pkg: MyPackageItem }) {
           ) : (
             <Link
               to={`/packages/${pkg.id}/propose`}
-              title="Only propose after meeting the traveler in person and handing over the package."
+              title={t("workflowDashboard.proposeOnlyNotice")}
               className="mt-1 inline-flex items-center gap-1 rounded-full bg-brand-accent/10 px-2 py-0.5 text-[10px] font-semibold text-brand-accent hover:bg-brand-accent/20"
             >
-              Propose Delivery
+              {t("workflowDashboard.proposeDelivery")}
             </Link>
           )}
         </div>
@@ -332,6 +349,7 @@ function PackageSummaryCard({ pkg }: { pkg: MyPackageItem }) {
 }
 
 function TripSummaryCard({ trip }: { trip: MyTripItem }) {
+  const { t } = useTranslation();
   const isClosed = new Date(trip.departureDate) < new Date();
   return (
     <div className={`rounded-xl bg-white p-4 shadow-sm ${isClosed ? "opacity-60 grayscale-[30%]" : ""}`}>
@@ -344,12 +362,12 @@ function TripSummaryCard({ trip }: { trip: MyTripItem }) {
             isClosed ? "bg-brand-muted/10 text-brand-muted" : "bg-green-100 text-green-700"
           }`}
         >
-          {isClosed ? "Closed" : "Active"}
+          {isClosed ? t("workflowDashboard.closed") : t("workflowDashboard.active")}
         </span>
       </div>
       <p className="mt-1 text-xs text-brand-muted">
-        Departs {new Date(trip.departureDate).toLocaleDateString()}
-        {trip.capacityWeight ? ` · ${trip.capacityWeight} kg capacity` : ""}
+        {t("workflowDashboard.departsOn", { date: new Date(trip.departureDate).toLocaleDateString() })}
+        {trip.capacityWeight ? t("workflowDashboard.capacityKg", { weight: trip.capacityWeight }) : ""}
       </p>
     </div>
   );
@@ -368,6 +386,7 @@ function SkeletonBlock() {
 // ── Main component ───────────────────────────────────────────
 
 export function WorkflowDashboard() {
+  const { t } = useTranslation();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -394,12 +413,12 @@ export function WorkflowDashboard() {
   if (error || !data) {
     return (
       <div className="rounded-xl bg-white p-6 text-center shadow-sm">
-        <p className="mb-3 text-sm text-brand-muted">Could not load your activity. Please refresh.</p>
+        <p className="mb-3 text-sm text-brand-muted">{t("workflowDashboard.couldNotLoad")}</p>
         <button
           onClick={fetchDashboard}
           className="inline-flex items-center gap-2 rounded-lg bg-brand-primary px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
         >
-          <RefreshCw className="h-4 w-4" /> Retry
+          <RefreshCw className="h-4 w-4" /> {t("workflowDashboard.retry")}
         </button>
       </div>
     );
@@ -417,15 +436,15 @@ export function WorkflowDashboard() {
       <div>
         <h2 className="mb-3 text-xl font-bold text-brand-primary">
           {data.pendingActions.length === 0
-            ? "✓ You're all caught up!"
+            ? t("workflowDashboard.allCaughtUp")
             : hasUrgent
-            ? "⚡ Actions Required"
-            : "📋 Your Next Steps"}
+            ? t("workflowDashboard.actionsRequired")
+            : t("workflowDashboard.nextSteps")}
         </h2>
         {data.pendingActions.length === 0 ? (
           <div className="rounded-xl border-l-4 border-green-500 bg-green-50 p-4">
             <p className="text-sm font-medium text-green-700">
-              Nothing needs your attention right now. Check back later!
+              {t("workflowDashboard.nothingNeeded")}
             </p>
           </div>
         ) : (
@@ -440,7 +459,7 @@ export function WorkflowDashboard() {
       {/* Section B — Active Workflows */}
       {active.length > 0 && (
         <div>
-          <h2 className="mb-3 text-lg font-bold text-brand-primary">Active Workflows</h2>
+          <h2 className="mb-3 text-lg font-bold text-brand-primary">{t("workflowDashboard.activeWorkflows")}</h2>
           <div className="space-y-4">
             {active.map((item) => (
               <ActiveWorkflowCard key={item.deliveryId} item={item} />
@@ -454,14 +473,14 @@ export function WorkflowDashboard() {
         <div>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-lg font-bold text-brand-primary">
-              Completed Deliveries ({completed.length})
+              {t("workflowDashboard.completedDeliveries", { count: completed.length })}
             </h2>
             {completed.length > 3 && (
               <button
                 onClick={() => setShowAllCompleted((v) => !v)}
                 className="flex items-center gap-1 text-sm font-medium text-brand-accent hover:underline"
               >
-                {showAllCompleted ? "Show less" : "Show all"}
+                {showAllCompleted ? t("workflowDashboard.showLess") : t("workflowDashboard.showAll")}
                 {showAllCompleted ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </button>
             )}
@@ -478,11 +497,11 @@ export function WorkflowDashboard() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div>
           <h2 className="mb-3 text-lg font-bold text-brand-primary">
-            My Packages ({data.myPackages.length})
+            {t("workflowDashboard.myPackages", { count: data.myPackages.length })}
           </h2>
           <div className="space-y-3">
             {data.myPackages.length === 0 ? (
-              <p className="text-sm text-brand-muted">You haven't posted any packages yet.</p>
+              <p className="text-sm text-brand-muted">{t("workflowDashboard.noPackagesYet")}</p>
             ) : (
               data.myPackages.map((pkg) => <PackageSummaryCard key={pkg.id} pkg={pkg} />)
             )}
@@ -490,16 +509,16 @@ export function WorkflowDashboard() {
               to="/packages/new"
               className="inline-block rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
             >
-              + Post a Package
+              {t("workflowDashboard.postAPackage")}
             </Link>
           </div>
         </div>
 
         <div>
-          <h2 className="mb-3 text-lg font-bold text-brand-primary">My Trips ({data.myTrips.length})</h2>
+          <h2 className="mb-3 text-lg font-bold text-brand-primary">{t("workflowDashboard.myTrips", { count: data.myTrips.length })}</h2>
           <div className="space-y-3">
             {data.myTrips.length === 0 ? (
-              <p className="text-sm text-brand-muted">You haven't posted any trips yet.</p>
+              <p className="text-sm text-brand-muted">{t("workflowDashboard.noTripsYet")}</p>
             ) : (
               data.myTrips.map((trip) => <TripSummaryCard key={trip.id} trip={trip} />)
             )}
@@ -507,7 +526,7 @@ export function WorkflowDashboard() {
               to="/trips/new"
               className="inline-block rounded-lg bg-brand-accent px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
             >
-              + Post a Trip
+              {t("workflowDashboard.postATrip")}
             </Link>
           </div>
         </div>

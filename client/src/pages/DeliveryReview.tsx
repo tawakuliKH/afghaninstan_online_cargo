@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../store/authStore";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
@@ -76,6 +77,7 @@ function ReadOnlyStars({ rating }: { rating: number }) {
 }
 
 function DeliveryReview() {
+  const { t } = useTranslation();
   const { deliveryId } = useParams<{ deliveryId: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
@@ -89,22 +91,22 @@ function DeliveryReview() {
     api
       .get(`/deliveries/${deliveryId}`)
       .then((res) => setDelivery(res.data.delivery))
-      .catch(() => toast.error("Failed to load delivery"))
+      .catch(() => toast.error(t("deliveryReview.toastLoadFailed")))
       .finally(() => setLoading(false));
   }, [deliveryId]);
 
   const onSubmit = async () => {
     if (rating === 0) {
-      toast.error("Please select a star rating");
+      toast.error(t("deliveryReview.toastSelectRating"));
       return;
     }
     setSubmitting(true);
     try {
       await api.post(`/reviews/${deliveryId}`, { rating, comment: comment || undefined });
-      toast.success("Thank you for your review!");
+      toast.success(t("deliveryReview.toastSubmitSuccess"));
       navigate("/profile?tab=deliveries");
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "Failed to submit review");
+      toast.error(err.response?.data?.error || t("deliveryReview.toastSubmitFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -120,7 +122,7 @@ function DeliveryReview() {
   if (!delivery)
     return (
       <div className="py-16 text-center">
-        <p className="text-brand-muted">Delivery not found.</p>
+        <p className="text-brand-muted">{t("deliveryReview.notFound")}</p>
       </div>
     );
 
@@ -128,7 +130,7 @@ function DeliveryReview() {
     return (
       <div className="py-16 text-center">
         <p className="text-brand-muted">
-          Only the sender of this delivery can leave a review.
+          {t("deliveryReview.notSenderMessage")}
         </p>
       </div>
     );
@@ -148,12 +150,12 @@ function DeliveryReview() {
         to="/profile?tab=deliveries"
         className="mb-6 flex items-center gap-2 text-sm text-brand-muted hover:text-brand-primary"
       >
-        <ArrowLeft className="h-4 w-4" /> Back to deliveries
+        <ArrowLeft className="h-4 w-4" /> {t("deliveryReview.backToDeliveries")}
       </Link>
 
       <div className="rounded-2xl bg-white p-8 shadow-lg">
         <h1 className="mb-6 text-2xl font-bold text-brand-primary">
-          Review Your Delivery
+          {t("deliveryReview.pageTitle")}
         </h1>
 
         {/* Package + delivery summary */}
@@ -170,7 +172,7 @@ function DeliveryReview() {
           <p className="mt-2 text-sm text-brand-muted">
             {delivery.agreedAmount} {delivery.currency}
             {delivery.finalizedAt &&
-              ` · Delivered ${new Date(delivery.finalizedAt).toLocaleDateString()}`}
+              ` ${t("deliveryReview.deliveredOn", { date: new Date(delivery.finalizedAt).toLocaleDateString() })}`}
           </p>
         </div>
 
@@ -182,7 +184,7 @@ function DeliveryReview() {
             className="h-12 w-12 rounded-full border-2 border-brand-primary/10 object-cover"
           />
           <div>
-            <p className="text-xs text-brand-muted">Traveler</p>
+            <p className="text-xs text-brand-muted">{t("deliveryReview.traveler")}</p>
             <Link
               to={`/users/${delivery.traveler.id}`}
               className="font-medium text-brand-primary hover:text-brand-accent"
@@ -195,7 +197,7 @@ function DeliveryReview() {
         {delivery.review ? (
           <div className="rounded-xl border border-brand-muted/10 bg-brand-bg p-4">
             <p className="mb-2 text-sm font-medium text-brand-primary">
-              You have already reviewed this delivery.
+              {t("deliveryReview.alreadyReviewed")}
             </p>
             <ReadOnlyStars rating={delivery.review.rating} />
             {delivery.review.comment && (
@@ -211,19 +213,19 @@ function DeliveryReview() {
           <div className="space-y-5">
             <div>
               <label className="mb-2 block text-sm font-medium text-brand-primary">
-                Rating
+                {t("deliveryReview.ratingLabel")}
               </label>
               <StarPicker value={rating} onChange={setRating} />
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-brand-primary">
-                Comment — optional
+                {t("deliveryReview.commentLabel")}
               </label>
               <textarea
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 rows={4}
-                placeholder="How was your experience with this traveler?"
+                placeholder={t("deliveryReview.commentPlaceholder")}
                 className="w-full rounded-lg border border-brand-muted/30 bg-brand-bg px-4 py-2.5 text-sm text-brand-primary outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
               />
             </div>
@@ -233,7 +235,7 @@ function DeliveryReview() {
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
             >
               {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
-              Submit Review
+              {t("deliveryReview.submitReview")}
             </button>
           </div>
         )}

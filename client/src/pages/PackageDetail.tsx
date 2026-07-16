@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useAuthStore } from "../store/authStore";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
@@ -45,20 +46,21 @@ interface PackageData {
   } | null;
 }
 
-const STATUS_LABELS: Record<string, { label: string; className: string }> = {
-  PROPOSED: { label: "Proposed", className: "bg-yellow-100 text-yellow-700" },
-  ACCEPTED: { label: "In Transit", className: "bg-blue-100 text-blue-700" },
-  FINALIZED: { label: "Delivered", className: "bg-green-100 text-green-700" },
-  CANCELLED: { label: "Cancelled", className: "bg-red-100 text-red-700" },
-};
-
 function PackageDetail() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const [pkg, setPkg] = useState<PackageData | null>(null);
   const [viewerCanSeeContact, setViewerCanSeeContact] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const STATUS_LABELS: Record<string, { label: string; className: string }> = {
+    PROPOSED: { label: t("packageDetail.statusProposed"), className: "bg-yellow-100 text-yellow-700" },
+    ACCEPTED: { label: t("packageDetail.statusInTransit"), className: "bg-blue-100 text-blue-700" },
+    FINALIZED: { label: t("packageDetail.statusDelivered"), className: "bg-green-100 text-green-700" },
+    CANCELLED: { label: t("packageDetail.statusCancelled"), className: "bg-red-100 text-red-700" },
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -68,7 +70,7 @@ function PackageDetail() {
         setPkg(res.data.package);
         setViewerCanSeeContact(res.data.viewerCanSeeContact);
       })
-      .catch(() => toast.error("Package not found"))
+      .catch(() => toast.error(t("packageDetail.toastNotFound")))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -82,7 +84,7 @@ function PackageDetail() {
   if (!pkg)
     return (
       <div className="py-16 text-center">
-        <p className="text-brand-muted">Package not found.</p>
+        <p className="text-brand-muted">{t("packageDetail.notFound")}</p>
       </div>
     );
 
@@ -94,13 +96,13 @@ function PackageDetail() {
   const isFinalized = pkg.activeDelivery?.status === "FINALIZED";
 
   const handleDelete = async () => {
-    if (!confirm("Delete this package?")) return;
+    if (!confirm(t("packageDetail.confirmDelete"))) return;
     try {
       await api.delete(`/packages/${pkg.id}`);
-      toast.success("Package deleted");
+      toast.success(t("packageDetail.toastDeleteSuccess"));
       navigate("/profile?tab=packages");
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "Failed to delete package");
+      toast.error(err.response?.data?.error || t("packageDetail.toastDeleteFailed"));
     }
   };
 
@@ -117,7 +119,7 @@ function PackageDetail() {
         onClick={() => navigate(-1)}
         className="mb-6 flex items-center gap-2 text-sm text-brand-muted hover:text-brand-primary"
       >
-        <ArrowLeft className="h-4 w-4" /> Back
+        <ArrowLeft className="h-4 w-4" /> {t("packageDetail.back")}
       </button>
 
       <div className="rounded-2xl bg-white p-8 shadow-sm">
@@ -142,7 +144,7 @@ function PackageDetail() {
             {isSender &&
               (isFinalized ? (
                 <span
-                  title="This package has been delivered and cannot be deleted."
+                  title={t("packageDetail.cannotDeleteTooltip")}
                   className="text-brand-muted"
                 >
                   <Lock className="h-4 w-4" />
@@ -168,7 +170,7 @@ function PackageDetail() {
           <div className="mt-6 flex h-64 w-full items-center justify-center rounded-xl border border-brand-muted/10 bg-brand-primary/5">
             <div className="flex flex-col items-center gap-2 text-brand-primary/30">
               <Package className="h-12 w-12" />
-              <span className="text-sm font-medium">No photo uploaded</span>
+              <span className="text-sm font-medium">{t("packageDetail.noPhotoUploaded")}</span>
             </div>
           </div>
         )}
@@ -179,19 +181,19 @@ function PackageDetail() {
             {pkg.weight} kg
           </span>
           <span className="text-xs text-brand-muted">
-            Posted {new Date(pkg.createdAt).toLocaleDateString()}
+            {t("packageDetail.postedOn", { date: new Date(pkg.createdAt).toLocaleDateString() })}
           </span>
         </div>
 
         <div className="mt-6 flex items-center gap-3 rounded-xl border border-brand-muted/10 bg-brand-bg p-4">
           <div className="flex-1 text-center">
-            <p className="text-xs text-brand-muted">From</p>
+            <p className="text-xs text-brand-muted">{t("packageDetail.fromLabel")}</p>
             <p className="font-semibold text-brand-primary">{pkg.originCity}</p>
             <p className="text-xs text-brand-muted">{pkg.originCountry}</p>
           </div>
           <MapPin className="h-4 w-4 shrink-0 text-brand-accent" />
           <div className="flex-1 text-center">
-            <p className="text-xs text-brand-muted">To</p>
+            <p className="text-xs text-brand-muted">{t("packageDetail.toLabel")}</p>
             <p className="font-semibold text-brand-primary">{pkg.destCity}</p>
             <p className="text-xs text-brand-muted">{pkg.destCountry}</p>
           </div>
@@ -204,7 +206,7 @@ function PackageDetail() {
         {/* Sender */}
         <div className="mt-6 border-t border-brand-muted/10 pt-6">
           <p className="mb-2 text-xs font-semibold uppercase text-brand-muted">
-            Sender
+            {t("packageDetail.senderLabel")}
           </p>
           <div className="flex items-center gap-3">
             <img
@@ -223,7 +225,7 @@ function PackageDetail() {
             <div className="mt-3 space-y-1 text-sm">
               {pkg.sender.whatsappNumber && (
                 <p className="text-brand-muted">
-                  WhatsApp:{" "}
+                  {t("contactInfo.whatsappLabel")}
                   <span className="font-medium text-brand-primary">
                     {pkg.sender.whatsappNumber}
                   </span>
@@ -231,7 +233,7 @@ function PackageDetail() {
               )}
               {pkg.sender.email && (
                 <p className="text-brand-muted">
-                  Email:{" "}
+                  {t("contactInfo.emailLabel")}
                   <span className="font-medium text-brand-primary">
                     {pkg.sender.email}
                   </span>
@@ -239,7 +241,7 @@ function PackageDetail() {
               )}
               {pkg.recipientName && (
                 <p className="mt-2 text-brand-muted">
-                  Recipient:{" "}
+                  {t("packageDetail.recipientLabel")}
                   <span className="font-medium text-brand-primary">
                     {pkg.recipientName}
                   </span>
@@ -251,12 +253,12 @@ function PackageDetail() {
               {!user ? (
                 <>
                   <Link to="/register" className="text-brand-accent hover:underline">
-                    Create an account and post a trip or package
-                  </Link>{" "}
-                  to see contact details
+                    {t("contactInfo.anonPrefix")}
+                  </Link>
+                  {t("contactInfo.anonSuffix")}
                 </>
               ) : (
-                "Post a trip or package to see contact details"
+                t("packageDetail.postToSeeContact")
               )}
             </p>
           )}
@@ -265,14 +267,14 @@ function PackageDetail() {
         {pkg.activeDelivery && (
           <div className="mt-6 rounded-xl border border-brand-muted/10 bg-brand-bg p-4 text-sm">
             <p className="text-brand-muted">
-              Being carried by{" "}
+              {t("packageDetail.beingCarriedBy")}
               <span className="font-medium text-brand-primary">
                 {pkg.activeDelivery.traveler.nickname}
               </span>
             </p>
             {pkg.activeDelivery.estimatedDeliveryDate && (
               <p className="mt-1 text-xs text-brand-muted">
-                Est. delivery:{" "}
+                {t("packageDetail.estDelivery")}
                 {new Date(pkg.activeDelivery.estimatedDeliveryDate).toLocaleDateString()}
               </p>
             )}
@@ -284,9 +286,7 @@ function PackageDetail() {
             <div className="mt-6 flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-700">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               <p>
-                Only propose a delivery after you've met the traveler in person
-                and handed over the package. This notifies them immediately and
-                cannot be undone.
+                {t("packageDetail.proposeNotice")}
               </p>
             </div>
             <Link
@@ -294,7 +294,7 @@ function PackageDetail() {
               className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-brand-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90"
             >
               <Truck className="h-4 w-4" />
-              Propose Delivery
+              {t("packageDetail.proposeDeliveryButton")}
             </Link>
           </>
         )}

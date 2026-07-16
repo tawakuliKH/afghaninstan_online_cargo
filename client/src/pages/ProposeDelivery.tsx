@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { useTranslation } from 'react-i18next'
 import api from '../lib/axios'
 import toast from 'react-hot-toast'
 import { ArrowLeft, Loader2, Package, MapPin, Weight, AlertTriangle } from 'lucide-react'
@@ -45,6 +46,7 @@ const proposeSchema = z.object({
 type ProposeForm = z.infer<typeof proposeSchema>
 
 function ProposeDelivery() {
+  const { t } = useTranslation()
   const { packageId } = useParams<{ packageId: string }>()
   const navigate = useNavigate()
   const [pkg, setPkg] = useState<PackageData | null>(null)
@@ -64,7 +66,7 @@ function ProposeDelivery() {
   })
 
   const selectedTravelerId = watch('travelerId')
-  const selectedTraveler = travelers.find((t) => t.id === selectedTravelerId)
+  const selectedTraveler = travelers.find((tr) => tr.id === selectedTravelerId)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -79,7 +81,7 @@ function ProposeDelivery() {
         const allUsers = usersRes.data.users
         setTravelers(allUsers)
       } catch {
-        toast.error('Failed to load data')
+        toast.error(t('proposeDelivery.toastLoadFailed'))
         navigate('/profile')
       } finally {
         setLoading(false)
@@ -104,10 +106,10 @@ function ProposeDelivery() {
         currency: pendingData.currency,
         paymentLocation: pendingData.paymentLocation,
       })
-      toast.success('Delivery request sent to traveler!')
+      toast.success(t('proposeDelivery.toastSuccess'))
       navigate('/profile?tab=deliveries')
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Failed to propose delivery')
+      toast.error(err.response?.data?.error || t('proposeDelivery.toastFailed'))
     }
   }
 
@@ -118,6 +120,17 @@ function ProposeDelivery() {
   )
 
   if (!pkg) return null
+
+  const travelerOptionLabel = (traveler: Traveler) => {
+    let label = traveler.nickname
+    if (traveler.legalFullName) label += ` (${traveler.legalFullName})`
+    if (traveler.mostRecentTrip) {
+      label += ` — ${traveler.mostRecentTrip.destCity}, ${traveler.mostRecentTrip.destCountry} (${t('proposeDelivery.departsOn', { date: new Date(traveler.mostRecentTrip.departureDate).toLocaleDateString() })})`
+    }
+    if (traveler.rating > 0) label += ` · ⭐ ${traveler.rating.toFixed(1)}`
+    if (traveler.packagesDeliveredCount > 0) label += ` · ${t('proposeDelivery.deliveredCount', { count: traveler.packagesDeliveredCount })}`
+    return label
+  }
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
@@ -133,13 +146,13 @@ function ProposeDelivery() {
         to="/profile?tab=packages"
         className="mb-6 flex items-center gap-2 text-sm text-brand-muted hover:text-brand-primary"
       >
-        <ArrowLeft className="h-4 w-4" /> Back to my packages
+        <ArrowLeft className="h-4 w-4" /> {t('proposeDelivery.backToMyPackages')}
       </Link>
 
       {/* Package summary */}
       <div className="mb-6 rounded-2xl bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-brand-muted">
-          Package to Deliver
+          {t('proposeDelivery.packageToDeliverHeading')}
         </h2>
         <div className="flex gap-4">
           {pkg.goodsPhotoUrl ? (
@@ -176,16 +189,13 @@ function ProposeDelivery() {
       {/* Propose form */}
       <div className="rounded-2xl bg-white p-6 shadow-sm">
         <h1 className="mb-4 text-xl font-bold text-brand-primary">
-          Propose Delivery
+          {t('proposeDelivery.pageTitle')}
         </h1>
 
         <div className="mb-6 flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-700">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <p>
-            Before you continue: only propose a delivery after you have met the
-            traveler in person, verified their identity, and physically handed
-            over the package. This action notifies the traveler immediately and
-            cannot be undone once sent.
+            {t('proposeDelivery.preConfirmNotice')}
           </p>
         </div>
 
@@ -194,22 +204,16 @@ function ProposeDelivery() {
           {/* Traveler selection */}
           <div>
             <label className="mb-1.5 block text-sm font-medium text-brand-primary">
-              Select Traveler
+              {t('proposeDelivery.selectTravelerLabel')}
             </label>
             <select
               {...register('travelerId')}
               className="w-full rounded-lg border border-brand-muted/30 bg-brand-bg px-4 py-2.5 text-sm text-brand-primary outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
             >
-              <option value="">Choose a traveler...</option>
-              {travelers.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.nickname}
-                  {t.legalFullName ? ` (${t.legalFullName})` : ''}
-                  {t.mostRecentTrip
-                    ? ` — ${t.mostRecentTrip.destCity}, ${t.mostRecentTrip.destCountry} (departs ${new Date(t.mostRecentTrip.departureDate).toLocaleDateString()})`
-                    : ''}
-                  {t.rating > 0 ? ` · ⭐ ${t.rating.toFixed(1)}` : ''}
-                  {t.packagesDeliveredCount > 0 ? ` · ${t.packagesDeliveredCount} delivered` : ''}
+              <option value="">{t('proposeDelivery.chooseTravelerOption')}</option>
+              {travelers.map((tr) => (
+                <option key={tr.id} value={tr.id}>
+                  {travelerOptionLabel(tr)}
                 </option>
               ))}
             </select>
@@ -233,13 +237,16 @@ function ProposeDelivery() {
                     <p className="text-xs text-brand-muted">{selectedTraveler.legalFullName}</p>
                   )}
                   <div className="mt-1 flex gap-3 text-xs text-brand-muted">
-                    <span>⭐ <span className="font-bold text-brand-primary">{selectedTraveler.rating > 0 ? selectedTraveler.rating.toFixed(1) : 'No ratings'}</span></span>
-                    <span><span className="font-bold text-brand-primary">{selectedTraveler.packagesDeliveredCount}</span> packages delivered</span>
+                    <span>⭐ <span className="font-bold text-brand-primary">{selectedTraveler.rating > 0 ? selectedTraveler.rating.toFixed(1) : t('proposeDelivery.noRatings')}</span></span>
+                    <span><span className="font-bold text-brand-primary">{selectedTraveler.packagesDeliveredCount}</span> {t('proposeDelivery.packagesDeliveredLabel')}</span>
                   </div>
                   {selectedTraveler.mostRecentTrip && (
                     <p className="mt-1 text-xs text-brand-muted">
-                      Most recent trip: {selectedTraveler.mostRecentTrip.destCity}, {selectedTraveler.mostRecentTrip.destCountry}
-                      {' '}(departs {new Date(selectedTraveler.mostRecentTrip.departureDate).toLocaleDateString()})
+                      {t('proposeDelivery.mostRecentTrip', {
+                        city: selectedTraveler.mostRecentTrip.destCity,
+                        country: selectedTraveler.mostRecentTrip.destCountry,
+                        date: new Date(selectedTraveler.mostRecentTrip.departureDate).toLocaleDateString(),
+                      })}
                     </p>
                   )}
                 </div>
@@ -248,7 +255,7 @@ function ProposeDelivery() {
                   target="_blank"
                   className="ml-auto text-xs text-brand-accent hover:underline"
                 >
-                  View profile →
+                  {t('proposeDelivery.viewProfile')}
                 </Link>
               </div>
             </div>
@@ -258,13 +265,13 @@ function ProposeDelivery() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-brand-primary">
-                Agreed amount
+                {t('proposeDelivery.agreedAmountLabel')}
               </label>
               <input
                 {...register('agreedAmount')}
                 type="number"
                 step="0.01"
-                placeholder="e.g. 50"
+                placeholder={t('proposeDelivery.agreedAmountPlaceholder')}
                 className="w-full rounded-lg border border-brand-muted/30 bg-brand-bg px-4 py-2.5 text-sm text-brand-primary outline-none transition focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20"
               />
               {errors.agreedAmount && (
@@ -273,7 +280,7 @@ function ProposeDelivery() {
             </div>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-brand-primary">
-                Currency
+                {t('proposeDelivery.currencyLabel')}
               </label>
               <select
                 {...register('currency')}
@@ -289,7 +296,7 @@ function ProposeDelivery() {
           {/* Payment location */}
           <div>
             <label className="mb-1.5 block text-sm font-medium text-brand-primary">
-              Payment location
+              {t('proposeDelivery.paymentLocationLabel')}
             </label>
             <div className="grid grid-cols-2 gap-3">
               {(['ORIGIN', 'DESTINATION'] as const).map((loc) => (
@@ -305,10 +312,10 @@ function ProposeDelivery() {
                   />
                   <div>
                     <p className="text-sm font-medium text-brand-primary">
-                      {loc === 'ORIGIN' ? 'At origin' : 'At destination'}
+                      {loc === 'ORIGIN' ? t('proposeDelivery.atOrigin') : t('proposeDelivery.atDestination')}
                     </p>
                     <p className="text-xs text-brand-muted">
-                      {loc === 'ORIGIN' ? 'Pay when handing over' : 'Pay on delivery'}
+                      {loc === 'ORIGIN' ? t('proposeDelivery.payAtOrigin') : t('proposeDelivery.payAtDestination')}
                     </p>
                   </div>
                 </label>
@@ -318,7 +325,7 @@ function ProposeDelivery() {
 
           <div className="rounded-xl border border-brand-accent/20 bg-brand-accent/5 p-4">
             <p className="text-xs text-brand-muted">
-              <span className="font-semibold text-brand-accent">Important:</span> By proceeding, you confirm that you have physically met the traveler, verified their identity document, and handed over the package. You will be required to read and agree to the Sender Terms before this request is submitted.
+              <span className="font-semibold text-brand-accent">{t('proposeDelivery.importantLabel')}</span> {t('proposeDelivery.importantBody')}
             </p>
           </div>
 
@@ -328,7 +335,7 @@ function ProposeDelivery() {
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
           >
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            Continue to Agreement
+            {t('proposeDelivery.submitButton')}
           </button>
         </form>
       </div>
