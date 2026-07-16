@@ -147,6 +147,32 @@ export const emailTemplates = {
     `,
   }),
 
+  // Phase 1 signups (quick register + Google) haven't submitted any KYC
+  // documents yet — unlike registrationReceived, this must prompt them to
+  // complete their profile rather than claim documents are under review.
+  completeProfileReminder: (nickname: string) => ({
+    subject: 'Welcome! One more step to get approved — Afghanistan Online Cargo',
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+        <div style="background: #1E2A5E; padding: 24px; border-radius: 12px; text-align: center; margin-bottom: 24px;">
+          <h1 style="color: #F2A60D; margin: 0; font-size: 20px;">Afghanistan Online Cargo</h1>
+        </div>
+        <h2 style="color: #1E2A5E;">Welcome, ${nickname}! 🎉</h2>
+        <p style="color: #64748B;">Your account has been created. Before you can post trips or packages, complete your profile with your identity documents so an admin can review and approve your account.</p>
+        <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 8px; padding: 16px; margin: 16px 0;">
+          <p style="color: #92400E; margin: 0;">⏳ Approval typically takes 1-2 business days once your profile is submitted.</p>
+        </div>
+        <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/profile/complete"
+           style="display: inline-block; background: #F2A60D; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold; margin-top: 16px;">
+          Complete My Profile
+        </a>
+        <p style="color: #64748B; font-size: 12px; margin-top: 32px;">
+          Afghanistan Online Cargo — Cross-border package coordination platform
+        </p>
+      </div>
+    `,
+  }),
+
   tripPosted: (nickname: string, originCity: string, destCity: string, departureDate: string) => ({
     subject: 'Your trip has been posted — Afghanistan Online Cargo',
     html: `
