@@ -33,21 +33,28 @@ model User {
 
   legalFullName           String
   nickname                String
-  dateOfBirth             DateTime
-  whatsappNumber          String
+  firstName               String?
+  lastName                String?
+  dateOfBirth             DateTime?
+  whatsappNumber          String?
 
-  documentType            DocumentType
-  documentNumber          String        @unique
+  googleId                String?       @unique
+  googleEmail             String?
+
+  documentType            DocumentType?
+  documentNumber          String?       @unique
   documentIssuingCountry  String?
 
-  permanentCountry        String
-  permanentCity           String
-  currentCountry          String
-  currentCity             String
+  permanentCountry        String?
+  permanentCity           String?
+  currentCountry          String?
+  currentCity             String?
 
-  passportPhotoUrl        String
-  facePhotoUrl            String
+  passportPhotoUrl        String?
+  facePhotoUrl            String?
   visaResidencyDocUrl     String?
+
+  profileCompleted        Boolean       @default(false)
 
   accountStatus           AccountStatus @default(PENDING)
   adminNote                String?

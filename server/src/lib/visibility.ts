@@ -35,7 +35,7 @@ export async function getViewerContext(userId?: string, isAdmin?: boolean): Prom
 }
 
 // Shapes a User object according to the visibility rule above.
-export function shapeUserForViewer<T extends { id: string; nickname: string; legalFullName: string; whatsappNumber?: string; email?: string }>(
+export function shapeUserForViewer<T extends { id: string; nickname: string; legalFullName: string; whatsappNumber?: string | null; email?: string }>(
   user: T,
   viewer: ViewerContext
 ) {

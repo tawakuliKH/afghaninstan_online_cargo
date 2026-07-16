@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuthStore } from '../store/authStore'
 import { Navigate, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import api from '../lib/axios'
 import toast from 'react-hot-toast'
 import {
@@ -28,10 +29,14 @@ interface AdminUser {
   email: string
   legalFullName: string
   nickname: string
-  documentType: string
-  documentNumber: string
-  currentCountry: string
-  currentCity: string
+  firstName?: string | null
+  lastName?: string | null
+  profileCompleted: boolean
+  hasGoogleAuth?: boolean
+  documentType: string | null
+  documentNumber: string | null
+  currentCountry: string | null
+  currentCity: string | null
   accountStatus: string
   createdAt: string
   adminNote?: string | null
@@ -138,6 +143,7 @@ function Pagination({
   totalPages: number
   onChange: (p: number) => void
 }) {
+  const { t } = useTranslation()
   if (totalPages <= 1) return null
   return (
     <div className="flex items-center justify-center gap-3 border-t border-brand-muted/10 p-4">
@@ -149,7 +155,7 @@ function Pagination({
         <ChevronLeft className="h-4 w-4" />
       </button>
       <span className="text-sm text-brand-muted">
-        Page {page} of {totalPages}
+        {t('admin.pagination', { page, totalPages })}
       </span>
       <button
         onClick={() => onChange(Math.min(totalPages, page + 1))}
@@ -221,6 +227,7 @@ function DeliveryDetailModal({
   onClose: () => void
   onChanged: () => void
 }) {
+  const { t } = useTranslation()
   const [delivery, setDelivery] = useState<Delivery | null>(null)
   const [acceptances, setAcceptances] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -233,34 +240,34 @@ function DeliveryDetailModal({
         setDelivery(res.data.delivery)
         setAcceptances(res.data.agreementAcceptances)
       })
-      .catch(() => toast.error('Failed to load delivery'))
+      .catch(() => toast.error(t('admin.deliveryModal.toastLoadFailed')))
       .finally(() => setLoading(false))
-  }, [deliveryId])
+  }, [deliveryId, t])
 
   const markPaid = async () => {
     setActionLoading(true)
     try {
       await api.patch(`/admin/deliveries/${deliveryId}/commission-paid`)
-      toast.success('Commission marked as paid')
+      toast.success(t('admin.deliveryModal.toastMarkPaidSuccess'))
       onChanged()
       onClose()
     } catch {
-      toast.error('Failed to mark commission as paid')
+      toast.error(t('admin.deliveryModal.toastMarkPaidFailed'))
     } finally {
       setActionLoading(false)
     }
   }
 
   const handleDelete = async () => {
-    if (!confirm('Delete this delivery? This cannot be undone.')) return
+    if (!confirm(t('admin.deliveryModal.confirmDelete'))) return
     setActionLoading(true)
     try {
       await api.delete(`/admin/deliveries/${deliveryId}`)
-      toast.success('Delivery deleted')
+      toast.success(t('admin.deliveryModal.toastDeleteSuccess'))
       onChanged()
       onClose()
     } catch {
-      toast.error('Failed to delete delivery')
+      toast.error(t('admin.deliveryModal.toastDeleteFailed'))
     } finally {
       setActionLoading(false)
     }
@@ -270,7 +277,7 @@ function DeliveryDetailModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-lg">
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="font-semibold text-brand-primary">Delivery Detail</h3>
+          <h3 className="font-semibold text-brand-primary">{t('admin.deliveryModal.title')}</h3>
           <button onClick={onClose} className="text-brand-muted hover:text-brand-primary">
             <X className="h-5 w-5" />
           </button>
@@ -282,7 +289,7 @@ function DeliveryDetailModal({
           <div className="space-y-4 text-sm">
             <div className="flex items-center justify-between">
               <p className="font-medium text-brand-primary">
-                {delivery.package?.title ?? 'Unknown package'}
+                {delivery.package?.title ?? t('admin.deliveryModal.unknownPackage')}
               </p>
               <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${DELIVERY_STATUS_COLORS[delivery.status] ?? ''}`}>
                 {delivery.status}
@@ -291,40 +298,40 @@ function DeliveryDetailModal({
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <p className="text-xs text-brand-muted">Sender</p>
+                <p className="text-xs text-brand-muted">{t('admin.deliveryModal.sender')}</p>
                 <p className="text-brand-primary">{delivery.sender?.nickname} ({delivery.sender?.email})</p>
               </div>
               <div>
-                <p className="text-xs text-brand-muted">Traveler</p>
+                <p className="text-xs text-brand-muted">{t('admin.deliveryModal.traveler')}</p>
                 <p className="text-brand-primary">{delivery.traveler?.nickname} ({delivery.traveler?.email})</p>
               </div>
               <div>
-                <p className="text-xs text-brand-muted">Agreed amount</p>
+                <p className="text-xs text-brand-muted">{t('admin.deliveryModal.agreedAmount')}</p>
                 <p className="text-brand-primary">{delivery.agreedAmount} {delivery.currency}</p>
               </div>
               <div>
-                <p className="text-xs text-brand-muted">Payment location</p>
+                <p className="text-xs text-brand-muted">{t('admin.deliveryModal.paymentLocation')}</p>
                 <p className="text-brand-primary">{delivery.paymentLocation}</p>
               </div>
               <div>
-                <p className="text-xs text-brand-muted">Commission</p>
+                <p className="text-xs text-brand-muted">{t('admin.deliveryModal.commission')}</p>
                 <p className="text-brand-primary">
                   {delivery.commissionAmount != null ? `${delivery.commissionAmount} ${delivery.currency}` : '—'}
                   {delivery.commissionAmount != null && (
                     <span className={`ml-2 rounded-full px-2 py-0.5 text-xs ${delivery.commissionPaid ? 'bg-green-100 text-green-700' : 'bg-red-100 text-brand-danger'}`}>
-                      {delivery.commissionPaid ? 'Paid' : 'Unpaid'}
+                      {delivery.commissionPaid ? t('admin.deliveryModal.paid') : t('admin.deliveryModal.unpaid')}
                     </span>
                   )}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-brand-muted">Est. delivery</p>
+                <p className="text-xs text-brand-muted">{t('admin.deliveryModal.estDelivery')}</p>
                 <p className="text-brand-primary">
                   {delivery.estimatedDeliveryDate ? new Date(delivery.estimatedDeliveryDate).toLocaleDateString() : '—'}
                 </p>
               </div>
               <div>
-                <p className="text-xs text-brand-muted">Finalized</p>
+                <p className="text-xs text-brand-muted">{t('admin.deliveryModal.finalized')}</p>
                 <p className="text-brand-primary">
                   {delivery.finalizedAt ? new Date(delivery.finalizedAt).toLocaleDateString() : '—'}
                 </p>
@@ -333,13 +340,15 @@ function DeliveryDetailModal({
 
             {acceptances.length > 0 && (
               <div>
-                <p className="mb-2 text-xs font-semibold uppercase text-brand-muted">Agreement Acceptances</p>
+                <p className="mb-2 text-xs font-semibold uppercase text-brand-muted">{t('admin.deliveryModal.agreementAcceptances')}</p>
                 <div className="space-y-1">
                   {acceptances.map((a) => (
                     <div key={a.id} className="flex items-center justify-between rounded-lg bg-brand-bg px-3 py-2 text-xs">
                       <span className="text-brand-primary">{a.type}</span>
                       <span className="text-brand-muted">
-                        {a.acceptedAt ? `Accepted ${new Date(a.acceptedAt).toLocaleDateString()}` : 'Not yet accepted'}
+                        {a.acceptedAt
+                          ? t('admin.deliveryModal.acceptedOn', { date: new Date(a.acceptedAt).toLocaleDateString() })
+                          : t('admin.deliveryModal.notYetAccepted')}
                       </span>
                     </div>
                   ))}
@@ -354,7 +363,7 @@ function DeliveryDetailModal({
                   disabled={actionLoading}
                   className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-500 px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
                 >
-                  <CheckCheck className="h-4 w-4" /> Mark Commission Paid
+                  <CheckCheck className="h-4 w-4" /> {t('admin.deliveryModal.markPaid')}
                 </button>
               )}
               <button
@@ -362,7 +371,7 @@ function DeliveryDetailModal({
                 disabled={actionLoading}
                 className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-brand-danger px-4 py-2 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-60"
               >
-                <Trash2 className="h-4 w-4" /> Delete
+                <Trash2 className="h-4 w-4" /> {t('admin.deliveryModal.delete')}
               </button>
             </div>
           </div>
@@ -375,6 +384,7 @@ function DeliveryDetailModal({
 // ── Pending Users ────────────────────────────────────────────
 
 function PendingUsers() {
+  const { t } = useTranslation()
   const [users, setUsers] = useState<AdminUser[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null)
@@ -385,7 +395,10 @@ function PendingUsers() {
   const fetchUsers = async () => {
     try {
       const res = await api.get('/admin/users?status=PENDING')
-      setUsers(res.data.users)
+      const sorted = [...res.data.users].sort(
+        (a: AdminUser, b: AdminUser) => Number(b.profileCompleted) - Number(a.profileCompleted)
+      )
+      setUsers(sorted)
     } finally {
       setLoading(false)
     }
@@ -404,7 +417,7 @@ function PendingUsers() {
         visa: res.data.user.visaResidencyDocUrl ?? null,
       })
     } catch {
-      toast.error('Failed to load KYC documents')
+      toast.error(t('admin.pending.toastLoadKycFailed'))
     }
   }
 
@@ -412,11 +425,11 @@ function PendingUsers() {
     setActionLoading(true)
     try {
       await api.patch(`/admin/users/${id}/approve`)
-      toast.success('User approved')
+      toast.success(t('admin.pending.toastApproveSuccess'))
       setSelectedUser(null)
       fetchUsers()
     } catch {
-      toast.error('Failed to approve user')
+      toast.error(t('admin.pending.toastApproveFailed'))
     } finally {
       setActionLoading(false)
     }
@@ -424,18 +437,18 @@ function PendingUsers() {
 
   const handleReject = async (id: string) => {
     if (!rejectReason.trim()) {
-      toast.error('Please enter a rejection reason')
+      toast.error(t('admin.pending.toastEnterReason'))
       return
     }
     setActionLoading(true)
     try {
       await api.patch(`/admin/users/${id}/reject`, { reason: rejectReason })
-      toast.success('User rejected')
+      toast.success(t('admin.pending.toastRejectSuccess'))
       setSelectedUser(null)
       setRejectReason('')
       fetchUsers()
     } catch {
-      toast.error('Failed to reject user')
+      toast.error(t('admin.pending.toastRejectFailed'))
     } finally {
       setActionLoading(false)
     }
@@ -445,11 +458,11 @@ function PendingUsers() {
     setActionLoading(true)
     try {
       await api.patch(`/admin/users/${id}/suspend`)
-      toast.success('User suspended')
+      toast.success(t('admin.pending.toastSuspendSuccess'))
       setSelectedUser(null)
       fetchUsers()
     } catch {
-      toast.error('Failed to suspend user')
+      toast.error(t('admin.pending.toastSuspendFailed'))
     } finally {
       setActionLoading(false)
     }
@@ -462,12 +475,12 @@ function PendingUsers() {
       {/* User list */}
       <div>
         <h3 className="mb-4 font-semibold text-brand-primary">
-          Pending Accounts ({users.length})
+          {t('admin.pending.title', { count: users.length })}
         </h3>
         {users.length === 0 ? (
           <div className="rounded-xl bg-white p-6 text-center shadow-sm">
             <CheckCircle className="mx-auto mb-2 h-8 w-8 text-green-500" />
-            <p className="text-sm text-brand-muted">No pending accounts</p>
+            <p className="text-sm text-brand-muted">{t('admin.pending.none')}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -483,20 +496,35 @@ function PendingUsers() {
                   <div>
                     <div className="flex items-center gap-2">
                       <p className="font-medium text-brand-primary">{u.legalFullName}</p>
+                      {u.profileCompleted ? (
+                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-green-700">
+                          {t('admin.pending.complete')}
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-semibold uppercase text-orange-700">
+                          {t('admin.pending.incomplete')}
+                        </span>
+                      )}
                       {u.adminNote?.includes('DELETION_REQUESTED') && (
                         <span className="rounded-full bg-brand-danger/10 px-2 py-0.5 text-[10px] font-semibold uppercase text-brand-danger">
-                          Deletion Requested
+                          {t('admin.pending.deletionRequested')}
                         </span>
                       )}
                     </div>
                     <p className="text-xs text-brand-muted">{u.email}</p>
-                    <p className="text-xs text-brand-muted">
-                      {u.documentType}: {u.documentNumber}
-                    </p>
+                    {u.profileCompleted ? (
+                      <p className="text-xs text-brand-muted">
+                        {u.documentType}: {u.documentNumber}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-orange-600">
+                        {t('admin.pending.awaitingProfile')}
+                      </p>
+                    )}
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-brand-muted">
-                      {u.currentCity}, {u.currentCountry}
+                      {u.currentCity ? `${u.currentCity}, ${u.currentCountry}` : '—'}
                     </p>
                     <p className="mt-1 text-xs text-brand-muted">
                       {new Date(u.createdAt).toLocaleDateString()}
@@ -514,36 +542,60 @@ function PendingUsers() {
       {selectedUser !== null && (
         <div className="rounded-xl bg-white p-6 shadow-sm">
           <h3 className="mb-4 font-semibold text-brand-primary">
-            Review: {selectedUser.legalFullName}
+            {t('admin.pending.reviewOf', { name: selectedUser.legalFullName })}
           </h3>
 
           <div className="mb-4 space-y-2 text-sm">
             <p>
-              <span className="text-brand-muted">Email: </span>
+              <span className="text-brand-muted">{t('admin.pending.email')}</span>
               {selectedUser.email}
             </p>
             <p>
-              <span className="text-brand-muted">Nickname: </span>
+              <span className="text-brand-muted">{t('admin.pending.name')}</span>
+              {selectedUser.firstName} {selectedUser.lastName}
+            </p>
+            <p>
+              <span className="text-brand-muted">{t('admin.pending.nickname')}</span>
               {selectedUser.nickname}
             </p>
             <p>
-              <span className="text-brand-muted">Document: </span>
-              {selectedUser.documentType} — {selectedUser.documentNumber}
+              <span className="text-brand-muted">{t('admin.pending.profile')}</span>
+              {selectedUser.profileCompleted ? (
+                <span className="font-medium text-green-700">{t('admin.pending.complete')}</span>
+              ) : (
+                <span className="font-medium text-orange-700">{t('admin.pending.incomplete')}</span>
+              )}
             </p>
             <p>
-              <span className="text-brand-muted">Location: </span>
-              {selectedUser.currentCity}, {selectedUser.currentCountry}
+              <span className="text-brand-muted">{t('admin.pending.googleSignIn')}</span>
+              {selectedUser.hasGoogleAuth ? t('admin.pending.yes') : t('admin.pending.no')}
             </p>
+            {selectedUser.profileCompleted && (
+              <>
+                <p>
+                  <span className="text-brand-muted">{t('admin.pending.document')}</span>
+                  {selectedUser.documentType} — {selectedUser.documentNumber}
+                </p>
+                <p>
+                  <span className="text-brand-muted">{t('admin.pending.location')}</span>
+                  {selectedUser.currentCity}, {selectedUser.currentCountry}
+                </p>
+              </>
+            )}
           </div>
 
           {/* KYC documents */}
           <div className="mb-4 space-y-3">
             <p className="text-xs font-semibold uppercase text-brand-muted">
-              KYC Documents
+              {t('admin.pending.kycDocuments')}
             </p>
-            {kycUrls === null ? (
+            {!selectedUser.profileCompleted ? (
+              <p className="text-xs text-orange-600">
+                {t('admin.pending.awaitingProfile')}
+              </p>
+            ) : kycUrls === null ? (
               <div className="flex items-center gap-2 text-xs text-brand-muted">
-                <Loader2 className="h-3 w-3 animate-spin" /> Loading documents...
+                <Loader2 className="h-3 w-3 animate-spin" /> {t('admin.pending.loadingDocuments')}
               </div>
             ) : (
               <div className="space-y-2">
@@ -554,8 +606,8 @@ function PendingUsers() {
                       className="flex items-center gap-2 rounded-lg border border-brand-muted/20 px-3 py-2 text-xs text-brand-primary hover:bg-brand-bg"
                   >
                       <Eye className="h-3 w-3" />
-                      View Passport / Tazkira Photo
-                      <span className="ml-auto text-brand-muted">(expires in 5 min)</span>
+                      {t('admin.pending.viewPassport')}
+                      <span className="ml-auto text-brand-muted">{t('admin.pending.expiresIn5Min')}</span>
                   </a>
                   <a
                       href={kycUrls.face}
@@ -564,8 +616,8 @@ function PendingUsers() {
                       className="flex items-center gap-2 rounded-lg border border-brand-muted/20 px-3 py-2 text-xs text-brand-primary hover:bg-brand-bg"
                   >
                       <Eye className="h-3 w-3" />
-                      View Face Photo
-                      <span className="ml-auto text-brand-muted">(expires in 5 min)</span>
+                      {t('admin.pending.viewFace')}
+                      <span className="ml-auto text-brand-muted">{t('admin.pending.expiresIn5Min')}</span>
                   </a>
                   {kycUrls.visa !== null && (
                       <a
@@ -575,8 +627,8 @@ function PendingUsers() {
                           className="flex items-center gap-2 rounded-lg border border-brand-muted/20 px-3 py-2 text-xs text-brand-primary hover:bg-brand-bg"
                       >
                           <Eye className="h-3 w-3" />
-                          View Visa / Residency Doc
-                          <span className="ml-auto text-brand-muted">(expires in 5 min)</span>
+                          {t('admin.pending.viewVisa')}
+                          <span className="ml-auto text-brand-muted">{t('admin.pending.expiresIn5Min')}</span>
                       </a>
                   )}
               </div>
@@ -592,19 +644,20 @@ function PendingUsers() {
                 className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-danger px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
               >
                 <Trash2 className="h-4 w-4" />
-                Delete Account (per user request)
+                {t('admin.pending.deleteAccountRequest')}
               </button>
             )}
             <><div className="flex gap-2">
                   <button
                       onClick={() => handleApprove(selectedUser.id)}
-                      disabled={actionLoading}
+                      disabled={actionLoading || !selectedUser.profileCompleted}
+                      title={!selectedUser.profileCompleted ? t('admin.pending.approveTooltip') : undefined}
                       className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-500 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
                   >
                       {actionLoading
                           ? <Loader2 className="h-3 w-3 animate-spin" />
                           : <CheckCircle className="h-4 w-4" />}
-                      Approve
+                      {t('admin.pending.approve')}
                   </button>
                   <button
                       onClick={() => handleSuspend(selectedUser.id)}
@@ -612,13 +665,13 @@ function PendingUsers() {
                       className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
                   >
                       <AlertTriangle className="h-4 w-4" />
-                      Suspend
+                      {t('admin.pending.suspend')}
                   </button>
               </div><div className="space-y-2">
                       <textarea
                           value={rejectReason}
                           onChange={(e) => setRejectReason(e.target.value)}
-                          placeholder="Rejection reason (required to reject)"
+                          placeholder={t('admin.pending.rejectReasonPlaceholder')}
                           rows={2}
                           className="w-full rounded-lg border border-brand-muted/30 bg-brand-bg px-3 py-2 text-sm outline-none focus:border-brand-danger" />
                       <button
@@ -627,7 +680,7 @@ function PendingUsers() {
                           className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-danger px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
                       >
                           <XCircle className="h-4 w-4" />
-                          Reject
+                          {t('admin.pending.reject')}
                       </button>
                   </div></>
           </div>
@@ -640,6 +693,7 @@ function PendingUsers() {
 // ── All Users ────────────────────────────────────────────────
 
 function AllUsers() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [users, setUsers] = useState<AdminUser[]>([])
   const [loading, setLoading] = useState(true)
@@ -668,13 +722,13 @@ function AllUsers() {
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
-    if (!confirm('Delete (suspend) this user? Their history will be preserved.')) return
+    if (!confirm(t('admin.allUsers.confirmDelete'))) return
     try {
       await api.delete(`/admin/users/${id}`)
-      toast.success('User deleted')
+      toast.success(t('admin.allUsers.toastDeleteSuccess'))
       fetchUsers()
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Failed to delete user')
+      toast.error(err.response?.data?.error || t('admin.allUsers.toastDeleteFailed'))
     }
   }
 
@@ -689,11 +743,11 @@ function AllUsers() {
           }}
           className="rounded-lg border border-brand-muted/30 bg-white px-3 py-2 text-sm text-brand-primary outline-none"
         >
-          <option value="">All statuses</option>
-          <option value="PENDING">Pending</option>
-          <option value="APPROVED">Approved</option>
-          <option value="REJECTED">Rejected</option>
-          <option value="SUSPENDED">Suspended</option>
+          <option value="">{t('admin.allUsers.allStatuses')}</option>
+          <option value="PENDING">{t('admin.allUsers.statusPending')}</option>
+          <option value="APPROVED">{t('admin.allUsers.statusApproved')}</option>
+          <option value="REJECTED">{t('admin.allUsers.statusRejected')}</option>
+          <option value="SUSPENDED">{t('admin.allUsers.statusSuspended')}</option>
         </select>
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-brand-muted" />
@@ -703,7 +757,7 @@ function AllUsers() {
               setSearch(e.target.value)
               setPage(1)
             }}
-            placeholder="Search by name or email..."
+            placeholder={t('admin.allUsers.searchPlaceholder')}
             className="w-full rounded-lg border border-brand-muted/30 bg-white py-2 pl-9 pr-3 text-sm text-brand-primary outline-none focus:border-brand-primary"
           />
         </div>
@@ -712,20 +766,21 @@ function AllUsers() {
       {loading ? (
         <Spinner />
       ) : users.length === 0 ? (
-        <EmptyState label="No users found" />
+        <EmptyState label={t('admin.allUsers.noneFound')} />
       ) : (
         <div className="overflow-hidden rounded-xl bg-white shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-brand-primary/5 text-xs uppercase text-brand-muted">
                 <tr>
-                  <th className="px-4 py-3 text-left">Name</th>
-                  <th className="px-4 py-3 text-left">Email</th>
-                  <th className="px-4 py-3 text-left">Document</th>
-                  <th className="px-4 py-3 text-left">Location</th>
-                  <th className="px-4 py-3 text-left">Status</th>
-                  <th className="px-4 py-3 text-left">Joined</th>
-                  <th className="px-4 py-3 text-left">Actions</th>
+                  <th className="px-4 py-3 text-left">{t('admin.allUsers.colName')}</th>
+                  <th className="px-4 py-3 text-left">{t('admin.allUsers.colEmail')}</th>
+                  <th className="px-4 py-3 text-left">{t('admin.allUsers.colDocument')}</th>
+                  <th className="px-4 py-3 text-left">{t('admin.allUsers.colLocation')}</th>
+                  <th className="px-4 py-3 text-left">{t('admin.allUsers.colProfile')}</th>
+                  <th className="px-4 py-3 text-left">{t('admin.allUsers.colStatus')}</th>
+                  <th className="px-4 py-3 text-left">{t('admin.allUsers.colJoined')}</th>
+                  <th className="px-4 py-3 text-left">{t('admin.allUsers.colActions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-brand-muted/10">
@@ -739,9 +794,20 @@ function AllUsers() {
                       {u.legalFullName}
                     </td>
                     <td className="px-4 py-3 text-brand-muted">{u.email}</td>
-                    <td className="px-4 py-3 text-brand-muted">{u.documentType}</td>
+                    <td className="px-4 py-3 text-brand-muted">{u.documentType ?? '—'}</td>
                     <td className="px-4 py-3 text-brand-muted">
-                      {u.currentCity}, {u.currentCountry}
+                      {u.currentCity ? `${u.currentCity}, ${u.currentCountry}` : '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      {u.profileCompleted ? (
+                        <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                          {t('admin.pending.complete')}
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
+                          {t('admin.pending.incomplete')}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_COLORS[u.accountStatus] ?? ''}`}>
@@ -774,6 +840,7 @@ function AllUsers() {
 // ── Packages ─────────────────────────────────────────────────
 
 function AdminPackages() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [packages, setPackages] = useState<AdminPackage[]>([])
   const [loading, setLoading] = useState(true)
@@ -798,24 +865,24 @@ function AdminPackages() {
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
-    if (!confirm('Delete this package? This cannot be undone.')) return
+    if (!confirm(t('admin.packages.confirmDelete'))) return
     try {
       await api.delete(`/admin/packages/${id}`)
-      toast.success('Package deleted')
+      toast.success(t('admin.packages.toastDeleteSuccess'))
       fetchPackages()
     } catch {
-      toast.error('Failed to delete package')
+      toast.error(t('admin.packages.toastDeleteFailed'))
     }
   }
 
   return (
     <div>
-      <SearchBox value={search} onChange={(v) => { setSearch(v); setPage(1) }} placeholder="Search by title..." />
+      <SearchBox value={search} onChange={(v) => { setSearch(v); setPage(1) }} placeholder={t('admin.packages.searchPlaceholder')} />
 
       {loading ? (
         <Spinner />
       ) : packages.length === 0 ? (
-        <EmptyState label="No packages found" />
+        <EmptyState label={t('admin.packages.noneFound')} />
       ) : (
         <div className="overflow-hidden rounded-xl bg-white shadow-sm">
           <div className="divide-y divide-brand-muted/10">
@@ -830,7 +897,7 @@ function AdminPackages() {
                   <div>
                     <p className="font-medium text-brand-primary">{pkg.title}</p>
                     <p className="text-xs text-brand-muted">
-                      {pkg.originCity} → {pkg.destCity} · Sender: {pkg.sender?.nickname ?? 'Unknown'}
+                      {pkg.originCity} → {pkg.destCity} · {t('admin.packages.senderLabel', { name: pkg.sender?.nickname ?? t('admin.packages.unknown') })}
                     </p>
                   </div>
                 </div>
@@ -858,6 +925,7 @@ function AdminPackages() {
 // ── Trips ────────────────────────────────────────────────────
 
 function AdminTrips() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [trips, setTrips] = useState<AdminTrip[]>([])
   const [loading, setLoading] = useState(true)
@@ -882,24 +950,24 @@ function AdminTrips() {
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
-    if (!confirm('Delete this trip? This cannot be undone.')) return
+    if (!confirm(t('admin.trips.confirmDelete'))) return
     try {
       await api.delete(`/admin/trips/${id}`)
-      toast.success('Trip deleted')
+      toast.success(t('admin.trips.toastDeleteSuccess'))
       fetchTrips()
     } catch {
-      toast.error('Failed to delete trip')
+      toast.error(t('admin.trips.toastDeleteFailed'))
     }
   }
 
   return (
     <div>
-      <SearchBox value={search} onChange={(v) => { setSearch(v); setPage(1) }} placeholder="Search by city..." />
+      <SearchBox value={search} onChange={(v) => { setSearch(v); setPage(1) }} placeholder={t('admin.trips.searchPlaceholder')} />
 
       {loading ? (
         <Spinner />
       ) : trips.length === 0 ? (
-        <EmptyState label="No trips found" />
+        <EmptyState label={t('admin.trips.noneFound')} />
       ) : (
         <div className="overflow-hidden rounded-xl bg-white shadow-sm">
           <div className="divide-y divide-brand-muted/10">
@@ -916,7 +984,10 @@ function AdminTrips() {
                       {trip.originCity} → {trip.destCity}
                     </p>
                     <p className="text-xs text-brand-muted">
-                      Departs {new Date(trip.departureDate).toLocaleDateString()} · Traveler: {trip.traveler?.nickname ?? 'Unknown'}
+                      {t('admin.trips.departsLabel', {
+                        date: new Date(trip.departureDate).toLocaleDateString(),
+                        name: trip.traveler?.nickname ?? t('admin.packages.unknown'),
+                      })}
                     </p>
                   </div>
                 </div>
@@ -944,6 +1015,7 @@ function AdminTrips() {
 // ── Deliveries (all) ─────────────────────────────────────────
 
 function AdminDeliveries() {
+  const { t } = useTranslation()
   const [deliveries, setDeliveries] = useState<Delivery[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -965,13 +1037,13 @@ function AdminDeliveries() {
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
-    if (!confirm('Delete this delivery? This cannot be undone.')) return
+    if (!confirm(t('admin.deliveries.confirmDelete'))) return
     try {
       await api.delete(`/admin/deliveries/${id}`)
-      toast.success('Delivery deleted')
+      toast.success(t('admin.deliveries.toastDeleteSuccess'))
       fetchDeliveries()
     } catch {
-      toast.error('Failed to delete delivery')
+      toast.error(t('admin.deliveries.toastDeleteFailed'))
     }
   }
 
@@ -987,7 +1059,7 @@ function AdminDeliveries() {
         />
       )}
       {deliveries.length === 0 ? (
-        <EmptyState label="No deliveries found" />
+        <EmptyState label={t('admin.deliveries.noneFound')} />
       ) : (
         <div className="overflow-hidden rounded-xl bg-white shadow-sm">
           <div className="divide-y divide-brand-muted/10">
@@ -1001,7 +1073,7 @@ function AdminDeliveries() {
                   <Truck className="h-4 w-4 shrink-0 text-brand-accent" />
                   <div>
                     <p className="font-medium text-brand-primary">
-                      {d.package?.title ?? 'Unknown package'}
+                      {d.package?.title ?? t('admin.deliveryModal.unknownPackage')}
                     </p>
                     <p className="text-xs text-brand-muted">
                       {d.sender?.nickname} → {d.traveler?.nickname} · {d.agreedAmount} {d.currency}
@@ -1032,6 +1104,7 @@ function AdminDeliveries() {
 // ── Delivered Packages ───────────────────────────────────────
 
 function DeliveredPackages() {
+  const { t } = useTranslation()
   const [deliveries, setDeliveries] = useState<Delivery[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
@@ -1055,10 +1128,10 @@ function DeliveredPackages() {
     e.stopPropagation()
     try {
       await api.patch(`/admin/deliveries/${id}/commission-paid`)
-      toast.success('Commission marked as paid')
+      toast.success(t('admin.delivered.toastMarkPaidSuccess'))
       fetchDeliveries()
     } catch {
-      toast.error('Failed to mark commission as paid')
+      toast.error(t('admin.delivered.toastMarkPaidFailed'))
     }
   }
 
@@ -1074,20 +1147,20 @@ function DeliveredPackages() {
         />
       )}
       {deliveries.length === 0 ? (
-        <EmptyState label="No delivered packages yet" />
+        <EmptyState label={t('admin.delivered.noneYet')} />
       ) : (
         <div className="overflow-hidden rounded-xl bg-white shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-brand-primary/5 text-xs uppercase text-brand-muted">
                 <tr>
-                  <th className="px-4 py-3 text-left">Package</th>
-                  <th className="px-4 py-3 text-left">Traveler</th>
-                  <th className="px-4 py-3 text-left">Sender</th>
-                  <th className="px-4 py-3 text-left">Amount</th>
-                  <th className="px-4 py-3 text-left">Commission</th>
-                  <th className="px-4 py-3 text-left">Finalized</th>
-                  <th className="px-4 py-3 text-left">Actions</th>
+                  <th className="px-4 py-3 text-left">{t('admin.delivered.colPackage')}</th>
+                  <th className="px-4 py-3 text-left">{t('admin.delivered.colTraveler')}</th>
+                  <th className="px-4 py-3 text-left">{t('admin.delivered.colSender')}</th>
+                  <th className="px-4 py-3 text-left">{t('admin.delivered.colAmount')}</th>
+                  <th className="px-4 py-3 text-left">{t('admin.delivered.colCommission')}</th>
+                  <th className="px-4 py-3 text-left">{t('admin.delivered.colFinalized')}</th>
+                  <th className="px-4 py-3 text-left">{t('admin.delivered.colActions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-brand-muted/10">
@@ -1098,14 +1171,14 @@ function DeliveredPackages() {
                     className="cursor-pointer hover:bg-brand-bg"
                   >
                     <td className="px-4 py-3 font-medium text-brand-primary">
-                      {d.package?.title ?? 'Unknown package'}
+                      {d.package?.title ?? t('admin.deliveryModal.unknownPackage')}
                     </td>
                     <td className="px-4 py-3 text-brand-muted">{d.traveler?.nickname}</td>
                     <td className="px-4 py-3 text-brand-muted">{d.sender?.nickname}</td>
                     <td className="px-4 py-3 text-brand-muted">{d.agreedAmount} {d.currency}</td>
                     <td className="px-4 py-3">
                       <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${d.commissionPaid ? 'bg-green-100 text-green-700' : 'bg-red-100 text-brand-danger'}`}>
-                        {d.commissionAmount} {d.currency} · {d.commissionPaid ? 'Paid' : 'Unpaid'}
+                        {d.commissionAmount} {d.currency} · {d.commissionPaid ? t('admin.deliveryModal.paid') : t('admin.deliveryModal.unpaid')}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-brand-muted">
@@ -1117,7 +1190,7 @@ function DeliveredPackages() {
                           onClick={(e) => markPaid(e, d.id)}
                           className="rounded-lg bg-green-500 px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90"
                         >
-                          Mark Paid
+                          {t('admin.delivered.markPaid')}
                         </button>
                       )}
                     </td>
@@ -1136,6 +1209,7 @@ function DeliveredPackages() {
 // ── Messages / Chats ─────────────────────────────────────────
 
 function AdminMessages() {
+  const { t } = useTranslation()
   const [conversations, setConversations] = useState<ConversationSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [thread, setThread] = useState<{ userAId: string; userBId: string; label: string } | null>(null)
@@ -1170,14 +1244,14 @@ function AdminMessages() {
   }
 
   const deleteMessage = async (id: string) => {
-    if (!confirm('Delete this message?')) return
+    if (!confirm(t('admin.messages.confirmDelete'))) return
     try {
       await api.delete(`/admin/messages/${id}`)
       setThreadMessages((prev) => prev.filter((m) => m.id !== id))
-      toast.success('Message deleted')
+      toast.success(t('admin.messages.toastDeleteSuccess'))
       fetchConversations()
     } catch {
-      toast.error('Failed to delete message')
+      toast.error(t('admin.messages.toastDeleteFailed'))
     }
   }
 
@@ -1187,10 +1261,10 @@ function AdminMessages() {
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <div>
         <h3 className="mb-4 font-semibold text-brand-primary">
-          Conversations ({conversations.length})
+          {t('admin.messages.conversationsTitle', { count: conversations.length })}
         </h3>
         {conversations.length === 0 ? (
-          <EmptyState label="No conversations yet" />
+          <EmptyState label={t('admin.messages.noneYet')} />
         ) : (
           <div className="space-y-2">
             {conversations.map((c, i) => (
@@ -1208,7 +1282,7 @@ function AdminMessages() {
                     <MessageSquare className="h-4 w-4 text-brand-accent" />
                     {c.userA.nickname} ↔ {c.userB.nickname}
                   </p>
-                  <span className="text-xs text-brand-muted">{c.count} messages</span>
+                  <span className="text-xs text-brand-muted">{t('admin.messages.messagesCount', { count: c.count })}</span>
                 </div>
                 <p className="mt-2 truncate text-xs text-brand-muted">{c.lastMessage.content}</p>
                 <p className="mt-1 text-xs text-brand-muted/60">
@@ -1254,17 +1328,8 @@ function AdminMessages() {
 
 // ── Main Dashboard ───────────────────────────────────────────
 
-const TABS = [
-  { id: 'pending', label: 'Pending Approvals', icon: Clock },
-  { id: 'users', label: 'All Users', icon: Users },
-  { id: 'packages', label: 'Packages', icon: Package },
-  { id: 'trips', label: 'Trips', icon: MapPin },
-  { id: 'deliveries', label: 'Deliveries', icon: Truck },
-  { id: 'delivered', label: 'Delivered Packages', icon: CheckCheck },
-  { id: 'messages', label: 'Chats', icon: MessageSquare },
-]
-
 function AdminDashboard() {
+  const { t } = useTranslation()
   const { user } = useAuthStore()
   const [stats, setStats] = useState<Stats | null>(null)
   const [activeTab, setActiveTab] = useState('pending')
@@ -1274,6 +1339,16 @@ function AdminDashboard() {
   }, [])
 
   if (!user?.isAdmin) return <Navigate to="/" replace />
+
+  const TABS = [
+    { id: 'pending', label: t('admin.tabs.pending'), icon: Clock },
+    { id: 'users', label: t('admin.tabs.users'), icon: Users },
+    { id: 'packages', label: t('admin.tabs.packages'), icon: Package },
+    { id: 'trips', label: t('admin.tabs.trips'), icon: MapPin },
+    { id: 'deliveries', label: t('admin.tabs.deliveries'), icon: Truck },
+    { id: 'delivered', label: t('admin.tabs.delivered'), icon: CheckCheck },
+    { id: 'messages', label: t('admin.tabs.messages'), icon: MessageSquare },
+  ]
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -1286,9 +1361,9 @@ function AdminDashboard() {
         noIndex
       />
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-brand-primary">Admin Dashboard</h1>
+        <h1 className="text-2xl font-bold text-brand-primary">{t('admin.dashboard.title')}</h1>
         <p className="text-sm text-brand-muted">
-          Afghanistan Online Cargo — Administration
+          {t('admin.dashboard.subtitle')}
         </p>
       </div>
 
@@ -1297,43 +1372,43 @@ function AdminDashboard() {
         <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           <StatCard
             icon={Users}
-            label="Total Users"
+            label={t('admin.dashboard.statTotalUsers')}
             value={stats.totalUsers}
             color="bg-brand-primary/10 text-brand-primary"
           />
           <StatCard
             icon={Clock}
-            label="Pending"
+            label={t('admin.dashboard.statPending')}
             value={stats.pendingUsers}
             color="bg-yellow-100 text-yellow-600"
           />
           <StatCard
             icon={MapPin}
-            label="Total Trips"
+            label={t('admin.dashboard.statTotalTrips')}
             value={stats.totalTrips}
             color="bg-brand-secondary/10 text-brand-secondary"
           />
           <StatCard
             icon={Package}
-            label="Total Packages"
+            label={t('admin.dashboard.statTotalPackages')}
             value={stats.totalPackages}
             color="bg-brand-accent/10 text-brand-accent"
           />
           <StatCard
             icon={Truck}
-            label="Deliveries"
+            label={t('admin.dashboard.statDeliveries')}
             value={stats.totalDeliveries}
             color="bg-green-100 text-green-600"
           />
           <StatCard
             icon={CheckCircle}
-            label="Finalized"
+            label={t('admin.dashboard.statFinalized')}
             value={stats.finalizedDeliveries}
             color="bg-green-100 text-green-600"
           />
           <StatCard
             icon={DollarSign}
-            label="Unpaid Commission"
+            label={t('admin.dashboard.statUnpaidCommission')}
             value={stats.unpaidCommissions}
             color="bg-red-100 text-brand-danger"
           />

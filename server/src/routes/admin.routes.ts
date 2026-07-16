@@ -40,6 +40,10 @@ router.get('/users', async (req, res) => {
         email: true,
         legalFullName: true,
         nickname: true,
+        firstName: true,
+        lastName: true,
+        profileCompleted: true,
+        googleId: true,
         documentType: true,
         documentNumber: true,
         accountStatus: true,
@@ -53,7 +57,9 @@ router.get('/users', async (req, res) => {
     prisma.user.count({ where }),
   ])
 
-  res.json({ users, pagination: { page: pageNum, pageSize, total, totalPages: Math.ceil(total / pageSize) } })
+  const shapedUsers = users.map(({ googleId, ...u }) => ({ ...u, hasGoogleAuth: Boolean(googleId) }))
+
+  res.json({ users: shapedUsers, pagination: { page: pageNum, pageSize, total, totalPages: Math.ceil(total / pageSize) } })
 })
 
 // Get one user — full details including KYC doc signed URLs
@@ -66,8 +72,12 @@ router.get('/users/:id', async (req, res) => {
   // Generate signed URLs for private KYC documents (5 minute expiry)
   const signedUrls: Record<string, string> = {}
   try {
-    signedUrls.passportPhotoUrl = await getKycSignedUrl(user.passportPhotoUrl)
-    signedUrls.facePhotoUrl = await getKycSignedUrl(user.facePhotoUrl)
+    if (user.passportPhotoUrl) {
+      signedUrls.passportPhotoUrl = await getKycSignedUrl(user.passportPhotoUrl)
+    }
+    if (user.facePhotoUrl) {
+      signedUrls.facePhotoUrl = await getKycSignedUrl(user.facePhotoUrl)
+    }
     if (user.visaResidencyDocUrl) {
       signedUrls.visaResidencyDocUrl = await getKycSignedUrl(user.visaResidencyDocUrl)
     }
@@ -75,7 +85,8 @@ router.get('/users/:id', async (req, res) => {
     console.error('Failed to generate signed URLs:', err)
   }
 
-  res.json({ user: { ...user, ...signedUrls } })
+  const { googleId, ...userWithoutGoogleId } = user
+  res.json({ user: { ...userWithoutGoogleId, hasGoogleAuth: Boolean(googleId), ...signedUrls } })
 })
 
 // Approve a user

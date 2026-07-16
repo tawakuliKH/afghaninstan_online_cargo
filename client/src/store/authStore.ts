@@ -15,6 +15,10 @@ export interface AuthUser {
   permanentCity?: string
   currentCountry?: string
   currentCity?: string
+  firstName?: string
+  lastName?: string
+  profileCompleted: boolean
+  hasGoogleAuth?: boolean
 }
 
 interface AuthState {

@@ -7,6 +7,7 @@ import { useHealthStore } from "./store/healthStore";
 import { AlertTriangle } from "lucide-react";
 import { Navbar } from "./components/layout/Navbar";
 import { Footer } from "./components/layout/Footer";
+import { ProfileProgressBanner } from "./components/ProfileProgressBanner";
 import { ProtectedRoute } from "./components/layout/ProtectedRoute";
 import Home from "./pages/Home";
 import Trips from "./pages/Trips";
@@ -25,6 +26,7 @@ import ProposeDelivery from "./pages/ProposeDelivery";
 import PackageDetail from "./pages/PackageDetail";
 import TripDetail from "./pages/TripDetail";
 import EditProfile from "./pages/EditProfile";
+import CompleteProfile from "./pages/CompleteProfile";
 import DeliveryReview from "./pages/DeliveryReview";
 import UserSearch from "./pages/UserSearch";
 import HelpChat from "./components/HelpChat";
@@ -69,6 +71,7 @@ function App() {
     <div className="flex min-h-screen flex-col bg-brand-bg">
       <Toaster position="top-right" />
       <Navbar />
+      <ProfileProgressBanner />
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<Home />} />
@@ -95,6 +98,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <EditProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile/complete"
+            element={
+              <ProtectedRoute>
+                <CompleteProfile />
               </ProtectedRoute>
             }
           />

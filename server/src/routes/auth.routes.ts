@@ -7,12 +7,14 @@ import { prisma } from '../lib/prisma'
 import { uploadKycFile } from '../lib/storage'
 import { supabase } from '../lib/supabase'
 import { loginSchema } from '../schemas/auth.schema'
+import { quickRegisterSchema, completeProfileSchema } from '../schemas/auth.schema'
 import { signAccessToken, signRefreshToken } from '../lib/jwt'
 import { verifyRefreshToken } from '../lib/jwt'
 import { requireAuth, requireApproved } from '../middleware/auth'
 import { optionalAuth } from '../middleware/auth'
 import { getViewerContext, shapeUserForViewer } from '../lib/visibility'
 import { sendEmail, emailTemplates } from '../lib/email'
+import { OAuth2Client } from 'google-auth-library'
 
 
 const router = Router()
@@ -24,6 +26,10 @@ router.get('/me', requireAuth, async (req, res) => {
       id: true,
       email: true,
       nickname: true,
+      firstName: true,
+      lastName: true,
+      profileCompleted: true,
+      googleId: true,
       accountStatus: true,
       isAdmin: true,
       legalFullName: true,
@@ -42,9 +48,12 @@ router.get('/me', requireAuth, async (req, res) => {
     prisma.delivery.count({ where: { travelerId: user.id, status: 'FINALIZED', commissionPaid: false } }),
   ])
 
+  const { googleId, ...userWithoutGoogleId } = user
+
   res.json({
     user: {
-      ...user,
+      ...userWithoutGoogleId,
+      hasGoogleAuth: Boolean(googleId),
       hasPosted: tripsCount + packagesCount > 0,
       hasUnpaidCommission: unpaidCommissionCount > 0,
     },
@@ -69,6 +78,8 @@ router.patch(
 
     const data: Record<string, unknown> = {}
     const editableFields = [
+      'firstName',
+      'lastName',
       'nickname',
       'whatsappNumber',
       'permanentCountry',
@@ -115,6 +126,8 @@ router.patch(
         id: true,
         email: true,
         nickname: true,
+        firstName: true,
+        lastName: true,
         accountStatus: true,
         isAdmin: true,
         legalFullName: true,
@@ -600,6 +613,10 @@ router.post('/login', async (req, res) => {
       id: user.id,
       email: user.email,
       nickname: user.nickname,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      profileCompleted: user.profileCompleted,
+      hasGoogleAuth: Boolean(user.googleId),
       isAdmin: user.isAdmin,
       accountStatus: user.accountStatus,
       hasPosted: tripsCount + packagesCount > 0,
@@ -607,6 +624,285 @@ router.post('/login', async (req, res) => {
     },
   })
 })
+
+// Phase 1 — quick registration: minimal fields, instant account creation.
+// Account is created as PENDING/profileCompleted=false; full KYC happens in Phase 2.
+router.post('/register-quick', async (req, res) => {
+  const parseResult = quickRegisterSchema.safeParse(req.body)
+  if (!parseResult.success) {
+    return res.status(400).json({ errors: parseResult.error.flatten().fieldErrors })
+  }
+  const data = parseResult.data
+
+  const existingEmail = await prisma.user.findUnique({ where: { email: data.email } })
+  if (existingEmail) {
+    return res.status(409).json({ error: 'An account with this email already exists' })
+  }
+
+  const userId = crypto.randomUUID()
+  const fullName = `${data.firstName} ${data.lastName}`.trim()
+  const passwordHash = await bcrypt.hash(data.password, 10)
+
+  const user = await prisma.user.create({
+    data: {
+      id: userId,
+      email: data.email,
+      passwordHash,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      nickname: fullName,
+      legalFullName: fullName,
+      whatsappNumber: data.whatsappNumber,
+      accountStatus: 'PENDING',
+      profileCompleted: false,
+    },
+  })
+
+  const payload = { userId: user.id, isAdmin: user.isAdmin }
+  const accessToken = signAccessToken(payload)
+  const refreshToken = signRefreshToken(payload)
+
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  })
+
+  const { subject, html } = emailTemplates.completeProfileReminder(user.nickname)
+  await sendEmail(user.email, subject, html)
+
+  res.status(201).json({
+    accessToken,
+    user: {
+      id: user.id,
+      email: user.email,
+      nickname: user.nickname,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      accountStatus: user.accountStatus,
+      isAdmin: user.isAdmin,
+      hasPosted: false,
+      hasUnpaidCommission: false,
+      profileCompleted: user.profileCompleted,
+    },
+  })
+})
+
+// Google OAuth sign-in/register. Accepts either a real Google idToken (JWT) or a
+// googleAccessToken from the implicit OAuth flow — the latter is resolved via Google's
+// userinfo endpoint, which is safe because Google already validated it server-side.
+router.post('/google', async (req, res) => {
+  if (!process.env.GOOGLE_CLIENT_ID) {
+    return res.status(500).json({ error: 'Google auth not configured' })
+  }
+
+  const { idToken, googleAccessToken } = req.body as { idToken?: string; googleAccessToken?: string }
+  if (!idToken && !googleAccessToken) {
+    return res.status(400).json({ error: 'idToken or googleAccessToken is required' })
+  }
+
+  let googleId: string
+  let email: string
+  let given_name: string | undefined
+  let family_name: string | undefined
+
+  try {
+    if (idToken) {
+      const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
+      const ticket = await client.verifyIdToken({ idToken, audience: process.env.GOOGLE_CLIENT_ID })
+      const payload = ticket.getPayload()
+      if (!payload?.sub || !payload.email) throw new Error('Invalid Google payload')
+      googleId = payload.sub
+      email = payload.email
+      given_name = payload.given_name
+      family_name = payload.family_name
+    } else {
+      const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${googleAccessToken}` },
+      })
+      if (!userInfoRes.ok) throw new Error('Failed to fetch Google user info')
+      const info = (await userInfoRes.json()) as {
+        sub: string
+        email: string
+        given_name?: string
+        family_name?: string
+      }
+      googleId = info.sub
+      email = info.email
+      given_name = info.given_name
+      family_name = info.family_name
+    }
+  } catch {
+    return res.status(401).json({ error: 'Invalid Google token' })
+  }
+
+  let user = await prisma.user.findUnique({ where: { googleId } })
+  let isNewUser = false
+
+  if (!user) {
+    const existingByEmail = await prisma.user.findUnique({ where: { email } })
+    if (existingByEmail) {
+      user = await prisma.user.update({
+        where: { id: existingByEmail.id },
+        data: { googleId, googleEmail: email },
+      })
+    } else {
+      const fullName = `${given_name || ''} ${family_name || ''}`.trim()
+      user = await prisma.user.create({
+        data: {
+          id: crypto.randomUUID(),
+          googleId,
+          googleEmail: email,
+          email,
+          firstName: given_name || '',
+          lastName: family_name || '',
+          nickname: fullName || email.split('@')[0],
+          legalFullName: fullName || email.split('@')[0],
+          passwordHash: '',
+          accountStatus: 'PENDING',
+          profileCompleted: false,
+        },
+      })
+      isNewUser = true
+
+      const { subject, html } = emailTemplates.completeProfileReminder(user.nickname)
+      await sendEmail(user.email, subject, html)
+    }
+  }
+
+  const payload = { userId: user.id, isAdmin: user.isAdmin }
+  const accessToken = signAccessToken(payload)
+  const refreshToken = signRefreshToken(payload)
+
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  })
+
+  const [tripsCount, packagesCount, unpaidCommissionCount] = await Promise.all([
+    prisma.trip.count({ where: { travelerId: user.id } }),
+    prisma.package.count({ where: { senderId: user.id } }),
+    prisma.delivery.count({ where: { travelerId: user.id, status: 'FINALIZED', commissionPaid: false } }),
+  ])
+
+  res.json({
+    accessToken,
+    isNewUser,
+    user: {
+      id: user.id,
+      email: user.email,
+      nickname: user.nickname,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      accountStatus: user.accountStatus,
+      isAdmin: user.isAdmin,
+      hasPosted: tripsCount + packagesCount > 0,
+      hasUnpaidCommission: unpaidCommissionCount > 0,
+      profileCompleted: user.profileCompleted,
+    },
+  })
+})
+
+// Phase 2 — profile completion: full KYC upload. Auth required but NOT approval —
+// PENDING users must be able to reach this to submit for review.
+router.post(
+  '/complete-profile',
+  requireAuth,
+  upload.fields([
+    { name: 'passportPhoto', maxCount: 1 },
+    { name: 'facePhoto', maxCount: 1 },
+    { name: 'visaResidencyDoc', maxCount: 1 },
+  ]),
+  async (req, res) => {
+    const parseResult = completeProfileSchema.safeParse(req.body)
+    if (!parseResult.success) {
+      return res.status(400).json({ errors: parseResult.error.flatten().fieldErrors })
+    }
+    const data = parseResult.data
+
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] }
+    const passportFile = files?.passportPhoto?.[0]
+    const faceFile = files?.facePhoto?.[0]
+    const visaFile = files?.visaResidencyDoc?.[0]
+
+    if (!passportFile || !faceFile) {
+      return res.status(400).json({ error: 'Passport/Tazkira photo and face photo are required' })
+    }
+    if (data.currentCountry !== 'Afghanistan' && !visaFile) {
+      return res.status(400).json({ error: 'A visa or residency document is required for residents outside Afghanistan' })
+    }
+
+    const existingDoc = await prisma.user.findFirst({
+      where: { documentNumber: data.documentNumber, id: { not: req.user!.userId } },
+    })
+    if (existingDoc) {
+      return res.status(409).json({ error: 'An account with this document number already exists' })
+    }
+
+    const userId = req.user!.userId
+
+    const passportExt = passportFile.originalname.split('.').pop()
+    const faceExt = faceFile.originalname.split('.').pop()
+    const passportPath = await uploadKycFile(`${userId}/passport.${passportExt}`, passportFile.buffer, passportFile.mimetype)
+    const facePath = await uploadKycFile(`${userId}/face.${faceExt}`, faceFile.buffer, faceFile.mimetype)
+
+    let visaPath: string | undefined
+    if (visaFile) {
+      const visaExt = visaFile.originalname.split('.').pop()
+      visaPath = await uploadKycFile(`${userId}/visa.${visaExt}`, visaFile.buffer, visaFile.mimetype)
+    }
+
+    const updateData: Record<string, unknown> = {
+      documentType: data.documentType,
+      documentNumber: data.documentNumber,
+      documentIssuingCountry: data.documentIssuingCountry,
+      dateOfBirth: data.dateOfBirth,
+      permanentCountry: data.permanentCountry,
+      permanentCity: data.permanentCity,
+      currentCountry: data.currentCountry,
+      currentCity: data.currentCity,
+      passportPhotoUrl: passportPath,
+      facePhotoUrl: facePath,
+      profileCompleted: true,
+    }
+    if (data.whatsappNumber) updateData.whatsappNumber = data.whatsappNumber
+    if (visaPath) updateData.visaResidencyDocUrl = visaPath
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    })
+
+    const admins = await prisma.user.findMany({ where: { isAdmin: true }, select: { id: true } })
+    if (admins.length > 0) {
+      await prisma.notification.createMany({
+        data: admins.map((admin) => ({
+          userId: admin.id,
+          type: 'PROFILE_UPDATED' as const,
+          title: `${updated.nickname} completed their profile — ready for KYC review`,
+          body: 'Documents uploaded. Please review and approve.',
+          link: '/admin?tab=pending',
+        })),
+      })
+    }
+
+    res.json({
+      user: {
+        id: updated.id,
+        email: updated.email,
+        nickname: updated.nickname,
+        firstName: updated.firstName,
+        lastName: updated.lastName,
+        accountStatus: updated.accountStatus,
+        isAdmin: updated.isAdmin,
+        profileCompleted: updated.profileCompleted,
+      },
+    })
+  }
+)
 
 router.post(
   '/register',

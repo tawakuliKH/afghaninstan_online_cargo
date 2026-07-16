@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { getData } from "country-list";
 import api from "../lib/axios";
 import toast from "react-hot-toast";
@@ -19,6 +20,8 @@ import SEO from "../components/SEO";
 const countries = getData().sort((a, b) => a.name.localeCompare(b.name));
 
 interface EditProfileForm {
+  firstName: string;
+  lastName: string;
   nickname: string;
   whatsappNumber: string;
   permanentCountry: string;
@@ -73,10 +76,14 @@ function Select({
 
 function FileField({
   label,
+  tooltip,
+  hint,
   onChange,
   fileName,
 }: {
   label: string;
+  tooltip: string;
+  hint: string;
   onChange: (file: File) => void;
   fileName?: string;
 }) {
@@ -84,10 +91,7 @@ function FileField({
     <div>
       <label className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-brand-primary">
         {label}
-        <span
-          title="Changing this document will send your account back for re-approval"
-          className="inline-flex"
-        >
+        <span title={tooltip} className="inline-flex">
           <AlertTriangle className="h-3.5 w-3.5 text-orange-500" />
         </span>
       </label>
@@ -97,9 +101,7 @@ function FileField({
         ) : (
           <Upload className="h-5 w-5 shrink-0 text-brand-muted" />
         )}
-        <span className="text-sm text-brand-muted">
-          {fileName || "Click to replace (leave empty to keep current file)"}
-        </span>
+        <span className="text-sm text-brand-muted">{fileName || hint}</span>
         <input
           type="file"
           accept="image/jpeg,image/png,image/webp,application/pdf"
@@ -114,6 +116,7 @@ function FileField({
 }
 
 function EditProfile() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { updateUser } = useAuthStore();
   const [loading, setLoading] = useState(true);
@@ -137,6 +140,8 @@ function EditProfile() {
       .then((res) => {
         const u = res.data.user;
         reset({
+          firstName: u.firstName || "",
+          lastName: u.lastName || "",
           nickname: u.nickname || "",
           whatsappNumber: u.whatsappNumber || "",
           permanentCountry: u.permanentCountry || "",
@@ -145,9 +150,9 @@ function EditProfile() {
           currentCity: u.currentCity || "",
         });
       })
-      .catch(() => toast.error("Failed to load profile"))
+      .catch(() => toast.error(t("editProfile.toastLoadFailed")))
       .finally(() => setLoading(false));
-  }, [reset]);
+  }, [reset, t]);
 
   const onSubmit = async (data: EditProfileForm) => {
     setIsSubmitting(true);
@@ -166,15 +171,13 @@ function EditProfile() {
       updateUser(res.data.user);
 
       if (res.data.user.accountStatus === "PENDING") {
-        toast.success(
-          "Profile updated. Your account is pending re-approval."
-        );
+        toast.success(t("editProfile.toastUpdatedPending"));
       } else {
-        toast.success("Profile updated successfully!");
+        toast.success(t("editProfile.toastUpdatedSuccess"));
       }
       navigate("/profile");
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "Failed to update profile");
+      toast.error(err.response?.data?.error || t("editProfile.toastUpdateFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -185,10 +188,10 @@ function EditProfile() {
     try {
       const res = await api.delete("/auth/me");
       updateUser({ accountStatus: "SUSPENDED" });
-      toast.success(res.data.message || "Deletion request submitted");
+      toast.success(res.data.message || t("editProfile.toastDeletionSubmitted"));
       navigate("/profile");
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "Failed to submit deletion request");
+      toast.error(err.response?.data?.error || t("editProfile.toastDeletionFailed"));
     } finally {
       setDeleting(false);
       setShowDeleteConfirm(false);
@@ -216,45 +219,54 @@ function EditProfile() {
         to="/profile"
         className="mb-6 flex items-center gap-2 text-sm text-brand-muted hover:text-brand-primary"
       >
-        <ArrowLeft className="h-4 w-4" /> Back to profile
+        <ArrowLeft className="h-4 w-4" /> {t("editProfile.backToProfile")}
       </Link>
 
       <div className="rounded-2xl bg-white p-8 shadow-lg">
         <h1 className="mb-4 text-2xl font-bold text-brand-primary">
-          Edit Profile
+          {t("editProfile.pageTitle")}
         </h1>
 
         <div className="mb-6 flex items-start gap-2 rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm text-orange-700">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-          <p>
-            Note: Any profile changes require admin re-approval. Your account
-            will be set to Pending until an admin reviews your changes.
-          </p>
+          <p>{t("editProfile.reapprovalNotice")}</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-4">
-            <Field label="Nickname" error={errors.nickname?.message}>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Field label={t("editProfile.firstNameLabel")} error={errors.firstName?.message}>
+                <Input
+                  {...register("firstName", { required: t("editProfile.firstNameRequired") })}
+                />
+              </Field>
+              <Field label={t("editProfile.lastNameLabel")} error={errors.lastName?.message}>
+                <Input
+                  {...register("lastName", { required: t("editProfile.lastNameRequired") })}
+                />
+              </Field>
+            </div>
+            <Field label={t("editProfile.nicknameLabel")} error={errors.nickname?.message}>
               <Input
-                {...register("nickname", { required: "Nickname is required" })}
-                placeholder="Your public name"
+                {...register("nickname", { required: t("editProfile.nicknameRequired") })}
+                placeholder={t("editProfile.nicknamePlaceholder")}
               />
             </Field>
             <Field
-              label="WhatsApp number"
+              label={t("editProfile.whatsappLabel")}
               error={errors.whatsappNumber?.message}
             >
               <Input
                 {...register("whatsappNumber", {
-                  required: "WhatsApp number is required",
+                  required: t("editProfile.whatsappRequired"),
                 })}
-                placeholder="+1 234 567 8900"
+                placeholder={t("editProfile.whatsappPlaceholder")}
               />
             </Field>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Permanent country">
+              <Field label={t("editProfile.permanentCountryLabel")}>
                 <Select {...register("permanentCountry")}>
-                  <option value="">Select country</option>
+                  <option value="">{t("editProfile.selectCountry")}</option>
                   {countries.map((c) => (
                     <option key={c.code} value={c.name}>
                       {c.name}
@@ -262,14 +274,14 @@ function EditProfile() {
                   ))}
                 </Select>
               </Field>
-              <Field label="Permanent city">
-                <Input {...register("permanentCity")} placeholder="City" />
+              <Field label={t("editProfile.permanentCityLabel")}>
+                <Input {...register("permanentCity")} placeholder={t("editProfile.cityPlaceholder")} />
               </Field>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Field label="Current country">
+              <Field label={t("editProfile.currentCountryLabel")}>
                 <Select {...register("currentCountry")}>
-                  <option value="">Select country</option>
+                  <option value="">{t("editProfile.selectCountry")}</option>
                   {countries.map((c) => (
                     <option key={c.code} value={c.name}>
                       {c.name}
@@ -277,36 +289,41 @@ function EditProfile() {
                   ))}
                 </Select>
               </Field>
-              <Field label="Current city">
-                <Input {...register("currentCity")} placeholder="City" />
+              <Field label={t("editProfile.currentCityLabel")}>
+                <Input {...register("currentCity")} placeholder={t("editProfile.cityPlaceholder")} />
               </Field>
             </div>
           </div>
 
           <div>
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-brand-muted">
-              Replace Documents — optional
+              {t("editProfile.replaceDocsHeading")}
             </h2>
             <div className="space-y-4">
               <FileField
-                label="Passport / Tazkira photo"
+                label={t("editProfile.passportLabel")}
+                tooltip={t("editProfile.docChangeWarningTooltip")}
+                hint={t("editProfile.replaceFileHint")}
                 onChange={setPassportFile}
                 fileName={passportFile?.name}
               />
               <FileField
-                label="Face photo"
+                label={t("editProfile.faceLabel")}
+                tooltip={t("editProfile.docChangeWarningTooltip")}
+                hint={t("editProfile.replaceFileHint")}
                 onChange={setFaceFile}
                 fileName={faceFile?.name}
               />
               <FileField
-                label="Visa / residency document"
+                label={t("editProfile.visaLabel")}
+                tooltip={t("editProfile.docChangeWarningTooltip")}
+                hint={t("editProfile.replaceFileHint")}
                 onChange={setVisaFile}
                 fileName={visaFile?.name}
               />
               <p className="flex items-center gap-1.5 text-xs text-brand-muted">
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-orange-500" />
-                Replacing any document above sends your account back for
-                admin re-approval.
+                {t("editProfile.replaceDocsNote")}
               </p>
             </div>
           </div>
@@ -317,18 +334,16 @@ function EditProfile() {
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-accent px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
           >
             {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
-            Save changes
+            {t("editProfile.saveButton")}
           </button>
         </form>
 
         <div className="mt-10 border-t border-brand-muted/10 pt-6">
           <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-brand-danger">
-            Danger Zone
+            {t("editProfile.dangerZoneHeading")}
           </h2>
           <p className="mb-3 text-xs text-brand-muted">
-            Deleting your account immediately hides you and your listings from
-            other users. An admin can still review your deletion request.
-            Delivery records are preserved for legal purposes.
+            {t("editProfile.dangerZoneBody")}
           </p>
           <button
             onClick={() => setShowDeleteConfirm(true)}
@@ -340,7 +355,7 @@ function EditProfile() {
             ) : (
               <Trash2 className="h-4 w-4" />
             )}
-            Delete Account
+            {t("editProfile.deleteAccountButton")}
           </button>
         </div>
       </div>
@@ -350,9 +365,9 @@ function EditProfile() {
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={handleDeleteAccount}
         variant="danger"
-        title="Delete your account?"
-        message="This will immediately hide you and your listings from other users. Delivery records are preserved for legal purposes. This cannot be undone once actioned."
-        confirmLabel="Delete Account"
+        title={t("editProfile.deleteModalTitle")}
+        message={t("editProfile.deleteModalMessage")}
+        confirmLabel={t("editProfile.deleteAccountButton")}
         loading={deleting}
       />
     </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import api from "../lib/axios";
 import { useAuthStore } from "../store/authStore";
 import { WorkflowDashboard } from "../components/WorkflowDashboard";
@@ -15,6 +16,8 @@ import {
 } from "lucide-react";
 
 // ── Structured Data ─────────────────────────────────────────
+// Always bilingual regardless of active UI language — this is crawler-facing
+// metadata (JSON-LD), not visible body content, so it stays as-is.
 
 const HOME_STRUCTURED_DATA = [
   {
@@ -218,45 +221,21 @@ function HeroAnimation() {
 // ── How it works ────────────────────────────────────────────
 
 function HowItWorks() {
+  const { t } = useTranslation();
   const steps = [
-    {
-      icon: Users,
-      title: "Verify your identity",
-      titleFa: "هویت خود را تأیید کنید",
-      desc: "Register with your passport or Tazkira. Every user is manually reviewed and approved.",
-      descFa: "با پاسپورت یا تذکره خود ثبت‌نام کنید. هر کاربر به صورت دستی بررسی و تأیید می‌شود.",
-    },
-    {
-      icon: Package,
-      title: "Post or find",
-      titleFa: "پست کنید یا پیدا کنید",
-      desc: "Senders post packages. Travelers post trips. Find each other and connect directly.",
-      descFa: "فرستندگان بسته پست می‌کنند. مسافران سفر پست می‌کنند. همدیگر را پیدا کنید و مستقیم ارتباط برقرار کنید.",
-    },
-    {
-      icon: Shield,
-      title: "Hand over safely",
-      titleFa: "با امنیت تحویل دهید",
-      desc: "Meet in person, verify ID, and hand over the package. The platform records every step as legal proof.",
-      descFa: "حضوری ملاقات کنید، هویت را تأیید کنید و بسته را تحویل دهید. پلتفرم هر مرحله را به عنوان مدرک قانونی ثبت می‌کند.",
-    },
-    {
-      icon: Clock,
-      title: "Track & confirm",
-      titleFa: "پیگیری و تأیید کنید",
-      desc: "Both parties confirm handover and final delivery. Reviews build trust over time.",
-      descFa: "هر دو طرف تحویل و تحویل نهایی را تأیید می‌کنند. نظرات اعتماد را در طول زمان ایجاد می‌کنند.",
-    },
+    { icon: Users, title: t("home.step1Title"), desc: t("home.step1Desc") },
+    { icon: Package, title: t("home.step2Title"), desc: t("home.step2Desc") },
+    { icon: Shield, title: t("home.step3Title"), desc: t("home.step3Desc") },
+    { icon: Clock, title: t("home.step4Title"), desc: t("home.step4Desc") },
   ];
 
   return (
     <div className="py-16">
       <h2 className="mb-2 text-center text-2xl font-bold text-brand-primary">
-        How Afghanistan Online Cargo Works
+        {t("home.howItWorksTitle")}
       </h2>
       <p className="mb-10 text-center text-sm text-brand-muted">
-        A trusted coordination platform — not a courier. All handovers happen in
-        person between verified users.
+        {t("home.howItWorksSubtitle")}
       </p>
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {steps.map((step, i) => {
@@ -276,14 +255,11 @@ function HowItWorks() {
                 </div>
               </div>
               <p className="mb-1 text-xs font-bold uppercase tracking-wide text-brand-accent">
-                Step {i + 1}
+                {t("home.step", { n: i + 1 })}
               </p>
               <h3 className="mb-1 font-semibold text-brand-primary">
                 {step.title}
               </h3>
-              <p className="mb-1 text-xs font-medium text-brand-muted/70">
-                {step.titleFa}
-              </p>
               <p className="text-xs text-brand-muted">{step.desc}</p>
             </motion.div>
           );
@@ -296,11 +272,12 @@ function HowItWorks() {
 // ── Trust badges ────────────────────────────────────────────
 
 function TrustBadges() {
+  const { t } = useTranslation();
   const badges = [
-    { label: "KYC Verified Users", labelFa: "کاربران تأیید هویت شده", icon: "🛡️" },
-    { label: "Legally Recorded", labelFa: "ثبت قانونی", icon: "⚖️" },
-    { label: "Afghan Community", labelFa: "جامعه افغان", icon: "🤝" },
-    { label: "Cross-Border Safe", labelFa: "امن بین المللی", icon: "✈️" },
+    { label: t("home.badgeKycVerified"), icon: "🛡️" },
+    { label: t("home.badgeLegallyRecorded"), icon: "⚖️" },
+    { label: t("home.badgeAfghanCommunity"), icon: "🤝" },
+    { label: t("home.badgeCrossBorderSafe"), icon: "✈️" },
   ]
   return (
     <div className="border-y border-brand-muted/10 bg-white py-6">
@@ -309,10 +286,7 @@ function TrustBadges() {
           {badges.map((b, i) => (
             <div key={i} className="flex items-center gap-2">
               <span className="text-xl">{b.icon}</span>
-              <div>
-                <p className="text-xs font-semibold text-brand-primary">{b.label}</p>
-                <p className="text-xs text-brand-muted">{b.labelFa}</p>
-              </div>
+              <p className="text-xs font-semibold text-brand-primary">{b.label}</p>
             </div>
           ))}
         </div>
@@ -324,6 +298,7 @@ function TrustBadges() {
 // ── Mini card components ────────────────────────────────────
 
 function TripMiniCard({ trip }: { trip: any }) {
+  const { t } = useTranslation();
   const isClosed = new Date(trip.departureDate) < new Date();
   return (
     <Link
@@ -346,23 +321,24 @@ function TripMiniCard({ trip }: { trip: any }) {
               : "bg-green-100 text-green-700"
           }`}
         >
-          {isClosed ? "Trip Closed" : "Active"}
+          {isClosed ? t("home.tripClosed") : t("home.active")}
         </span>
       </div>
       <p className="text-xs text-brand-muted">
         {trip.originCountry} → {trip.destCountry}
       </p>
       <p className="mt-2 text-xs text-brand-muted">
-        Departure: {new Date(trip.departureDate).toLocaleDateString()}
+        {t("home.departure", { date: new Date(trip.departureDate).toLocaleDateString() })}
       </p>
       <p className="mt-1 text-xs text-brand-muted">
-        By: {trip.traveler?.nickname}
+        {t("home.byLabel", { name: trip.traveler?.nickname })}
       </p>
     </Link>
   );
 }
 
 function PackageMiniCard({ pkg }: { pkg: any }) {
+  const { t } = useTranslation();
   return (
     <Link
       to={`/packages/${pkg.id}`}
@@ -386,7 +362,7 @@ function PackageMiniCard({ pkg }: { pkg: any }) {
               <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
               <line x1="12" y1="22.08" x2="12" y2="12" />
             </svg>
-            <span className="text-xs">No photo</span>
+            <span className="text-xs">{t("home.noPhoto")}</span>
           </div>
         </div>
       )}
@@ -401,7 +377,7 @@ function PackageMiniCard({ pkg }: { pkg: any }) {
       </p>
       <p className="mt-2 text-xs text-brand-muted">{pkg.weight} kg</p>
       <p className="mt-1 text-xs text-brand-muted">
-        By: {pkg.sender?.nickname}
+        {t("home.byLabel", { name: pkg.sender?.nickname })}
       </p>
     </Link>
   );
@@ -410,6 +386,8 @@ function PackageMiniCard({ pkg }: { pkg: any }) {
 // ── Main Home page ──────────────────────────────────────────
 
 function Home() {
+  const { t, i18n } = useTranslation();
+  const isDari = i18n.language === "fa-AF";
   const { user } = useAuthStore();
   const [recentTrips, setRecentTrips] = useState<any[]>([]);
   const [recentPackages, setRecentPackages] = useState<any[]>([]);
@@ -446,22 +424,23 @@ function Home() {
         >
           Afghanistan Online Cargo
         </motion.h1>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="mb-1 text-sm text-brand-accent font-medium"
-        >
-          کارگو آنلاین افغانستان
-        </motion.p>
+        {isDari && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="mb-1 text-sm text-brand-accent font-medium"
+          >
+            کارگو آنلاین افغانستان
+          </motion.p>
+        )}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
           className="mx-auto mb-8 max-w-xl text-sm text-white/70 sm:text-base"
         >
-          Connect verified senders and travelers for safe, coordinated
-          cross-border package delivery between Afghanistan and the world.
+          {t("home.heroTagline")}
         </motion.p>
 
         <HeroAnimation />
@@ -476,20 +455,20 @@ function Home() {
             to="/trips"
             className="rounded-full bg-brand-accent px-6 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
           >
-            Browse Trips — مشاهده سفرها
+            {t("home.browseTrips")}
           </Link>
           <Link
             to="/packages"
             className="rounded-full border border-white/30 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
           >
-            Browse Packages — مشاهده بسته‌ها
+            {t("home.browsePackages")}
           </Link>
           {!user && (
             <Link
               to="/register"
               className="rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-brand-primary transition hover:bg-white/90"
             >
-              Get Started — شروع کنید
+              {t("home.getStarted")}
             </Link>
           )}
         </motion.div>
@@ -503,26 +482,12 @@ function Home() {
         <section className="bg-brand-bg px-4 py-12">
           <div className="mx-auto max-w-6xl">
             <h2 className="mb-6 text-xl font-bold text-brand-primary">
-              Welcome back, {user.nickname}! Here's your activity:
+              {t("home.welcomeBack", { name: user.nickname })}
             </h2>
             <WorkflowDashboard />
           </div>
         </section>
       )}
-      {user && user.accountStatus === "PENDING" && (
-        <section className="bg-brand-bg px-4 py-8">
-          <div className="mx-auto max-w-6xl">
-            <div className="flex items-center gap-3 rounded-xl border border-yellow-200 bg-yellow-50 p-5">
-              <Clock className="h-5 w-5 shrink-0 text-yellow-600" />
-              <p className="text-sm text-brand-muted">
-                Your account is pending approval. You'll be notified as soon as
-                an admin reviews your application.
-              </p>
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* Main content */}
       <div className="mx-auto max-w-6xl px-4">
         <HowItWorks />
@@ -533,17 +498,17 @@ function Home() {
             <div>
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-bold text-brand-primary">
-                  Recent Trips — سفرهای اخیر
+                  {t("home.recentTrips")}
                 </h2>
                 <Link
                   to="/trips"
                   className="flex items-center gap-1 text-sm text-brand-accent hover:underline"
                 >
-                  View all <ArrowRight className="h-3 w-3" />
+                  {t("home.viewAll")} <ArrowRight className="h-3 w-3" />
                 </Link>
               </div>
               {recentTrips.length === 0 ? (
-                <p className="text-sm text-brand-muted">No trips posted yet.</p>
+                <p className="text-sm text-brand-muted">{t("home.noTripsYet")}</p>
               ) : (
                 <div className="space-y-3">
                   {recentTrips.map((trip) => (
@@ -556,18 +521,18 @@ function Home() {
             <div>
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-lg font-bold text-brand-primary">
-                  Recent Packages — بسته‌های اخیر
+                  {t("home.recentPackages")}
                 </h2>
                 <Link
                   to="/packages"
                   className="flex items-center gap-1 text-sm text-brand-accent hover:underline"
                 >
-                  View all <ArrowRight className="h-3 w-3" />
+                  {t("home.viewAll")} <ArrowRight className="h-3 w-3" />
                 </Link>
               </div>
               {recentPackages.length === 0 ? (
                 <p className="text-sm text-brand-muted">
-                  No packages posted yet.
+                  {t("home.noPackagesYet")}
                 </p>
               ) : (
                 <div className="space-y-3">
@@ -584,24 +549,23 @@ function Home() {
         {!user && (
           <div className="mb-16 rounded-2xl bg-brand-primary p-8 text-center">
             <h2 className="mb-2 text-xl font-bold text-white">
-              Ready to get started?
+              {t("home.readyToStart")}
             </h2>
-            <p className="mb-2 text-sm text-white/60">آماده شروع هستید؟</p>
             <p className="mb-6 text-sm text-white/70">
-              Join thousands of verified Afghan senders and travelers worldwide.
+              {t("home.joinThousands")}
             </p>
             <div className="flex flex-wrap justify-center gap-3">
               <Link
                 to="/register"
                 className="rounded-full bg-brand-accent px-6 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
               >
-                Create Free Account — ثبت‌نام رایگان
+                {t("home.createFreeAccount")}
               </Link>
               <Link
                 to="/rules"
                 className="rounded-full border border-white/30 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10"
               >
-                Read the Rules — قوانین را بخوانید
+                {t("home.readRules")}
               </Link>
             </div>
           </div>

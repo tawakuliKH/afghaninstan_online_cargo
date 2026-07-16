@@ -9,6 +9,7 @@ import api from '../lib/axios'
 import toast from 'react-hot-toast'
 import { Package, Loader2, AlertCircle, X } from 'lucide-react'
 import { SEO } from '../components/SEO'
+import { GoogleSignInButton } from '../components/GoogleSignInButton'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -71,6 +72,16 @@ function Login() {
             <p className="mt-1 text-sm text-brand-muted">
               {t('auth.loginSubtitle')}
             </p>
+          </div>
+
+          {/* Google sign-in */}
+          <div className="mb-6">
+            <GoogleSignInButton label={t('auth.signInWithGoogle')} />
+            <div className="my-4 flex items-center gap-3">
+              <div className="h-px flex-1 bg-brand-muted/20" />
+              <span className="text-xs text-brand-muted">or sign in with email</span>
+              <div className="h-px flex-1 bg-brand-muted/20" />
+            </div>
           </div>
 
           {/* Form */}
